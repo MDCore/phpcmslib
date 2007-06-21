@@ -1,0 +1,240 @@
+ h4
+ {
+     margin-bottom: 0;
+     text-decoration: underline;
+ }
+ div.action_links
+{
+    border: 1px solid #ccc;
+    padding: 3px;
+    /*font-size: 12px;*/
+    width: 50%;
+}
+.flash
+{
+    width: 75%;
+    border: 1px solid #ccc;
+    background-color: #ffc;
+    padding: 2px 5px;
+    font-weight: bold;
+    color: #d00;
+}
+.list_wrapper
+{
+    width: 98%;
+    margin-bottom: 10px;
+}
+div.list_rows
+{
+    /*font-style: oblique;*/
+    /*font-size: 7pt;*/
+}
+table.list
+{
+    clear: both;
+    border-collapse: collapse;
+    margin: 0 auto;
+    width: 100%;
+}
+table.list thead tr
+{
+    background: #e7e5dc top left repeat-x url(../images/layout/tblHeader2.jpg);
+    border: 1px solid #cfcfcf;
+}
+table.list tbody tr:hover
+{
+    background-color: #f8f8f1;
+}
+
+table.list th
+{
+    color: #575751;
+    font-weight: bold;
+    text-align: left;
+    white-space: nowrap;
+    border-left: 1px solid #cfcfcf;
+    padding: 5px 5px 5px 5px;
+}
+table.list th a
+{
+    width: 100%;
+	color: #afad99;
+}
+
+table.list th a:hover {
+	color: #87846a;
+	}
+
+table.list th.sorted
+{
+    background-color: #f5f4dc;
+}
+
+table.list th.sorted a {
+	color: #575751;
+	text-decoration: none;
+	cursor: default;
+	}
+
+table.list td.action_link
+{
+    text-align: right;
+    padding: 0px 5px;
+    white-space: nowrap;
+    /*font-size: 7pt;*/
+    text-decoration: none !important;
+}
+
+table.list td
+{
+    border:1px solid #f1f1e5;
+    border-top-width: 0;
+    padding: 0 5px;
+    margin: 0;
+}
+
+table.list td:hover {
+	background: #dbdad1;
+	}
+
+.button
+{
+    cursor: pointer;
+    text-decoration: underline;
+}
+#bt_show_filters
+{
+    padding: 0 3px;
+    text-align: center;
+    display: block;
+    text-decoration: none;
+    background: #f8f8f1;
+    color: #afad99;
+    border: 1px solid #dbdad1;
+    width: 90px;
+}
+#bt_show_filters:hover
+{
+    border: 1px outset #f8f8f1;
+}
+#filters
+{
+    display: none;
+}
+
+#filters table
+{
+    display: block;
+    width: 98%;
+    border: 1px solid #ccc;
+    background-color: #E7E5DC;
+    margin-bottom: 4px;
+    font-size: 10px;
+}
+#filters label
+{
+    font-weight: bold;
+    padding-right: 2px;
+}
+#filters input, #filters select
+{
+    font-size: 10px;
+}
+
+table.view_form th
+{
+    text-align: left;
+    vertical-align: top;
+}
+div.list_form
+{
+}
+p.form_element label
+{
+   width: 350px; 
+   display: block;
+   font-weight: bold;
+}
+p.form_element input, p.form_element select, p.form_element textarea
+{
+        font-family: "courier new",monospace;
+        width: 350px;
+        font-size: 14px;
+}
+p.form_element textarea.large
+{
+        height: 200px;
+        width: 450px;
+}
+.date_picker_button
+{
+    width: 35px !important;
+}
+.checkbox
+{
+    width: 12px !important;
+}
+
+
+.detail-even, .detail-odd
+{
+    margin:0pt 0px 0pt -5px;
+    padding:2px 0 15px 10px;
+    border: 1px solid #e8e8e8;
+}
+.detail-odd
+{
+    background-color:#F0EFE5;
+}
+.detail-even
+{
+    background-color:#FFFFFA;
+}
+
+#email_page
+{
+    display: none;
+
+}
+#inner_email_page * /* compress the email page. looks nicer */
+{
+    margin: 0; padding: 0;
+}
+
+#tabmenu {
+		color: #000;
+		border-bottom: 0px solid black;
+		margin: 2px 0px 3px 0px;
+		padding: 0 5px 10px 10px;
+		z-index: 1;
+            }
+
+	#tabmenu li {
+		display: inline;
+		overflow: hidden;
+		list-style-type: none;
+        }
+
+	#tabmenu a, a.active {
+		color: #DEDECF;
+		background: #898B5E;
+		border: 1px solid black;
+		padding: 2px 8px 0px 8px;
+		margin: 0 0px 5px 2px;
+		text-decoration: none; }
+
+	#tabmenu a.active {
+		background: #ABAD85;
+		border-bottom: 2px solid #ABAD85; }
+
+	#tabmenu a:hover {
+		color: #fff;
+		background: #ADC09F; }
+
+	#tabmenu a:visited {
+		color: #E8E9BE; }
+
+	#tabmenu a.active:hover {
+		background: #ABAD85;
+		color: #DEDECF; }
+
