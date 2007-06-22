@@ -10,7 +10,7 @@ class cm_controller extends action_controller
     public $is_controller = true;
     public $layout = 'default';
     public $face = 'cm';
-    public $default_action = 'draw_cm_list';
+    public $default_action = 'cm_list';
 
     #default configuration 
         public $allow_edit = true, $allow_add = true, $allow_delete = true;
@@ -24,7 +24,6 @@ class cm_controller extends action_controller
     {
         parent::__construct();
 
-        #todo - move e.g. action specific stuff to only activate on a action
         # todo is also to document this all!
             #foreign key(s)
                 if (isset($_GET['fk'])) {
@@ -42,8 +41,6 @@ class cm_controller extends action_controller
                     $this->foreign_keys = array();
                 }
        
-            if (isset($_GET['action'])) {$this->action = $_GET['action']; }# $this->action = "sub/page"; 
-
             $this->controller_name = get_class($this);$this->controller_name = str_replace('_controller', '', $this->controller_name);
             if (!isset($this->list_type))       { $this->list_type =  singularize($this->controller_name); }
             if (!isset($this->primary_model))   { $this->primary_model = $this->list_type; }
@@ -110,17 +107,6 @@ class cm_controller extends action_controller
             if (!isset($this->foreign_key_title_prefix)) {$this->foreign_key_title_prefix = ' in ';}
             if (isset($_GET['fk_t'])) {$fk_t= $_GET['fk_t']; $this->foreign_key_title = $this->foreign_key_title_prefix.$fk_t; } else {$this->foreign_key_title = '';}
 
-            $this->init();
-    }
-
-    function __call($method_name, $params)
-    {
-        $this->action = $method_name;
-        draw();
-    }
-
-    function init()
-    {
             #changes for print mode
             if (defined('PRINTING_MODE'))
             {
@@ -133,32 +119,23 @@ class cm_controller extends action_controller
                 $this->row_limit = 1000000;
                 $this->allow_sort = false;
             }
-
-        #pre-render stuff
-            switch ($this->action)
-            {
-            case 'save':
-                $this->handle_save();
-                break;
-            case 'update':
-                $this->handle_update();
-                break;
-            case 'delete':
-                $this->handle_delete();
-                break;
-            }
     }
 
-    function draw() 
+    function __call($method_name, $params)
+    {
+        $this->cm_page($method_name);
+    }
+
+    function cm_page($page) 
     {
         global $path_to_root;
 
-        #rendering router
-            switch ($this->action)
+        #automatic cm pages router
+            switch ($page)
             {
             case 'list':
-                $this->draw_cm_list();
-                #require the additional scripts #todo remove this.. redundant with controllers / actions
+                $this->cm_list();
+                #require the additional scripts #todo remove this.. possibly redundant with controllers / actions
                     if (isset($this->additional_scripts))
                     {
                         foreach ($this->additional_scripts as $script)
@@ -168,57 +145,20 @@ class cm_controller extends action_controller
                     }
                 break;
             case 'edit':
-                $this->draw_cm_edit();
-                break;
+                $this->cm_edit();break;
             case 'add':
-                $this->draw_cm_add();
-                break;
+                $this->cm_add();break;
             case 'view':
-                $this->draw_cm_view();
-                break;
-            case 'sub/page':
-                #a custom page
-                $custom_action = tableize(pluralize($this->list_type)).'_'.$this->action.'.php';
-                $this->draw_action($custom_action);
-                break;
-            default:
-                #rendering an action
-                    $this->{$this->action}();
-                    if (!$this->has_rendered)
-                    {
-                        $this->render_view($this->action);
-                    }
-
+                $this->cm_view();break; 
+            case 'save':
+                $this->cm_save();break;
+            case 'update':
+                $this->cm_update();break;
+            case 'delete':
+                $this->cm_delete();break;
             }
     }
     
-    public function draw_action($page_name)
-    {
-        $record = $this->model_object;
-        if (isset($_GET['view_id']))
-        {
-            $edit_id = $_GET['view_id'];
-            $sql = 'SELECT * FROM '.$this->primary_table.' WHERE '.$this->primary_key_field.' = '.$edit_id;
-            $AR = new AR;
-            $values = $AR->db->query($sql);App::error_check($values);
-            $values = $values->fetchRow();
-            $this->model_object->update_attributes($values);
-            $record = $this->model_object;
-        }
-        else
-        {
-
-        #automatically populate the model_object with the foreign keys
-            foreach($this->foreign_keys as $key => $value)
-            {
-                $record->$key = $value;
-            }
-        }
-        require(App::$env->content_path.'/'.$page_name);
-    }
-
-  
-
     function related_page_anchor($related_page, $row)
     {
         $related_page['name'] = $related_page[0];
@@ -234,7 +174,7 @@ class cm_controller extends action_controller
 # Action Presets
 #------------------------------#
 
-    public function handle_update()
+    public function cm_update()
     {
         $edit_id = $_GET['edit_id'];
 
@@ -276,33 +216,33 @@ class cm_controller extends action_controller
                             $meta_model_object->update_attributes($collection);
                             if (!$meta_model_object->is_valid())
                             {
-                                redirect_from_handler("&action=edit&edit_id=".$edit_id."&flash=".$meta_model_object->validation_errors);die();
+                                redirect_with_parameters(url_to(array('action' => 'edit')), "edit_id=".$edit_id."&flash=".$meta_model_object->validation_errors);die();
                             }
                             $meta_model_object->update();
                         }
                     }
                     {
                         unset($collection['_add_record']); #currently used to add a comment each time
-                        #todo duplicate the meta-model code from handle_save
+                        #todo duplicate the meta-model code from cm_save
                         $meta_model = new $meta_model($collection); $meta_model->save();
                     }
                 }
             }
             $this->handle_new_files($edit_id, true);
 
-            redirect_from_handler("&action=list&flash=".humanize($this->list_type). " updated");
+            redirect_with_parameters(url_to(array('action' => 'list')), "flash=".humanize($this->list_type). " updated");
         }
         else
         {
-            redirect_from_handler("&action=edit&edit_id=".$edit_id."&flash=".$primary_model_object->validation_errors);
+            redirect_with_parameters(url_to(array('action' => 'edit')), "edit_id=".$edit_id."&flash=".$primary_model_object->validation_errors);
         }
     }
 
-    public function handle_save()
+    public function cm_save()
     {
         #debug('handling_save');print_r($_GET);print_r($_POST);print_r($_FILES);
         
-        if (function_exists('before_save')) { before_save(); }
+        if (function_exists('before_save')) { before_save(); } #todo clean this up.... should be in model, maybe
         
         $collection = $_POST[$this->primary_model];
         if ( !$collection ) {
@@ -317,9 +257,8 @@ class cm_controller extends action_controller
             $primary_model_object = new $this->primary_model($collection);
 
         if (!$primary_model_object->is_valid()) {
-            #old method     redirect_from_handler("&action=add&flash=".$primary_model_object->validation_errors); die(); 
-            $_GET['action'] = 'add'; $this->action = 'add'; #todo fix this hackaround
             $_GET['flash'] = $primary_model_object->validation_errors; 
+            render_view('add');
             return false;
         }
 
@@ -349,7 +288,7 @@ class cm_controller extends action_controller
                             {
                                 #delete the primary_record
                                 $primary_model_object->delete($primary_record_id);
-                                if (!$meta_model_object->is_valid()) { redirect_from_handler("&action=add&flash=".$meta_model_object->validation_errors); die(); }
+                                if (!$meta_model_object->is_valid()) { redirect_with_parameters(url_to(array('action' => 'list')), "flash=".$meta_model_object->validation_errors); die(); }
                             }
                             $meta_model->save(); #don't need the primary id, afaik
                         }
@@ -358,9 +297,9 @@ class cm_controller extends action_controller
             }
             $this->handle_new_files($primary_record_id, true);
             # callback here
-            if (function_exists('after_save')) { after_save($primary_record_id); }
-            $return_page = $_GET['returnaction']; if ($return_page != '') {$return_page = "&action=".$return_page;}
-            redirect_from_handler($return_page."&flash=New ".humanize($this->list_type). " added");
+            if (function_exists('after_save')) { after_save($primary_record_id); } # todo should be in model maybe
+            $return_page = $_GET['returnaction']; if ($return_page != '') {$return_page = url_to(array('view' => $return_page));}
+            redirect_with_parameters(url_to(array('action' => $return_page)), "flash=New ".humanize($this->list_type). " added");
         }
         else
         {
@@ -368,7 +307,7 @@ class cm_controller extends action_controller
         }
     }
 
-    public function handle_delete()
+    public function cm_delete()
     {
         # delete these puppies
         $sql_delete = "DELETE FROM " . $this->primary_table . " WHERE ".$this->primary_key_field." IN (";
@@ -392,7 +331,7 @@ class cm_controller extends action_controller
         
         if ($records_deleted != 1) {$flash = humanize(pluralize($this->list_type));} else {$flash = humanize($this->list_type);}
         $flash = "Deleted $records_deleted ".$flash;
-        redirect_from_handler("&flash=$flash");
+        redirect_with_parameters(url_to(array('action' => 'list')), "flash=$flash");
     }
 
     public function handle_new_files($primary_record_id, $force_new = false)
@@ -414,7 +353,7 @@ class cm_controller extends action_controller
 # CM actions
 #------------------------------#
 
-    public function draw_cm_list()
+    public function cm_list()
     {
         $page_title = $this->page_title;
 
@@ -437,7 +376,7 @@ class cm_controller extends action_controller
             {
                 echo $this->draw_filters($this->filter_object->filters);
             }
-        if ($this->show_delete) { ?><form id="list_delete" method="post" action="<?=page_parameters('/^action/')?>&action=delete"><? }
+        if ($this->show_delete) { ?><form id="list_delete" method="post" action="<?=href_to(array('action' =>'delete')).page_parameters('', false)?>"><? }
 
     #---------query, sql_query, sql query ---------------------------------------#
         
@@ -515,9 +454,9 @@ class cm_controller extends action_controller
         ?> </div>
         <? if ($this->allow_add || $this->allow_delete) {
             ?><div class="action_links"><? #todo document action_links
-                if ($this->back_link) { ?><a href="<?=page_parameters('/^action/,/^page$/,/^fk/');?>&amp;page=<?=$this->back_link;?>"/>Back to <?=humanize($this->back_link);?></a><br /><? }
-            if ($this->allow_add) { ?><a href="<?=href_to('add');?><?=page_parameters('/^action/');?>" />Add a new <?=humanize($this->list_type);?></a><br /><? }
-            if ($this->allow_delete) { ?><a href="<?=page_parameters('/^action/');?>&amp;delete=y"/>Delete <?=humanize(pluralize($this->list_type));?></a><br /><? }
+                if ($this->back_link) { ?><a href="<?=href_to($this->back_link).page_parameters('/^fk/', false);?>"/>Back to <?=humanize($this->back_link);?></a><br /><? }
+            if ($this->allow_add) { ?><a href="<?=href_to(array('action' =>'add')).page_parameters('', false);?>" />Add a new <?=humanize($this->list_type);?></a><br /><? }
+            if ($this->allow_delete) { ?><a href="<?=page_parameters('');?>&amp;delete=y"/>Delete <?=humanize(pluralize($this->list_type));?></a><br /><? }
             ?></div><?
         }
         $this->render_inline();
@@ -574,13 +513,10 @@ class cm_controller extends action_controller
 
             if (!$this->show_delete && $this->allow_edit)
             {
-            # get or set the edit_page
-                $edit_page = page_parameters('/^edit/,/^action/');
-
             # get or set the edit_link_title
                 if (isset($this->edit_link_title)) {$edit_link_title = $this->edit_link_title;} else {$edit_link_title = 'Edit';}#.humanize($this->list_type)
 
-                ?><td class="action_link"><a href="<?=$edit_page;?>&action=edit&edit_id=<?=$row->__pk_field;?>"><?=$edit_link_title;?></a></td><?
+                    ?><td class="action_link"><a href="<?=href_to(array('action' => 'edit')).page_parameters('/^edit/');?>&amp;edit_id=<?=$row->__pk_field;?>"><?=$edit_link_title;?></a></td><?
             }
 
             if (!$this->show_delete && $this->allow_view)
@@ -588,7 +524,7 @@ class cm_controller extends action_controller
             # get or set the view_title
                 if (isset($this->view_title)) {$view_title = $this->view_title;} else {$view_title = 'View';} #.humanize($this->list_type)
 
-                ?><td class="action_link"><a href="<?=page_parameters('/^view/,/^action/');?>&amp;action=view&view_id=<?=$row->__pk_field;?>"><?=$view_title;?></a></td><?
+                ?><td class="action_link"><a href="<?=href_to(array('action' => 'view')).page_parameters('/^view/');?>&amp;view_id=<?=$row->__pk_field;?>"><?=$view_title;?></a></td><?
             }
 
             #related pages
@@ -641,7 +577,7 @@ class cm_controller extends action_controller
         <tr><td align="left"><?
         if ($this->paging_back >= 0)
         {
-            ?><a href="<?=page_parameters('/^start$/');?>&start=<?=$this->paging_back.$pageextra;?>">PREV</a><?
+            ?><a href="<?=page_parameters('/^start$/');?>&amp;start=<?=$this->paging_back.$pageextra;?>">PREV</a><?
         }
         ?></td><td align=center><?
         $i=0; $l=1;
@@ -651,7 +587,7 @@ class cm_controller extends action_controller
         {
             if ($i <> $this->start_limit)
             {
-                ?><a href="<?=page_parameters('/^start$/');?>&start=<?=$i.$pageextra;?>"><?=$l?></a><?
+                ?><a href="<?=page_parameters('/^start$/');?>&amp;start=<?=$i.$pageextra;?>"><?=$l?></a><?
             }
             else
             {
@@ -664,7 +600,7 @@ class cm_controller extends action_controller
         ?></td><td align="right"><?
         if($this->paging_next < $num_rows)
         {
-            ?><a href="<?=page_parameters('/^start$/');?>&start=<?=$this->paging_next.$pageextra;?>">NEXT</a><?
+            ?><a href="<?=page_parameters('/^start$/');?>&amp;start=<?=$this->paging_next.$pageextra;?>">NEXT</a><?
         }
         ?></td></tr></table><?
     }
@@ -709,7 +645,7 @@ class cm_controller extends action_controller
     </div><?
     }
 
-    public function draw_cm_view()
+    public function cm_view()
     {
         $edit_id = $_GET['view_id'];
         if (!$view_page) {$view_page = $this->view_page;}
@@ -724,16 +660,16 @@ class cm_controller extends action_controller
         $this->model_object->update_attributes($values);
         $record = $this->model_object;
         require(App::$env->content_path.'/'.$view_page);
+        $this->render_inline();
     }
 
-    public function draw_cm_edit()
+    public function cm_edit()
     {
         $edit_id = $_GET['edit_id'];
         # pull out id's and suchlike
         $this->edit_page_title = str_replace('__id__', $edit_id, $this->edit_page_title); #todo fix this hack, replace with actual field names in some way
         ?><h2><?=$this->edit_page_title;?></h2><?
-        ?><form method="post" enctype="multipart/form-data" action="<?
-        echo page_parameters('/^edit/,/^action/')?>&action=update&edit_id=<?=$edit_id?>"><?
+        ?><form method="post" enctype="multipart/form-data" action="<?=href_to(array('action' => 'update')).page_parameters('/^edit/')?>&edit_id=<?=$edit_id?>"><?
 
         $sql = 'SELECT * FROM '.$this->primary_table.' WHERE '.$this->primary_key_field." = '".$edit_id."'";
         $AR = new AR;
@@ -755,16 +691,17 @@ class cm_controller extends action_controller
         }
         if ($this->draw_form_buttons) {forms::form_buttons();}
         ?></form><?
+        $this->render_inline();
     }
 
-    public function draw_cm_add()
+    public function cm_add()
     {
         ?><h2>Add a new <?=humanize($this->list_type);?></h2><?
         ?><form method="post" enctype="multipart/form-data" action="<?
-        $parameters_to_remove = '/^action/'; $parameters = "&action=save";
+        $parameters_to_remove = $parameters = '';
         if (isset($this->add_postback_parameters)) {$parameters_to_remove .= ','.$this->add_postback_parameters['filters']; $parameters.= '&'.$this->add_postback_parameters['parameters'];}
-            
-        echo page_parameters($parameters_to_remove).$parameters;?>"><?
+
+        echo url_to(array('action' => 'save')).page_parameters($parameters_to_remove).$parameters;?>"><?
             
         if (isset($_POST) && sizeof($_POST) > 0 )
         {
@@ -792,6 +729,7 @@ class cm_controller extends action_controller
         }
         if ($this->draw_form_buttons) {forms::form_buttons('save',false);}
         ?></form><?
+        $this->render_inline();
     }
 }
 ?>

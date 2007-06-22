@@ -63,7 +63,7 @@ class action_controller
     function execute_action($action_name = null)
     {
         if (!$action_name) { $action_name = App::$route['action']; }
-        if (method_exists(App::$controller, $action_name))
+        if (method_exists(App::$controller, $action_name) || method_exists(App::$controller, '__call'))
         {
             #debug('execute_action');
             App::$controller->$action_name();

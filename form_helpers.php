@@ -455,7 +455,7 @@ class forms
     {
         ?><input type="submit" value="<?=$update_name?>" />&nbsp;
         <? if ($show_reset) {?><input type="reset" value="reset" />&nbsp;<? } ?>
-        <? if ($show_cancel) {?><input type="button" value="cancel" onclick="window.location='<?=redirect_from_handler('&action=list', true);?>'" />&nbsp;<? } ?><br />
+        <? if ($show_cancel) {?><input type="button" value="cancel" onclick="window.location='<?=redirect_with_parameters(url_to(array('action' => 'list')), '', true);?>'" />&nbsp;<? } ?><br />
         <br /><strong>Note:</strong> All fields marked with <strong>*</strong> are required.
 <?
     }

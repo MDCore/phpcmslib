@@ -30,4 +30,9 @@ function render_shared_partial($partial_name)
     require($path_to_root.'/'.App::$route['face'].'/layouts/_'.$partial_name.'.php');
 }
 
+function render($view)
+{
+
+}
+
 ?>

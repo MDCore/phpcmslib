@@ -35,7 +35,7 @@ $path_to_root = '../../..';
     if (App::require_controller(App::$route['controller']))
     {
         #controller found!
-        $controller = new App::$route['controller']; #todo is this true anymore ? pre-render actions may occur here. e.g. saving records etc. This may redirect from here and stop execution
+        $controller = new App::$route['controller'];
     }
     if (!$controller) { trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> not found", E_USER_ERROR); }
 
@@ -49,13 +49,9 @@ $path_to_root = '../../..';
 
     #execute the action
         ob_start(); #cache the output
-        #echo 'here';
         App::$controller->execute_action();
-        #echo 'here3';
         App::$render_contents = ob_get_contents(); #save the output, for later rendering
-        #echo 'here4';
         ob_clean(); #drop the output contents
-        #echo 'here5';
 
 #load the layout
     #echo '<pre>';print_r(App::$route);print_r(App::$controller);echo '</pre>';die();

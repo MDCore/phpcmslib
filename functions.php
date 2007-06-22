@@ -2,12 +2,13 @@
 require_once('string_helpers.php');
 require_once('form_helpers.php');
 
-define('MENU_PAGE_PARAMETERS_TO_SKIP', '/^page$/,/^action/,/_id$/,/^sort/,/^filter_/,/^fk$/');
+define('MENU_PAGE_PARAMETERS_TO_SKIP', '/_id$/,/^sort/,/^filter_/,/^fk$/');
 
-function redirect_from_handler($additional_parameters = '', $just_the_url = false) #rename to redirect_with_parameters
+#this method does a redirect with standard parameters stripped
+function redirect_with_parameters($url, $additional_parameters = '', $return_url = false)
 {
-    $url = "index.php".page_parameters('/^p$/,/^action/,/^edit/,/^delete$/,/^returnaction/').$additional_parameters;
-    if (!$just_the_url)
+    $url .= page_parameters('/^p$/,/^edit/,/^delete$/').$additional_parameters;
+    if (!$return_url)
     {
         header("Location: $url");die();
     }
@@ -71,41 +72,6 @@ function split_aliased_string($str)
     return $new_fields;
 }
 
-function menu_item($name, $page_name = null, $highlight = false)
-{
-    if (!$page_name) {$page_name = $name;}
-
-    ?><a href="<?=page_parameters(MENU_PAGE_PARAMETERS_TO_SKIP);?>&page=<?=$page_name?>"><?
-    if ( $highlight ) { echo '<strong>'; }
-    echo humanize($name);?></a> | <?
-    if ( $highlight ) { echo '</strong>'; }
-
-}
-
-// Added to return and not echo
-
-function menu_item_rtn($name, $page_name = null, $highlight = false)
-{
-    if (!$page_name) {$page_name = $name;}
-
-    ?>
-	<li><a href="<?=page_parameters(MENU_PAGE_PARAMETERS_TO_SKIP);?>&page=<?=$page_name?>">
-	<?
-    if ( $highlight ) { echo '<strong>'; }
-    echo humanize($name);?></a><?
-    if ( $highlight ) { echo '</strong>'; }
-	echo '</li>';
-}
-
-
-function menu_link($name, $page_name=null, $menu_name = null)
-{
-    if (is_null($menu_name)) {$menu_name = $name;}
-    ?><a href="?menu=<?=$menu_name?><?
-    if ($page_name) { echo "&page=$page_name";}
-    ?>"><?=humanize($name)?></a> |  <?
-}
-
 function page_parameters($except = '', $always_return_something = true, $method = 'querystring')
 {
     # methods are querystring or hidden
@@ -141,7 +107,9 @@ function page_parameters($except = '', $always_return_something = true, $method 
     }
     if ( $method == 'querystring' )
     {
-        if ($always_return_something && $return == '') {$return = '?p=y';} else {
+        if ($always_return_something && $return == '') {$return = '?p=y';}
+        elseif ($return != '')
+        {
             $return = '?'.substr($return, 1);
         }
     }
@@ -157,6 +125,7 @@ function debug ( $str )
     }*/
    echo "<pre>";var_dump($str);echo "</pre>";
 }
+
 # reimplement the function exists method for php < 5.1
 if (!function_exists('property_exists')) {
   function property_exists($class, $property) {
@@ -224,4 +193,29 @@ function dateAdd($interval,$number,$dateTime) {
        
         if ($nosecmin>2){     return(date("Y-m-d",$dateTime));} else {     return(date("Y-m-d G:i:s",$dateTime));}
 }
+
+function url_to($path)
+{
+    $url = App::$env->url;
+
+    if (is_array($path)) { $target = $path; } else { $target = build_route($path); }
+    if (!$target['face']) { $target['face'] = App::$default_face; }
+    if (!$target['controller']) { $target['controller'] = App::$controller->controller_name; }
+
+    #echo "<!--";print_r($target);echo "-->";
+    
+    #route's are the same so just send bank emptystring
+        if ($target['face'] == App::$route['face'] && $target['controller'] == App::$route['controller'] && $target['action'] == App::$route['action']) { return ''; }
+
+    $url = App::$env->url.'/';
+    #if the default face is the same as the target face leave the face out
+        if ($target['face'] != App::$default_face) { $url .= $target['face'].'/'; }
+    
+    $url .= str_replace('_controller', '', $target['controller']);
+    #no specified action?  let the controller decide
+        if ($target['action'] != '') { $url .= '/'.$target['action']; }
+
+    return $url;
+}
+function href_to($path) { return url_to($path); }
 ?>

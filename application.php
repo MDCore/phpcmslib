@@ -155,24 +155,4 @@ function build_route($path)
 }
 /* todo move these methods into helper functions */
 
-function href_to($path)
-{
-    $href = App::$env->url;
-
-    $target = build_route($path);
-    #echo "<!--";print_r($target);echo "-->";
-    
-    #route's are the same so just send bank emptystring
-        if ($target['face'] == App::$route['face'] && $target['controller'] == App::$route['controller'] && $target['action'] == App::$route['action']) { return ''; }
-
-    $href = App::$env->url.'/';
-    #if the default face is the same as the target face leave the face out
-        if ($target['face'] != App::$default_face) { $href .= $target['face'].'/'; }
-    
-    $href .= str_replace('_controller', '', $target['controller']);
-    #no specified action?  let the controller decide
-        if ($target['action'] != '') { $href .= '/'.$target['action']; }
-
-    return $href;
-}
 ?>
