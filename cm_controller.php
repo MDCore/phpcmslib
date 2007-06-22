@@ -262,7 +262,7 @@ class cm_controller extends action_controller
             return false;
         }
 
-            $primary_record_id = $primary_model_object->save(); 
+        $primary_record_id = $primary_model_object->save(); 
 
         if ($primary_record_id) #might not have one if saving failed e.g. validation
         {
@@ -298,8 +298,7 @@ class cm_controller extends action_controller
             $this->handle_new_files($primary_record_id, true);
             # callback here
             if (function_exists('after_save')) { after_save($primary_record_id); } # todo should be in model maybe
-            $return_page = $_GET['returnaction']; if ($return_page != '') {$return_page = url_to(array('view' => $return_page));}
-            redirect_with_parameters(url_to(array('action' => $return_page)), "flash=New ".humanize($this->list_type). " added");
+            redirect_with_parameters(url_to(array('action' => 'list')), "flash=New ".humanize($this->list_type). " added");
         }
         else
         {
