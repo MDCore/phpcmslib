@@ -4,30 +4,46 @@ class action_controller
     public $has_rendered = false;
     public $layout = 'application';
     public $face = "site";
+    public $virtual = false;
 
     public $before_action_filter = null, $after_action_filter = null;
-    public $before_controller_filter = null, $before_controller_execute_filter = null, $after_controller_filter;
+    public $before_controller_execute_filter = null, $after_controller_filter;
     /*
      * these filters work like so:
-     * > $filter = array('method_name', 'only' => 'action_1, action_2, action3', 'except' => 'action_4');
+     * > $filter = array('method_name_1, method_name_2', 'only' => 'action_1, action_2, action3', 'except' => 'action_4');
      * OR
-     * > $filter = 'method_name;
+     * > $filter = 'method_name';
+     * OR
+     * > $filter = 'method_name, method_name_2';
      *
      * only will only execute that method for the specified actions / controllers.
      * except will not execute that method for the specified actions / controllers, but will for all others.
      * only and except are mutually exclusive. Using both will cause an error.
      */
 
-    public function handle_controller_filter($filter, $controller_name)
+    public function handle_controller_filter($filter)
     {
+        #face controllers execute controller-level filters on their child controllers. That is why the filters are defined in the face controller but executed on the current controller
+        
         $only = $except = null;
 
         /* this method handles controller filter method execution */
+
+        switch ($filter)
+        {
+            case 'before_controller_execute':
+                $filter = $this->before_controller_execute_filter;
+                break;
+            case 'after_controller':
+                $filter = $this->after_controller_filter;
+                break;
+        }
+        
         if ($filter)
         { 
             if (is_array($filter))
             {
-                $method_name = $filter[0];
+                $methods = $filter[0];
                 if ($filter['only'] && $filter['except']) { trigger_error('Only and except using for filter',  E_USER_ERROR); } #todo better error name
 
                 if ($filter['only']){ $only = explode(',', $filter['only']); }
@@ -35,16 +51,21 @@ class action_controller
             }
             else
             {
-                $method_name = $filter;
             }
+            $methods = explode(',', $methods);
 
-            #check if the method exists
-                if (!method_exists($this, $method_name)) { trigger_error('Method '. $method_name . ' does not exist for filter.', E_USER_ERROR ); } # todo better error name
-
-            #execute the method
-            if (!$only && !$except) { $this->$method_name(); }
-            elseif ($only) { if (in_array($controller_name, $only)) { $this->method_name(); } }
-            elseif ($except) { if (!in_array($controller_name, $only)) { $this->method_name(); } }
+            foreach($methods as $method_name)
+            {
+                $method_name = trim($method_name);
+                
+                #check if the method exists
+                    if (!method_exists(App::$controller, $method_name)) { trigger_error("Method <i>$method_name</i> does not exist for controller_filter in controller <i>$controller_name</i>", E_USER_ERROR ); }
+                
+                #execute the method
+                    if (!$only && !$except) { App::$controller->$method_name(); }
+                    elseif ($only) { if (in_array(App::$controller->controller_name, $only)) { App::$controller->$method_name(); } }
+                    elseif ($except) { if (!in_array(App::$controller->controller_name, $except)) { App::$controller->$method_name(); } }
+            }
         }
     }
 

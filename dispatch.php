@@ -11,7 +11,7 @@ $path_to_root = '../../..';
 
 #initialize the application
     require ('./init.php');
-
+#-------------------------------------------------------------------------------------------------
 #build the route
     $route = build_route($path);
 
@@ -24,9 +24,6 @@ $path_to_root = '../../..';
     {
         #the face controller was found
         $face_controller = new face_controller;
-
-        #before_controller_filter
-            $face_controller->handle_controller_filter($face_controller->before_controller_filter, App::$route['controller']);
     }
     else
     {
@@ -37,26 +34,37 @@ $path_to_root = '../../..';
         #controller found!
         $controller = new App::$route['controller'];
     }
+#-------------------------------------------------------------------------------------------------
+    
     if (!$controller) { trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> not found", E_USER_ERROR); }
+
+#-------------------------------------------------------------------------------------------------
 
     App::$controller = $controller;
 
     if (!App::$route['action']) { App::$route['action'] = App::$controller->default_action; }
     if (!App::$route['action']) { trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> has no default action and no action has been specified", E_USER_ERROR); }
 
-    #before_controller_execute_filter
-        $face_controller->handle_controller_filter($face_controller->before_controller_execute_filter, App::$route['controller']);
+#-------------------------------------------------------------------------------------------------
 
+    #before_controller_execute_filter
+        $face_controller->handle_controller_filter('before_controller_execute');
+
+#-------------------------------------------------------------------------------------------------
     #execute the action
         ob_start(); #cache the output
         App::$controller->execute_action();
         App::$render_contents = ob_get_contents(); #save the output, for later rendering
         ob_clean(); #drop the output contents
 
+#-------------------------------------------------------------------------------------------------
+
 #load the layout
     #echo '<pre>';print_r(App::$route);print_r(App::$controller);echo '</pre>';die();
     if (App::$controller->layout) { render_layout(); } else { render_content(); } # the layout calls render_content which renders the view
 
+#-------------------------------------------------------------------------------------------------
+
 #after_controller_filter
-    $face_controller->handle_controller_filter($face_controller->after_controller_filter, App::$route['controller']);
+    $face_controller->handle_controller_filter('after_controller');
 ?>

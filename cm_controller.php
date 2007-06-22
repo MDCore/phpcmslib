@@ -24,6 +24,10 @@ class cm_controller extends action_controller
     {
         parent::__construct();
 
+        #the face_controller should be virtual;
+            if ($this->controller_name == 'face') {$this->virtual = true;}
+        if ($this->virtual) { return true; }
+
         # todo is also to document this all!
             #foreign key(s)
                 if (isset($_GET['fk'])) {
@@ -41,7 +45,6 @@ class cm_controller extends action_controller
                     $this->foreign_keys = array();
                 }
        
-            $this->controller_name = get_class($this);$this->controller_name = str_replace('_controller', '', $this->controller_name);
             if (!isset($this->list_type))       { $this->list_type =  singularize($this->controller_name); }
             if (!isset($this->primary_model))   { $this->primary_model = $this->list_type; }
             if (!isset($this->list_title))      { $this->list_title = proper_nounize(pluralize($this->list_type)); } $this->list_title = proper_nounize($this->list_title);
