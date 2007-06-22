@@ -6,6 +6,7 @@ class Application
     static $env;
     static $default_face = null, $controller = null, $route = null;
     static $allowed_faces = array('cm', 'site', 'extranet');
+    static $render_contents = null;
 
     function load_models()
     {
@@ -119,7 +120,7 @@ function build_route($path)
     $result = array(
         'face' => '',
         'controller' => 'default_controller',
-        'view' => '',
+        'action' => '',
         'id' => ''
         );
     $result['face'] = App::$default_face;
@@ -131,7 +132,7 @@ function build_route($path)
         {
             $result['controller'] = $path[0].'_controller';
 
-            if (isset($path[1])) { $result['view'] = $path[1]; }
+            if (isset($path[1])) { $result['action'] = $path[1]; }
             if (isset($path[2])) { $result['id'] = $path[2]; }
             
         }
@@ -143,7 +144,7 @@ function build_route($path)
 
             if ($path[1]) {$result['controller'] = $path[1].'_controller';}
 
-            if (isset($path[2])) { $result['view'] = $path[2]; }
+            if (isset($path[2])) { $result['action'] = $path[2]; }
             if (isset($path[3])) { $result['id'] = $path[3]; }
         }
     }
@@ -153,27 +154,6 @@ function build_route($path)
     return $result;
 }
 /* todo move these methods into helper functions */
-function render_content()
-{
-    $view = null; 
-    if (!App::$route['view']) { $view = App::$controller->default_view; } else { $view = App::$route['view']; }
-    
-    if (!$view) { $view = 'default'; }
-   
-    #print_r(App::$route);die();
-
-    if (method_exists(App::$controller, $view)) { App::$controller->$view(); }
-
-    if (!App::$controller->has_rendered)
-    {
-        App::$controller->render_view($view);
-    }
-}
-function render_shared_partial($partial_name)
-{
-    global $path_to_root;
-    require($path_to_root.'/'.App::$route['face'].'/layouts/_'.$partial_name.'.php');
-}
 
 function href_to($path)
 {
@@ -183,15 +163,15 @@ function href_to($path)
     #echo "<!--";print_r($target);echo "-->";
     
     #route's are the same so just send bank emptystring
-        if ($target['face'] == App::$route['face'] && $target['controller'] == App::$route['controller'] && $target['view'] == App::$route['view']) { return ''; }
+        if ($target['face'] == App::$route['face'] && $target['controller'] == App::$route['controller'] && $target['action'] == App::$route['action']) { return ''; }
 
     $href = App::$env->url.'/';
     #if the default face is the same as the target face leave the face out
         if ($target['face'] != App::$default_face) { $href .= $target['face'].'/'; }
     
     $href .= str_replace('_controller', '', $target['controller']);
-    #no specified view?  let the controller decide
-        if ($target['view'] != '') { $href .= '/'.$target['view']; }
+    #no specified action?  let the controller decide
+        if ($target['action'] != '') { $href .= '/'.$target['action']; }
 
     return $href;
 }

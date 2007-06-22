@@ -18,6 +18,7 @@ $path_to_root = '../../..';
     App::$route = $route;
     #echo '<pre>';print_r($route);echo '</pre>';
 #load the controller
+    $view_parameters = null;
     #load the face_controller for this face first
     if (App::require_controller('face_controller'))
     {
@@ -31,25 +32,34 @@ $path_to_root = '../../..';
     {
         #do we require a face controller ? If so, create an error trigger here...
     }
-        
     if (App::require_controller(App::$route['controller']))
     {
         #controller found!
-        $controller = new App::$route['controller']; #pre-render actions may occur here. e.g. saving records etc. This may redirect from here and stop execution
+        $controller = new App::$route['controller']; #todo is this true anymore ? pre-render actions may occur here. e.g. saving records etc. This may redirect from here and stop execution
     }
-    if (!$controller) { trigger_error("Controller ".App::$route['face'].'/'.App::$route['controller']." not found", E_USER_ERROR); }
+    if (!$controller) { trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> not found", E_USER_ERROR); }
 
     App::$controller = $controller;
 
+    if (!App::$route['action']) { App::$route['action'] = App::$controller->default_action; }
+    if (!App::$route['action']) { trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> has no default action and no action has been specified", E_USER_ERROR); }
+
     #before_controller_execute_filter
         $face_controller->handle_controller_filter($face_controller->before_controller_execute_filter, App::$route['controller']);
-    
+
+    #execute the action
+        ob_start(); #cache the output
+        #echo 'here';
+        App::$controller->execute_action();
+        #echo 'here3';
+        App::$render_contents = ob_get_contents(); #save the output, for later rendering
+        #echo 'here4';
+        ob_clean(); #drop the output contents
+        #echo 'here5';
+
 #load the layout
-    #print_r(App::$route);print_r(App::$controller);die();
-    require $path_to_root.'/'.App::$route['face'].'/layouts/'.App::$controller->layout.'.php';
-    /*
-        (the layout automagically calls the view)
-     */
+    #echo '<pre>';print_r(App::$route);print_r(App::$controller);echo '</pre>';die();
+    if (App::$controller->layout) { render_layout(); } else { render_content(); } # the layout calls render_content which renders the view
 
 #after_controller_filter
     $face_controller->handle_controller_filter($face_controller->after_controller_filter, App::$route['controller']);

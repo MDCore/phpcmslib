@@ -10,7 +10,7 @@ class cm_controller extends action_controller
     public $is_controller = true;
     public $layout = 'default';
     public $face = 'cm';
-    public $default_view = 'draw_cm_list';
+    public $default_action = 'draw_cm_list';
 
     #default configuration 
         public $allow_edit = true, $allow_add = true, $allow_delete = true;
@@ -22,7 +22,9 @@ class cm_controller extends action_controller
 
     function __construct()
     {
-        #todo - move e.g. view specific stuff to only activate on a view
+        parent::__construct();
+
+        #todo - move e.g. action specific stuff to only activate on a action
         # todo is also to document this all!
             #foreign key(s)
                 if (isset($_GET['fk'])) {
@@ -156,7 +158,7 @@ class cm_controller extends action_controller
             {
             case 'list':
                 $this->draw_cm_list();
-                #require the additional scripts #todo remove this.. redundant with controllers / views
+                #require the additional scripts #todo remove this.. redundant with controllers / actions
                     if (isset($this->additional_scripts))
                     {
                         foreach ($this->additional_scripts as $script)
@@ -409,7 +411,7 @@ class cm_controller extends action_controller
     }
 
 #------------------------------#
-# CM Views
+# CM actions
 #------------------------------#
 
     public function draw_cm_list()
@@ -514,13 +516,11 @@ class cm_controller extends action_controller
         <? if ($this->allow_add || $this->allow_delete) {
             ?><div class="action_links"><? #todo document action_links
                 if ($this->back_link) { ?><a href="<?=page_parameters('/^action/,/^page$/,/^fk/');?>&amp;page=<?=$this->back_link;?>"/>Back to <?=humanize($this->back_link);?></a><br /><? }
-            if ($this->allow_add) { ?><a href="<?=page_parameters('/^action/');?>&amp;action=add"/>Add a new <?=humanize($this->list_type);?></a><br /><? }
+            if ($this->allow_add) { ?><a href="<?=href_to('add');?><?=page_parameters('/^action/');?>" />Add a new <?=humanize($this->list_type);?></a><br /><? }
             if ($this->allow_delete) { ?><a href="<?=page_parameters('/^action/');?>&amp;delete=y"/>Delete <?=humanize(pluralize($this->list_type));?></a><br /><? }
             ?></div><?
         }
-
-        die('here');
-    global $has_rendered; $has_rendered = true;
+        $this->render_inline();
     }
 
     public function list_header()

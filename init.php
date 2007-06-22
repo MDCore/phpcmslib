@@ -7,6 +7,7 @@ require_once("functions.php");
 /* core classes */
     require_once("AR.php");
     require_once("action_controller.php");
+    require_once("action_view_helpers.php");
     require_once("environment.php");
     require_once("application.php");
 
