@@ -1,9 +1,12 @@
 <?
+#print_r($_GET);die();
 #get the path, and remove the path from $_GET
 if (sizeof($_GET) > 0) 
 {
-    $path = array_keys($_GET);$path = $path[0];
-    unset($_GET[$path]);
+    $path = array_keys($_GET);
+    if ($path[0] != 'qs') { $path = $path[0];unset($_GET[$path]); } else { $path = null; }
+    unset($_GET['qs']);
+    
     if ($path == 'index_html') {$path = 'default';}
 }
 
