@@ -16,14 +16,13 @@ $path_to_root = '../../..';
     require ('./init.php');
 #-------------------------------------------------------------------------------------------------
 #build the route
-    $route = build_route($path);
-
-    App::$route = $route;
-    #echo '<pre>';print_r($route);echo '</pre>';
+    App::$route = build_route($path);
+    
+    #echo '<pre>';print_r(App::$route);echo '</pre>';
 #load the controller
     $view_parameters = null;
     #load the face_controller for this face first
-    if (App::require_controller('face_controller'))
+    if (App::require_this('controller', 'face_controller'))
     {
         #the face controller was found
         $face_controller = new face_controller;
@@ -32,7 +31,13 @@ $path_to_root = '../../..';
     {
         #do we require a face controller ? If so, create an error trigger here...
     }
-    if (App::require_controller(App::$route['controller']))
+#-------------------------------------------------------------------------------------------------
+    #before_controller_load_filter
+        $face_controller->handle_controller_filter('before_controller_load', $face_controller);
+    
+#-------------------------------------------------------------------------------------------------
+
+    if (App::require_this('controller', App::$route['controller']))
     {
         #controller found!
         $controller = new App::$route['controller'];

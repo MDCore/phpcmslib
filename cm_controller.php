@@ -544,9 +544,6 @@ class cm_controller extends action_controller
                     $method = substr($field, 0, strlen($field)-2);
                     echo $this->model_object->$method($row);
                 }
-                // I'm doing this type fudging in such a bad way because I don't want the overhead
-                // of having to loop through the dbfields each time just to check types, maybe.
-                // php-mysql's introspection methods suck!
                 // ok... TODO fix this.. now that this uses mdb2. where is my schema introspection on appstart ?
                 elseif ((stristr($this->list_fields[$field], ' date') != false) or strtolower($this->list_fields[$field]) == 'date')
                 {

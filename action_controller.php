@@ -7,7 +7,7 @@ class action_controller
     public $virtual = false;
 
     public $before_action_filter = null, $after_action_filter = null;
-    public $before_controller_execute_filter = null, $after_controller_filter;
+    public $before_controller_load_filter = null, $before_controller_execute_filter = null, $after_controller_filter = null;
     /*
      * these filters work like so:
      * > $filter = array('method_name_1, method_name_2', 'only' => 'action_1, action_2, action3', 'except' => 'action_4');
@@ -21,22 +21,33 @@ class action_controller
      * only and except are mutually exclusive. Using both will cause an error.
      */
 
-    public function handle_controller_filter($filter)
+    public function handle_controller_filter($filter, $controller = null)
     {
-        #face controllers execute controller-level filters on their child controllers. That is why the filters are defined in the face controller but executed on the current controller
+        /*
+         * face controllers execute controller-level filters on their child controllers by default.
+         *  That is why the filters are defined in the face controller but executed on the current controller.
+         *  The exception to this is the before controller load filter, which is executed on the face_controller, 
+         *  since we may want to switch controllers
+         */
+
+        if ($controller == null) {$controller = App::$controller; }
         
         $only = $except = null;
-
-        /* this method handles controller filter method execution */
 
         switch ($filter)
         {
             case 'before_controller_execute':
-                $filter = $this->before_controller_execute_filter;
+                $filter = $controller->before_controller_execute_filter;
                 break;
             case 'after_controller':
-                $filter = $this->after_controller_filter;
+                $filter = $controller->after_controller_filter;
                 break;
+            case 'before_controller_load':
+                $filter = $controller->before_controller_load_filter;
+                break;
+            default:
+                trigger_error("filter type <i>$filter></i> not defined",  E_USER_ERROR); 
+                return false;
         }
         
         if ($filter)
@@ -44,14 +55,16 @@ class action_controller
             if (is_array($filter))
             {
                 $methods = $filter[0];
-                if ($filter['only'] && $filter['except']) { trigger_error('Only and except using for filter',  E_USER_ERROR); } #todo better error name
+                if ($filter['only'] && $filter['except']) { trigger_error("Only and except are mutually exclusive for controller ".$controller->controller_name,  E_USER_ERROR); }
 
                 if ($filter['only']){ $only = explode(',', $filter['only']); }
                 if ($filter['except']){ $except = explode(',', $filter['except']); }
             }
             else
             {
+                $methods = $filter;
             }
+
             $methods = explode(',', $methods);
 
             foreach($methods as $method_name)
@@ -59,12 +72,12 @@ class action_controller
                 $method_name = trim($method_name);
                 
                 #check if the method exists
-                    if (!method_exists(App::$controller, $method_name)) { trigger_error("Method <i>$method_name</i> does not exist for controller_filter in controller <i>$controller_name</i>", E_USER_ERROR ); }
+                    if (!method_exists($controller, $method_name)) { trigger_error("Method \"<i>$method_name</i>\" does not exist for controller_filter in controller <i>$controller->controller_name</i>", E_USER_ERROR ); }
                 
                 #execute the method
-                    if (!$only && !$except) { App::$controller->$method_name(); }
-                    elseif ($only) { if (in_array(App::$controller->controller_name, $only)) { App::$controller->$method_name(); } }
-                    elseif ($except) { if (!in_array(App::$controller->controller_name, $except)) { App::$controller->$method_name(); } }
+                    if (!$only && !$except) { $controller->$method_name(); }
+                    elseif ($only) { if (in_array($controller->controller_name, $only)) { $controller->$method_name(); } }
+                    elseif ($except) { if (!in_array($controller->controller_name, $except)) { $controller->$method_name(); } }
             }
         }
     }
@@ -87,7 +100,14 @@ class action_controller
         if (method_exists(App::$controller, $action_name) || method_exists(App::$controller, '__call'))
         {
             #debug('execute_action');
-            App::$controller->$action_name();
+            if (isset(App::$route['id']) && App::$route['id'])
+            {
+                App::$controller->$action_name(App::$route['id']);
+            }
+            else
+            {
+                App::$controller->$action_name();
+            }
         }
 
     }
@@ -113,7 +133,8 @@ class action_controller
 }
 /*
 This is the order of execution for the application's controller flow:
-- before_controller_filter (before the controller in that face is loaded or called. in face_controller)
+- before_controller_load_filter (before the controller in that face is loaded. in face_controller)
+- before_controller_execute_filter (before the controller in that face is called. in face_controller)
 - before_controller_execute_filter (before the action / action in that controller is executed. in face_controller)
 - before_filter (in controller)
 - after_filter ( in controller)

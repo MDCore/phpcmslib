@@ -83,11 +83,13 @@ class Application
         }
     }
 
-    function require_controller($controller_name, $face = null)
+    function require_this($type_name, $name)
     {
-        if (isset($_SESSION[APP_NAME]['application']['controllers']) && in_array($controller_name.'.php', array_keys($_SESSION[APP_NAME]['application']['controllers'])))
+        $type_name = pluralize($type_name);
+        if (isset($_SESSION[APP_NAME]['application'][$type_name]) && in_array($name.'.php', array_keys($_SESSION[APP_NAME]['application'][$type_name])))
         {
-            require($_SESSION[APP_NAME]['application']['controllers'][$controller_name.'.php']);
+            #echo '<pre>';print_r($_SESSION[APP_NAME]['application'][$type_name][$name.'.php']);echo '</pre>';
+            require($_SESSION[APP_NAME]['application'][$type_name][$name.'.php']);
             return true;
         }
         else
