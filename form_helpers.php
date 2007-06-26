@@ -10,7 +10,8 @@ class forms
 
     function upload($name, $value = null, $attributes = null)
     {
-        global $page;
+
+        $page = App::$controller;
         $result = '';
         # 
         if ( $page->action == 'edit' )
@@ -203,7 +204,7 @@ class forms
     {
         ?><div class="form list_form"><?
         
-        global $page;
+        $page = App::$controller;
         $arguments = func_get_args();
         if (sizeof($arguments) == 1) {$arguments = $arguments[0];} #arguments are being passed as an array 
 
@@ -276,7 +277,7 @@ class forms
         #   options ( for select )
 
         $field_name = $db_field_name = null; $visible = true; #some inits
-        global $page;
+        $page = App::$controller;
         $primary_model_object = new $default_model;
         #print_r($element_description);
         if ( sizeof( $element_description ) == 1 || !isset($element_description[1]))

@@ -16,7 +16,6 @@ class cm_controller extends action_controller
         public $allow_edit = true, $allow_add = true, $allow_delete = true;
         public $allow_filters = true, $allow_sort = true;
         public $row_limit = 30;
-        public $action = 'list'; #the default action, natch
 
     public $list_sort_field = null, $list_sort_type = null;
 
@@ -133,6 +132,7 @@ class cm_controller extends action_controller
     {
         global $path_to_root;
 
+        $this->action = $page;
         #automatic cm pages router
             switch ($page)
             {
@@ -159,6 +159,8 @@ class cm_controller extends action_controller
                 $this->cm_update();break;
             case 'delete':
                 $this->cm_delete();break;
+            default:
+                $this->action = null;
             }
     }
     
@@ -676,15 +678,8 @@ class cm_controller extends action_controller
         $values = $values->fetchRow();
         $this->model_object->update_attributes($values);
         $record = $this->model_object;
-        if (!$this->is_controller)
-        {
-            if (!$edit_page) {$edit_page = tableize(pluralize($this->list_type)).'_form';}
-            require(App::$env->content_path.'/'.$edit_page.'.php');
-        }
-        else
-        {
-            $form_fields = $this->form_fields;
-        }
+
+        $form_fields = $this->form_fields;
         if (isset($form_fields)) {
             forms::form(array_merge(array($this->primary_model, &$record), $form_fields));
         }
@@ -714,15 +709,7 @@ class cm_controller extends action_controller
                 $record->$key = $value;
             }
 
-        if (!$this->is_controller)
-        {
-            require(App::$env->content_path.'/'.tableize(pluralize($this->list_type)).'_form.php');
-        }
-        else
-        {
-            $form_fields = $this->form_fields;
-        }
-
+        $form_fields = $this->form_fields;
         if (isset($form_fields)) {
             forms::form(array_merge(array($this->primary_model, &$record), $form_fields));
         }
