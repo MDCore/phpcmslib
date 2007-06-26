@@ -373,7 +373,7 @@ class forms
             }
             elseif (!(array_key_exists('options', $element_description)))
             {
-                debug("warning, relationship to $fk_model not found");
+                trigger_error("Relationship to  <i>".$fk_model."</i> not found", E_USER_WARNING); 
             }
         }
         
