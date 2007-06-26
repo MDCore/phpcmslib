@@ -32,7 +32,7 @@ function render_shared_partial($partial_name)
 
 function render($view)
 {
-
+    die('bad method RENDER');
 }
 
 ?>

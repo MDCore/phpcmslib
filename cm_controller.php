@@ -261,7 +261,7 @@ class cm_controller extends action_controller
 
         if (!$primary_model_object->is_valid()) {
             $_GET['flash'] = $primary_model_object->validation_errors; 
-            render_view('add');
+            $this->cm_add();
             return false;
         }
 
