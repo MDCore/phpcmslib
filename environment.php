@@ -23,7 +23,7 @@ class Environment
                         if (App::$reloading) {echo "testing match $url<br />";}
                         if (preg_match($url, $_SERVER['SERVER_NAME']))
                         {
-                            if (App::$reloading) {echo "Matched to $env enrivonment<br />";}
+                            if (App::$reloading) {echo "Matched to $env environment<br />";}
                             $environment = $env;
                         }
                     }
