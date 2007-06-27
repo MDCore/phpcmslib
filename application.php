@@ -8,60 +8,84 @@ class Application
     static $allowed_faces = array('cm', 'site', 'extranet');
     static $render_contents = null;
 
-    function load_models()
-    {
-        if (App::$booting) {App::find_these('models', 'models');}
-
-        foreach ($_SESSION[APP_NAME]['application']['models'] as $model)
-        {
-            if (App::$reloading) {echo "loading $model<br />"; }
-            require_once($model);
-        }
-    }
-    
     function init($path_to_root)
     {
     # check for application load or reload
         if (!isset($_SESSION[APP_NAME]['application'])) {App::$booting = true;}
-        if ( isset($_GET['reload']) ){ App::$booting = true; App::$reloading = true; $_GET['reload'] = ''; }
+        if ( isset($_GET['reload']) )
+        {
+            App::$booting = true; App::$reloading = true; $_GET['reload'] = '';
+?><style type="text/css">
+        li
+        {
+            font-family: "Courier New",monospace,verdana,arial;
+        }
+        </style>
+                <ol><?
 
-        global $environment; #pulling it in from the config
+        }
+
+        global $environment; #pull in the environment rom the config
         
         #slurp config/application.php settings
             global $default_face; if ($default_face) { App::$default_face = $default_face; }
             global $allowed_faces; if ($allowed_faces) { App::$allowed_faces = explode(',', $allowed_faces); }
 
-        if (!App::$booting) {
+        if (!App::$booting)
+        {
             $environment = $_SESSION[APP_NAME]['application']['environment'];
         }
+
         Environment::load($environment, $path_to_root);
         App::load_models(); 
 
         if (App::$booting) {
 
-            if (App::$reloading) {echo "Using face ".App::$default_face."<br />"; }
+            if (App::$reloading) {echo "<li>Using face <strong>".App::$default_face."</strong></li>"; }
 
             App::find_these('layouts', App::$default_face.'/layouts');
             App::find_these('controllers', App::$default_face.'/controllers');
+
+    #run cron jobs, only on app start, not each page load!
+            require($path_to_root.'/cron_jobs/auto_mailer.php');
+            if (App::$env->run_cron_jobs)
+            {
+                $cron_job = new cron_job;
+                $cron_job->run_all_jobs();
+            }
         }
 
     # if forced reload then print app variables and die
         if (App::$reloading)
         {
-            print_r( $_SESSION );echo '<br />';
-            print_r(App::$env);echo '<br />';
-
-            die("Application reloaded");
+            echo "<li>Session:<pre>";print_r($_SESSION);echo '</pre></li>';
+            echo "<li>App::\$env<pre>";print_r(App::$env);echo '</pre></li>';
+            echo "<li>Application reloaded</li>";
+            echo "</ol>";
+            die();
         }
     }
 
+    function load_models()
+    {
+        if (App::$booting) {App::find_these('models', 'models');}
+
+        if (App::$reloading) {echo "<li>Loading models<ul>"; }
+        foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model)
+        {
+            if (App::$reloading) {echo "<li>loading <strong>$model_name</strong> ($model)</li>"; }
+            require_once($model);
+        }
+        if (App::$reloading) {echo "</ul></li>"; }
+    }
+    
     function find_these($name, $path)
     {
-        if (App::$reloading) {echo "parsing $name folder<br />"; }
+        if (App::$reloading) {echo "<li>parsing $name folder</li>"; }
         #check if the dir exists
         if (!file_exists(App::$env->root.'/'.$path))
         {
-            if (App::$reloading) {echo " $name folder not found<br />"; }
+            if (App::$reloading) {echo "<li>$name folder not found</li>"; }
             return false;
         }
 
@@ -150,8 +174,6 @@ function build_route($path)
             if (isset($path[3])) { $result['id'] = $path[3]; }
         }
     }
-
-    
 
     return $result;
 }

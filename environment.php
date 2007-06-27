@@ -1,7 +1,6 @@
 <?
 class Environment
 {
-    public $content_path = '/cm';
     public $mail_send_method = 'sendmail';
     public $run_cron_jobs = true;
 
@@ -11,36 +10,42 @@ class Environment
         if ($environment == "auto")
         {
             #find_environments
+            #if (App::$reloading) {echo "<li>Loading Environments";}
             foreach (Environment::find_environments($path_to_root) as $env)
             {
-                if (App::$reloading) {echo "Testing environment $env<br />";}
+                if (App::$reloading) {echo "<ul><li>Testing environment <i>$env</i></li>";}
                 require_once($path_to_root."/config/environments/".$env.'.php');
                 $env_object = new $env;
                 if (isset($env_object->urls))
                 {
+                    if (App::$reloading) {echo "<ul>";}
                     foreach ($env_object->urls as $url)
                     {
-                        if (App::$reloading) {echo "testing match $url<br />";}
+                        if (App::$reloading) {echo "<li>testing match <i>$url</i></li>";}
                         if (preg_match($url, $_SERVER['SERVER_NAME']))
                         {
-                            if (App::$reloading) {echo "Matched to $env environment<br />";}
+                            if (App::$reloading) {echo "<strong>Matched to environment <i>$env</i></strong>";}
                             $environment = $env;
                         }
                     }
+                    if (App::$reloading) {echo "</ul>";}
                 }
+                if (App::$reloading) {echo "</ul>";}
             }
-            if ($environment == "auto")
+            if ($environment == "auto") # i.e. it's still auto
             {
                 $environment = "staging";
             }
+            #if (App::$reloading) {echo "</li>";}
         }
         require_once($path_to_root."/config/environments/".$environment.'.php'); $_SESSION[APP_NAME]['application']['environment'] = $environment;
         App::$env = new $environment;
-        App::$env->content_path = App::$env->root.App::$env->content_path;
     }
+
     function find_environments($path_to_root)
     {
-        if (App::$reloading) {echo "parsing environments folder<br />"; }
+        $environment = null;
+        if (App::$reloading) {echo "<li>parsing environments folder</ul>"; }
         $check_path = $path_to_root.'/config/environments/';
         if ($handle = opendir($check_path))
         {
@@ -56,12 +61,15 @@ class Environment
                 }
             }
             closedir($handle);
-            if (App::$reloading) {
-                echo "found environments <br />"; 
-                print_r($environments);
+            if (App::$reloading)
+            {
+                echo "<li>found environments:"; 
+                echo '<pre>';print_r($environments);echo '</pre>';
+                echo "<li>";
             }
-            return $environments;echo 'br';
         }
+        if (App::$reloading) {echo "</ul></li>";}
+        return $environments;
     }
 }
 class Env extends Environment { var $foo = ''; } #foo is there cos I read something about empty classes not working so lekker. yes, yes, where's my proof...

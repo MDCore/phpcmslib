@@ -27,15 +27,4 @@ if (!isset($path_to_root)) {$path_to_root = '.';}
 
 #application init
     App::init($path_to_root);
-
-    if (App::$booting)
-    {
-        require($path_to_root.'/cron_jobs/auto_mailer.php');
-        if (App::$env->run_cron_jobs)
-        {
-        #run cron jobs, only on app start, not each page load!
-            $cron_job = new cron_job;
-            $cron_job->run_all_jobs();
-        }
-    }
 ?>
