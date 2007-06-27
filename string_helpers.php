@@ -127,6 +127,22 @@ function proper_case($str)
 function enquote($value) #AR::update uses this as a map function
 {
     return "'$value'";
+} 
+
+function value_else_na($value)
+{
+    return value_else_none($value, 'n/a');
+}
+function value_else_none($value, $none_value = 'none')
+{
+    if ($value && $value != '')
+    {
+        return $value;
+    }
+    else
+    {
+        return $none_value;
+    }
 }
 
 ?>

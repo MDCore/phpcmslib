@@ -7,6 +7,7 @@ class AR implements SeekableIterator # basic AR class
     public $count = 0; public $attributes = null;
     public $validation_result = null;
     public $preserve_updated_on = false;
+    public $db = null;
 
     function connect_to_db($dsn = null)
     {
@@ -15,12 +16,14 @@ class AR implements SeekableIterator # basic AR class
         App::error_check($this->db);
         $this->db->setFetchMode(MDB2_FETCHMODE_OBJECT);
     }
+
     function __construct($collection = null, $with_value_changes = true)
     {
-        if (!isset($this->db))
+        if (!$this->db)
         {
             $this->connect_to_db();
         }
+        #
         #get the model name
         $this->model = get_class($this);
 
@@ -49,6 +52,35 @@ class AR implements SeekableIterator # basic AR class
                 }
             }
         if ($collection) {$this->update_attributes($collection, $with_value_changes);} #updates attribs if object is created with a collection
+    }
+
+    function __call($method_name, $params)
+    {
+        #overload finders
+        if (substr($method_name, 0, 8) == 'find_by_')
+        {
+            $find_by = substr($method_name, 8);
+            $this->find("WHERE $find_by = '$params[0]'"); #todo expand this to multiple params
+        }
+    }
+
+    function __get($name)
+    {
+    #relationships magic
+        #todo other relationships ?
+        if ($this->has_one($name))
+        {
+            $has_one = new $name;
+            $fk = foreign_keyize($name);
+            $has_one->find($this->$fk);
+            return $has_one;
+        }
+        else
+        {
+            trigger_error("<i>$name</i> has no relationship to <i>".get_class($this).'</i>', E_USER_ERROR); 
+        }
+
+
     }
 
     function create() #create a new record. analogous to ROR new method

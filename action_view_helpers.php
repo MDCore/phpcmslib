@@ -3,7 +3,6 @@ function render_layout()
 {
     global $view_parameters, $path_to_root;
     #echo '<pre>';print_r(App::$route);print_r(App::$controller);echo '</pre>';die();
-
     global $view_parameters; if($view_parameters) { foreach ($view_parameters as $variable => $value) { $$variable = $value; } }
     App::require_this('layout', App::$controller->layout);#old method require $path_to_root.'/'.App::$route['face'].'/layouts/'.App::$controller->layout.'.php';
 

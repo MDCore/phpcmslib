@@ -86,7 +86,8 @@ class action_controller
     {
         if (!$view_name) { $view_name = App::$route['action']; }
         global $path_to_root;
-        global $view_parameters;
+        # set up the view_parameters
+            global $view_parameters; if ($view_parameters) {foreach ($view_parameters as $variable => $value) { $$variable = $value; } }
         $view_url = $path_to_root."/".$this->face."/views/".$this->controller_name."/$view_name.php";
         #debug($view_url);
         require ($view_url);
@@ -94,6 +95,14 @@ class action_controller
         $this->has_rendered = true;
         return true;
     }
+
+    function render_partial($partial_name)
+    {
+        $this->layout = null;
+        $this->render_view('_'.$partial_name);
+        $this->action_rendered_inline = true;
+    }
+
     function execute_action($action_name = null)
     {
         if (!$action_name) { $action_name = App::$route['action']; }
@@ -112,7 +121,7 @@ class action_controller
 
     }
 
-    function render_inline() { $this->action_rendered_inline = true; }
+    function render_inline() { $this->layout = false; $this->action_rendered_inline = true; }
 
     function __construct()
     {
