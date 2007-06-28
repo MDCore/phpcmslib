@@ -76,7 +76,7 @@ class forms
     function select( $name, $value = null, $attributes = null, $options = null )
     {
         /*
-         * $options takes a either an array of options or one of these values:
+         * $options takes a either html source of options or one of these values:
          * yes_no, true_false 
          */
         $result = "<select id=\"".$name."\" name=\"$name\"";
