@@ -1,4 +1,11 @@
 <?php
+/**
+ * This file implements the ActiveRecord pattern
+ * @author Gavin van Lelyveld <gavin@pedantic.co.za>
+ * @version 2.0
+ * @package pedantic/lib
+ */
+
 define ('SQL_INSERT_DATE_FORMAT', '%Y-%m-%d');
 
 class AR implements SeekableIterator # basic AR class
