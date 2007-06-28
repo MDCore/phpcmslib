@@ -7,7 +7,7 @@ class AR implements SeekableIterator # basic AR class
     public $count = 0; public $attributes = null;
     public $validation_result = null;
     public $preserve_updated_on = false;
-    public $db = null;
+    public $db = null, $schema_definition;
 
     function connect_to_db($dsn = null)
     {
@@ -23,11 +23,16 @@ class AR implements SeekableIterator # basic AR class
         {
             $this->connect_to_db();
         }
-        #
+        
         #get the model name
         $this->model = get_class($this);
+       
+        #pull in the schema definition
+            $this->schema_definition = App::$schema_definition[$this->model];
 
         if (!isset($this->primary_key_field)) {$this->primary_key_field = 'id';}
+        
+        #check if this model is a changelog
         if (!isset($this->primary_table)) {
             $changelog_pos = strpos($this->model, '_changelog');
 
@@ -40,6 +45,7 @@ class AR implements SeekableIterator # basic AR class
                 $this->primary_table = tableize(pluralize($this->model));
             }
         }
+
         if (!isset($this->display_field)) {$this->display_field = 'name';}
 
         #split the validations - todo. maybe use getobjectvars todo add all validations
@@ -75,9 +81,14 @@ class AR implements SeekableIterator # basic AR class
             $has_one->find($this->$fk);
             return $has_one;
         }
+        #check for properties with this name
+        elseif (is_array($this->schema_definition) && in_array($name, array_keys($this->schema_definition)))
+        {
+            return null;#it isn't set for some reason
+        }
         else
         {
-            trigger_error("<i>$name</i> has no relationship to <i>".get_class($this).'</i>', E_USER_ERROR); 
+            trigger_error("<i>$name</i> is not a relationship or a or property of <i>".get_class($this).'</i>', E_USER_ERROR); 
         }
 
 

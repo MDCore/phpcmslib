@@ -3,6 +3,7 @@ class Application
 {
     static $booting;static $reloading;
     static $models;
+    static $schema_definition = null;
     static $env;
     static $default_face = null, $controller = null, $route = null;
     static $allowed_faces = array('cm', 'site', 'extranet');
@@ -15,14 +16,7 @@ class Application
         if ( isset($_GET['reload']) )
         {
             App::$booting = true; App::$reloading = true; $_GET['reload'] = '';
-?><style type="text/css">
-        li
-        {
-            font-family: "Courier New",monospace,verdana,arial;
-        }
-        </style>
-                <ol><?
-
+?><style type="text/css"> li { font-family: "Courier New",monospace,verdana,arial; } </style><ol><?
         }
 
         global $environment; #pull in the environment rom the config
@@ -37,6 +31,13 @@ class Application
         }
 
         Environment::load($environment, $path_to_root);
+        #App::rebuild();
+ 
+        #load the schema definition
+            require ($path_to_root.'/config/cache/schema_definition.php');
+            if (!isset($schema_definition) || $schema_definition == null) { trigger_error('Schema definition not set', E_USER_ERROR);  }
+            App::$schema_definition = $schema_definition;
+
         App::load_models(); 
 
         if (App::$booting) {
