@@ -201,17 +201,23 @@ function url_to($path)
     if (is_array($path)) { $target = $path; } else { $target = build_route($path); }
     if (!$target['face']) { $target['face'] = App::$default_face; }
     if (!$target['controller']) { $target['controller'] = App::$controller->controller_name; }
+    $target['controller'] = str_replace('_controller', '', $target['controller']);
 
     #echo "<!--";print_r($target);echo "-->";
     
     #route's are the same so just send bank emptystring
-        if ($target['face'] == App::$route['face'] && $target['controller'] == App::$route['controller'] && $target['action'] == App::$route['action']) { return ''; }
+        $app_route_controller = str_replace('_controller', '', App::$route['controller']);
+        if ($target['face'] == App::$route['face'] && $target['controller'] == $app_route_controller && $target['action'] == App::$route['action']) { return ''; }
 
-    $url = App::$env->url.'/';
+    #base URL
+        $url = App::$env->url.'/';
+
     #if the default face is the same as the target face leave the face out
         if ($target['face'] != App::$default_face) { $url .= $target['face'].'/'; }
-    
-    $url .= str_replace('_controller', '', $target['controller']);
+        
+    #append the controller path
+        $url .= $target['controller']; 
+
     #no specified action?  let the controller decide
         if ($target['action'] != '') { $url .= '/'.$target['action']; }
 

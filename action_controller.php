@@ -2,7 +2,7 @@
 class action_controller
 {
     public $has_rendered = false;
-    public $layout = 'application';
+    public $layout = null;
     public $face = "site";
     public $virtual = false;
 
@@ -121,7 +121,7 @@ class action_controller
 
     }
 
-    function render_inline() { $this->layout = false; $this->action_rendered_inline = true; }
+    function render_inline() { $this->action_rendered_inline = true; }
 
     function __construct()
     {
