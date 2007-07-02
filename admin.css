@@ -238,3 +238,9 @@ p.form_element textarea.large
 		background: #ABAD85;
 		color: #DEDECF; }
 
+#spinner_div
+{
+    position: absolute;
+    right: 15px;
+    top: 15px;
+}

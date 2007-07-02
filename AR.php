@@ -41,7 +41,7 @@ class AR implements SeekableIterator # basic AR class
         
         #check if this model is a changelog
         if (!isset($this->primary_table)) {
-            $changelog_pos = strpos($this->model, '_changelog');
+            $changelog_pos = strpos($this->model, '_changelog'); #todo fix this hacky method. right ?
 
             if ($changelog_pos > 0)
             {
