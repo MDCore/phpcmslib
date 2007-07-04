@@ -100,7 +100,7 @@ class action_controller
     {
         $this->layout = null;
         $this->render_view('_'.$partial_name);
-        $this->action_rendered_inline = true;
+        $this->render_inline();
     }
 
     function execute_action($action_name = null)
@@ -108,6 +108,11 @@ class action_controller
         if (!$action_name) { $action_name = App::$route['action']; }
         if (method_exists(App::$controller, $action_name) || method_exists(App::$controller, '__call'))
         {
+            # check for ajax requests, and automatically set render_inline and layout = null
+            if ($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
+            {
+                $this->layout = null; $this->render_inline();
+            }
             #debug('execute_action');
             if (isset(App::$route['id']) && App::$route['id'])
             {
@@ -121,6 +126,7 @@ class action_controller
 
     }
 
+    /* this method essentialy means: don't try and load a view file, I'm rendering all the content inside this method */
     function render_inline() { $this->action_rendered_inline = true; }
 
     function __construct()
