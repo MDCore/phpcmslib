@@ -7,7 +7,7 @@ define('MENU_PAGE_PARAMETERS_TO_SKIP', '/_id$/,/^sort/,/^filter_/,/^fk$/');
 #this method does a redirect with standard parameters stripped
 function redirect_with_parameters($url, $additional_parameters = '', $return_url = false)
 {
-    $url .= page_parameters('/^p$/,/^edit/,/^delete$/').$additional_parameters;
+    $url .= page_parameters('/^p$/,/^edit/,/^delete$/').'&'.$additional_parameters;
     if (!$return_url)
     {
         header("Location: $url");die();

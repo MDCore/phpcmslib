@@ -146,7 +146,7 @@ class forms
             # type
                 if (!isset($attributes['type'])) { $attributes['type'] = 'text'; }
 
-                $result .= '<input id="'.$name.'" name="'.$name.'" value="'.$value.'" ';
+                $result .= '<input id="'.$name.'" name="'.$name.'" value="'.stripslashes($value).'" ';
 
         $result .= self::parse_attributes( $attributes );
 
@@ -166,7 +166,7 @@ class forms
 
         $result .= self::parse_attributes( $attributes );
 
-        $result .= " />$value</textarea>";  
+        $result .= ' />'.stripslashes($value).'</textarea>'; 
     return $result;
     }
 

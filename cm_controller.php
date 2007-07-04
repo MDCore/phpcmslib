@@ -166,12 +166,11 @@ class cm_controller extends action_controller
     
     function related_page_anchor($related_page, $row)
     {
-        $related_page['name'] = $related_page[0];
-        if (!isset($related_page['page_name'])) {$related_page['page_name'] = strtolower($related_page['name']);}
+        $related_page['controller'] = $related_page[0];
         if (!isset($related_page['fk'])) {$related_page['fk'] = foreign_keyize($this->list_type);}
         if (!isset($related_page['fk_title_field'])) {$related_page['fk_title_field'] = $this->model_object->display_field;}
         
-        ?><td class="action_link"><a href="?page=<?=$related_page['page_name']?>&fk=<?=$related_page['fk'];?>~<?=$row->id?>&fk_t=<?=urlencode($row->$related_page['fk_title_field']);?>"><?=htmlentities(humanize($related_page['name']));?></a></td><?
+        ?><td class="action_link"><a href="<?=url_to(array('controller' => $related_page['controller']));?>?fk=<?=$related_page['fk'];?>~<?=$row->id?>&fk_t=<?=urlencode($row->$related_page['fk_title_field']);?>"><?=htmlentities(humanize($related_page['controller']));?></a></td><?
 
     }
 
@@ -562,7 +561,7 @@ class cm_controller extends action_controller
                 }
                 else
                 {
-                    echo $row->$field;
+                    echo stripslashes($row->$field);
                 }?></td><?
             } ?>
               </tr>
