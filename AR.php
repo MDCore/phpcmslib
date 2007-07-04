@@ -361,7 +361,7 @@ class AR implements SeekableIterator # basic AR class
         }
     }
 
-    function find($criteria) #todo dynamic finders!
+    function find($criteria) 
     {
         #echo 'criteria';debug($criteria);
         $sql_criteria = $this->criteria_to_sql($criteria);
@@ -574,6 +574,24 @@ class AR implements SeekableIterator # basic AR class
             else
             {
                 $sql_criteria = $criteria;
+            }
+        }
+        elseif (is_array($criteria))
+        {
+            if (sizeof($criteria) > 0)
+            {
+                #I assume we are passing an array of ID's
+                $sql_criteria = 'WHERE '.$this->primary_table.'.'.$this->primary_key_field.' in (';
+                foreach ($criteria as $id)
+                {
+                    $sql_criteria .= $id.',';
+                } 
+                $sql_criteria = substr($sql_criteria, 0, strlen($sql_criteria)-1);
+                $sql_criteria .= ')';
+            }
+            else
+            {
+                $sql_criteria = ' WHERE 1=2';
             }
         }
         return $sql_criteria;
