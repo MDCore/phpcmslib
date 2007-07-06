@@ -1,5 +1,5 @@
 <?
-class database_interregator
+class schema_interregator
 {
     function pull_schema()
     {
@@ -18,6 +18,7 @@ class database_interregator
 
             #using the magic of mdb2's Reverse module and the method tableInfo
             $table_name = $model_object->primary_table;
+            echo "writing schema of table <i>$table_name</i> for model <i>$model_name</i><br />";
             $table_schema = $model_object->db->tableInfo($table_name, null);
             
             foreach ($table_schema as $field)
@@ -78,9 +79,9 @@ class database_interregator
 
     function build_schema_definition()
     {
-        $schema = database_interregator::pull_schema();
-        $source = database_interregator::generate_schema_source($schema);
-        database_interregator::write_schema_source($source);
+        $schema = schema_interregator::pull_schema();
+        $source = schema_interregator::generate_schema_source($schema);
+        schema_interregator::write_schema_source($source);
     }
 }
 ?>
