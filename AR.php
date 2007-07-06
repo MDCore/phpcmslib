@@ -24,6 +24,15 @@ class AR implements SeekableIterator # basic AR class
         $this->db->setFetchMode(MDB2_FETCHMODE_OBJECT);
     }
 
+    function setup_attributes()
+    {
+        if (!$this->$this->schema_definition) { return false; }
+        foreach ($this->schema_definition as $field => $meta_data) 
+        {
+            $this->$field = null;
+        }
+    }
+
     function __construct($collection = null, $with_value_changes = true)
     {
         if (!$this->db)
@@ -34,15 +43,15 @@ class AR implements SeekableIterator # basic AR class
         #get the model name
         $this->model = get_class($this);
        
-        #pull in the schema definition
+        #pull in the schema definition, and set the attributes to null
             $this->schema_definition = App::$schema_definition[$this->model];
+            $this->setup_attributes();
 
         if (!isset($this->primary_key_field)) {$this->primary_key_field = 'id';}
         
         #check if this model is a changelog
         if (!isset($this->primary_table)) {
             $changelog_pos = strpos($this->model, '_changelog'); #todo fix this hacky method. right ?
-
             if ($changelog_pos > 0)
             {
                 $this->primary_table = tableize(pluralize(substr($this->model, 0, $changelog_pos))).'_changelog';
@@ -93,6 +102,7 @@ class AR implements SeekableIterator # basic AR class
         {
             return null;#it isn't set for some reason
         }
+        elseif ($name = 'Object'){ return false; }
         else
         {
             trigger_error("<i>$name</i> is not a relationship or a or property of <i>".get_class($this).'</i>', E_USER_ERROR); 
@@ -121,70 +131,59 @@ class AR implements SeekableIterator # basic AR class
 
         #validate object
             $allow_save = $this->is_valid();
+            if (!$allow_save) { return false; }
 
         #execute before save/update actions
             if (method_exists($this, 'before_'.$save_type)) { $this->{'before_'.$save_type}(); }
 
-        if ($allow_save)
-        {
-            #build the fields, values arrays from attributes
-                $fields = $this->attributes;
-                #debug(get_class($this));debug($save_type);print_r($fields);
-                #remove the PK from attributes
-                    $pk_index = array_search($this->primary_key_field, $fields);
-                    if (!($pk_index === false)) { unset($fields[$pk_index]); $fields = array_values($fields); }
+        #build the field => value array, with empty values
+            $collection = array_combine(array_keys($this->schema_definition), array_fill(0, sizeof($this->schema_definition), null));
+            #debug(get_class($this));debug($save_type);print_r($collection);die();
+            
+            #remove the PK from attributes
+            if (in_array($this->primary_key_field, array_keys($collection))) { unset ($collection[$this->primary_key_field]); }
 
-                foreach ($fields as $attribute)
-                {
-                    $values[] = addslashes($this->$attribute);
-                }
-                if($save_type == 'update') 
-                {
-                    if (!isset($this->updated_on) || $this->updated_on == true) #remove updated_on when updating so we can re-add it
+            #populate the values in the fields array
+                foreach (array_keys($collection) as $attribute) { $collection[$attribute] = $this->$attribute; } #removed addslashes
+
+            #set the updated_on and/or created_on time
+                $now = strftime(SQL_DATE_TIME_FORMAT, time());
+
+            if ($save_type == 'save')
+            {
+                #deal with created on, naturally only set on save
+                if (in_array('created_on', array_keys($collection))) { $collection['created_on'] = $now; }
+            }
+
+            #deal with updated_on
+                if (in_array('updated_on', array_keys($collection)) && !$this->preserve_updated_on) { $collection['updated_on'] = $now; }
+
+                #deal with user_id
+                    if (in_array('user_id', array_keys($collection)))
                     {
-                        if (!$this->preserve_updated_on)
+                        if ($_SESSION[APP_NAME]['user_id'])
                         {
-                            $updated_on_index = array_search('updated_on', $fields);
-                            if (!($updated_on_index === false)) { unset($fields[$updated_on_index]); unset($values[$updated_on_index]); }
+                            $collection['user_id'] = $_SESSION[APP_NAME]['user_id'];
                         }
                     }
-                }
-                $now = strftime(SQL_DATE_TIME_FORMAT, time());
-                if ($save_type == 'save')
-                {
-                    if (!isset($this->created_on) || $this->created_on == true) {$fields[] = 'created_on';$values[] = $now;} 
-                }
 
-                if (!$this->preserve_updated_on) {if (!isset($this->updated_on) || $this->updated_on == true) {$fields[] = 'updated_on';$values[] = $now;}}
-                
+        if ($save_type == "save") { $record_id = $this->save_core($collection); }
+        if ($save_type == "update") { $record_id = $this->update_core($collection); }
+        
+        #okay... do we have a a changelog?
+            if (property_exists($this->model, 'changelog')){ $this->changelog($record_id, $collection);}
 
-            if ($save_type == "save")
-            {
-                $record_id = $this->save_core($fields, $values);
-            }
-            elseif ($save_type == "update")
-            {
-                $record_id = $this->update_core($fields, $values);
-            }
-            #okay... do we have a a changelog?
-                if (property_exists($this->model, 'changelog')){ $this->changelog($record_id, $fields, $values);}
+    #execute after save/update actions
+        if (method_exists($this, 'after_'.$save_type)) { $this->{'after_'.$save_type}(); }
 
-        #execute after save/update actions
-            if (method_exists($this, 'after_'.$save_type)) { $this->{'after_'.$save_type}(); }
-
-            return $record_id;
-        }
-        else
-        {
-            return false;
-        }
+        return $record_id;
     }
     
-    private function save_core($fields, $values)
+    private function save_core($collection)
     {
-        $fields = implode(',', $fields); $values = "'".implode("','", $values)."'";
+        $fields = implode(',', array_keys($collection)); $values = "'".implode("','", array_values($collection))."'";
         $sql = "INSERT INTO ".$this->primary_table." ($fields) VALUES ($values)";
-        #debug ( $sql );
+        #debug ( $sql );die();
         $save = $this->db->query($sql);App::error_check($save);
         
         #get the key of the new record
@@ -192,13 +191,15 @@ class AR implements SeekableIterator # basic AR class
         return $record_id;
     }
 
-    private function update_core($fields, $values)
+    private function update_core($collection)
     {
-           $values = array_map("enquote", $values);
+           //$values = array_map("enquote", $values);
+           foreach ($collection as $field => $value)
+           {
+               $collection[$field] = "'".$value."'";
+           }
 
-           #print_r($fields); print_r($values);
-
-           $update_sql = implode_with_keys(',', array_combine($fields, $values), "");
+           $update_sql = implode_with_keys(',', $collection, "");
            $sql = 'UPDATE '.$this->primary_table." SET $update_sql WHERE ".$this->primary_key_field."=".$this->{$this->primary_key_field};
            #debug($sql);
            $update = $this->db->query($sql);App::error_check($update);
@@ -272,7 +273,7 @@ class AR implements SeekableIterator # basic AR class
         $this->delete_by_sql($sql);
     }
 
-    function changelog($record_id, $fields, $values)
+    function changelog($record_id, $collection)
     {
 
          #get the highest revision id
@@ -289,16 +290,16 @@ class AR implements SeekableIterator # basic AR class
                  else {$revision = 1;}
 
             #record_id
-                 $fields[] = $this->model.'_id'; $values[] = $record_id;
+                 $collection[$this->model.'_id'] = $record_id;
             #revision
-                 $fields[] = 'revision'; $values[] = $revision;
+                 $collection['revision'] = $revision;
             #revision
-                if ($created_on && !in_array('created_on', $fields))
+                if (in_array('created_on', array_keys($collection)))
                 {
-                    $fields[] = 'created_on'; $values[] = $created_on;
+                    $collection['created_on'] = $created_on;
                 }
 
-        $fields = implode(',', $fields); $values = "'".implode("','", $values)."'";
+        $fields = implode(',', array_keys($collection)); $values = "'".implode("','", array_values($collection))."'";
 
         $sql = "INSERT INTO ".$this->primary_table."_changelog ($fields) VALUES ($values)";
         #debug ( $sql );
@@ -312,7 +313,7 @@ class AR implements SeekableIterator # basic AR class
             case 'password_md5':
                 if ($value != '' && $this->dirty)
                 {
-                    if (method_exists($this,'encrypt_password')) #is this a hack ? no... no it's not. it makes sense, right ?
+                    if (method_exists($this,'encrypt_password')) #allows the model to have a custom password encryption method
                     {
                         $value = $this->encrypt_password($value);
                     }
@@ -327,7 +328,7 @@ class AR implements SeekableIterator # basic AR class
                     return false;
                 }
                 break;
-            case 'session_user_id': #todo fix hack. should check the model if it has a user id, elswhere
+            case 'session_user_id': #here for backwards compatibility
                     $field = 'user_id';
                     $value = $_SESSION[APP_NAME]['user_id'];
                     return true;
@@ -377,6 +378,12 @@ class AR implements SeekableIterator # basic AR class
         #don't do any of this. It kills an update loop.
         #$this->results = null;$this->offset = 0;$this->count = 1;
     }
+
+    public function has_attribute($attribute)
+    {
+        if (in_array($attribute, array_keys($this->schema_definition))) { return true; } else { return false; }
+    }
+
     public function update_attributes($collection = null, $with_value_changes = false)
     {
         if (!$collection ) # if no row is passed then set the current row in results
@@ -384,6 +391,7 @@ class AR implements SeekableIterator # basic AR class
             if ($this->results && !MDB2::isError($this->results))
             {
                 $collection = $this->results->fetchRow();
+                $with_value_changes = false;
             }
         }
         else
@@ -392,22 +400,21 @@ class AR implements SeekableIterator # basic AR class
                 $this->dirty();
                 $with_value_changes = true;
         }
-        if ($collection)  # it's possible no collecton was set with the DB lookup: checking again.
+
+        if ($collection)  # it's possible no collection was set with the DB lookup: checking again.
         {
         #set row variables to properties
-            if ($this->attributes == null) {$update_attributes_list = true;} else {$update_attributes_list = false;} #this check is outside the loop, else it will only update the first attribute!
             foreach ($collection as $field => $value)
             {   
                 if ($with_value_changes)
                 {
-                    $value_change_result = $this->write_value_changes($field, $value);
-                    if ($value_change_result && $field) {$this->$field = $value;}
-                    if ($update_attributes_list && $field){$this->attributes[] = $field;} #TODO only set this when not dirty. this is currently a workaround for link tables
+                    #apply value changes to this field and value
+                        $value_change_result = $this->write_value_changes($field, $value);
+                        if ($value_change_result && $field) {$this->$field = $value;}
                 }
                 else
                 {
                     $this->$field = $value;
-                    if ($update_attributes_list){$this->attributes[] = $field;} #set list of attribute names if not already set #TODO only set this when not dirty
                 }
             }
             return true;
@@ -420,9 +427,9 @@ class AR implements SeekableIterator # basic AR class
 
     function clear_attributes()
     {
-        if (isset($this->attributes))
+        if (isset($this->schema_definition))
         {
-            foreach ($this->attributes as $attribute)
+            foreach ($this->schema_definition as $attribute)
             {
                 unset($this->$attribute);
             }
@@ -676,18 +683,6 @@ function compare_records($record1, $record2, $include_boilerplate = false)
     return $changed_attributes;
 
 }
-# TODO
-# auto-pull schema info from database
-# cache the schema info.. to a php script
-
- /*function __call($method, $params)
-    {
-        echo $method;
-        print_r($params);
-        die();
-    }*/
-
-
 #docs - todo make this use a proper php documenting standard
 #
 #more callbacks todo:
