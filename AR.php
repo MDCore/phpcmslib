@@ -325,7 +325,7 @@ class AR implements SeekableIterator # basic AR class
             $changelog_model_name = $this->model.'_changelog';
             $changelog = new $changelog_model_name($collection);
             #check if the changelog has an action
-                if (isset($changelog->action)) { $changelog->action = $save_type; }
+                if (isset($changelog->schema_definition['action'])) { $changelog->action = $save_type; }
 
             $changelog->save();
         /*
