@@ -1,10 +1,4 @@
 <?
-#steps that happen in the making of a cm page
-#1. controller is loaded in init
-#2. controller->init() is called in lib/init
-#4. init() processes any pre-render actions. these actions may redirect to another page.
-#5. draw() is called by the layout
-
 class cm_controller extends action_controller
 {
     public $before_controller_load_filter = 'is_logged_in';
@@ -356,7 +350,7 @@ class cm_controller extends action_controller
     }
 
 #------------------------------#
-# CM actions
+# CM views
 #------------------------------#
 
     public function cm_list()
@@ -453,7 +447,7 @@ class cm_controller extends action_controller
         ?></div> <?
         ?><div class="list_wrapper"><?
             ?><table class="list"> <?=$this->list_header() ?><?=$this->list_body($results_list);?></table><?
-            ?></div><div class="paging"><?=$this->list_paging($num_rows, $pageextra);?></div><?  
+            ?></div><div class="paging"><?=$this->list_paging($num_rows);?></div><?  
         ?><div><?
         if ($this->show_delete) { ?><input type="submit" value="Delete selected" onclick="return confirm('Are you sure you want to delete these <?=humanize(pluralize($this->list_type))?> ?');">&nbsp;<? } 
         if (isset($this->return_page )) {$return_page = $this->return_page ;} else { $return_page = pluralize($this->list_type); }  #XXX
@@ -572,7 +566,7 @@ class cm_controller extends action_controller
         }
     }
 
-    public function list_paging($num_rows, $pageextra)
+    public function list_paging($num_rows)
     {
 
         if ($num_rows <= $this->row_limit) {return;}
@@ -580,7 +574,7 @@ class cm_controller extends action_controller
         <tr><td align="left"><?
         if ($this->paging_back >= 0)
         {
-            ?><a href="<?=page_parameters('/^start$/');?>&amp;start=<?=$this->paging_back.$pageextra;?>">PREV</a><?
+            ?><a href="<?=page_parameters('/^start$/');?>&amp;start=<?=$this->paging_back;?>">PREV</a><?
         }
         ?></td><td align=center><?
         $i=0; $l=1;
@@ -610,23 +604,14 @@ class cm_controller extends action_controller
 
     public function draw_filters($filters)
     {
+        /* this whole filter button thing is an enormous hack. todo is fix draw_filters() */
 
         ?><span class="button" id="bt_show_filters" <? if ($this->filter_object->has_filter_values) { echo 'action="h"'; }
 ?> onclick="
-    if ( !self.action )
-    {
-        self.action = 'H';
-        $('#filters').css({display: 'inline'});
-        $('#bt_show_filters').innerHTML = 'Hide filters';
-    }
-    else
-    {
-        $('#filters').css({display: 'none'});
-        $('#bt_show_filters').innerHTML = 'Show filters'; self.action = '';
-    }
+$('#filters').slideToggle('slow');
+if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $(this).html('Hide filters'); }
         "><? if (!$this->filter_object->has_filter_values) {
-            ?>Show filters</span><div id="filters"><? } else { ?>
-            Hide filters</span><div style="display:inline" id="filters"><? } ?>
+            ?>Show filters</span><div id="filters" style="display: none"><? } else { ?> Hide filters</span><div id="filters" style="display: block"><? } ?>
     <form id="frm_filter" method="get"><? echo page_parameters('/^filter/,/^start$/', false, 'hidden');
             ?><table><tr><?
             $cnt=0;
@@ -723,6 +708,7 @@ class cm_controller extends action_controller
 #------------------------------#
 # default filter actions
 #------------------------------#
+
     public function check_for_print()
     {
         if ($_GET['print'] == 'y') { $this->layout = 'print'; }
