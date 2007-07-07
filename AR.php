@@ -26,7 +26,7 @@ class AR implements SeekableIterator # basic AR class
 
     function setup_attributes()
     {
-        if (!$this->$this->schema_definition) { return false; }
+        if (!$this->schema_definition) { return false; }
         foreach ($this->schema_definition as $field => $meta_data) 
         {
             $this->$field = null;
