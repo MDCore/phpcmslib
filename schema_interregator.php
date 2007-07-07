@@ -12,27 +12,47 @@ class schema_interregator
 
             $model_name = str_replace('.php', '', $model_name);
             $model_object = new $model_name;
-            $model_object->connect_to_db();
-            #load the appropriate mdb2 modules
-                $model_object->db->loadModule('Reverse', null, true);
-
-            #using the magic of mdb2's Reverse module and the method tableInfo
-            $table_name = $model_object->primary_table;
-            echo "writing schema of table <i>$table_name</i> for model <i>$model_name</i><br />";
-            $table_schema = $model_object->db->tableInfo($table_name, null);
-            
-            foreach ($table_schema as $field)
+            if (!$model_object->virtual)
             {
-                $fields_in_table[$field['name']] = array(
-                    'type' => $field['type'],
-                    'mdb2type' => $field['mdb2type'],
-                    'length' => $field['length'],
-                    'default' => $field['default'],
-                    );
+                $model_object->connect_to_db();
+                #load the appropriate mdb2 modules
+                    $model_object->db->loadModule('Reverse', null, true);
+
+                #using the magic of mdb2's Reverse module and the method tableInfo
+                $table_name = $model_object->primary_table;
+                echo "writing schema of table <i>$table_name</i> for model <i>$model_name</i><br />";
+                $table_schema = $model_object->db->tableInfo($table_name, null);
+                $error_code = App::error_check($table_schema, false);
+                #check if there were any errors pulling the schema
+                if ($error_code) 
+                {
+                    switch ($error_code)
+                    {
+                        case -18:
+                            $message = "$table_name not found"; break;
+                        default:
+                            $message = '('.$error_code.') '.$table_schema->getMessage();
+                    }
+                    trigger_error($message, E_USER_WARNING);
+                }
+                else
+                {
+                    #print_r($table_schema);
+                
+                    foreach ($table_schema as $field)
+                    {
+                        $fields_in_table[$field['name']] = array(
+                            'type' => $field['type'],
+                            'mdb2type' => $field['mdb2type'],
+                            'length' => $field['length'],
+                            'default' => $field['default'],
+                            );
+                    }
+                    $tables[$model_name] = $fields_in_table;
+                }
             }
-            $tables[$table_name] = $fields_in_table;
         }
-        #print_r($tables);echo '</pre>';
+        #echo '<pre>';print_r($tables);echo '</pre>';
         return $tables;           
     }
 
@@ -84,4 +104,4 @@ class schema_interregator
         schema_interregator::write_schema_source($source);
     }
 }
-?>
+    ?>
