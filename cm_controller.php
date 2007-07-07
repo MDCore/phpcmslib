@@ -231,7 +231,7 @@ class cm_controller extends action_controller
             }
             $this->handle_new_files($edit_id, true);
 
-            redirect_with_parameters(url_to(array('action' => 'list')), "flash=".humanize($this->list_type). " updated");
+            redirect_with_parameters(url_to(array('action' => 'list')), "flash=".proper_nounize($this->list_type). " updated");
         }
         else
         {
@@ -299,7 +299,7 @@ class cm_controller extends action_controller
             $this->handle_new_files($primary_record_id, true);
             # callback here
             if (function_exists('after_save')) { after_save($primary_record_id); } # todo should be in model maybe
-            redirect_with_parameters(url_to(array('action' => 'list')), "flash=New ".humanize($this->list_type). " added");
+            redirect_with_parameters(url_to(array('action' => 'list')), "flash=New ".proper_nounize($this->list_type). " added");
         }
         else
         {
@@ -329,7 +329,7 @@ class cm_controller extends action_controller
 
         #set message
         
-        if ($records_deleted != 1) {$flash = humanize(pluralize($this->list_type));} else {$flash = humanize($this->list_type);}
+        if ($records_deleted != 1) {$flash = humanize(pluralize($this->list_type));} else {$flash = proper_nounize($this->list_type);}
         $flash = "Deleted $records_deleted ".$flash;
         redirect_with_parameters(url_to(array('action' => 'list')), "flash=$flash");
     }

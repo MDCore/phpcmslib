@@ -26,7 +26,9 @@ class AR implements SeekableIterator # basic AR class
 
     function setup_attributes()
     {
+        $this->schema_definition = App::$schema_definition[$this->model];
         if (!$this->schema_definition) { return false; }
+                    
         foreach ($this->schema_definition as $field => $meta_data) 
         {
             $this->$field = null;
@@ -44,17 +46,27 @@ class AR implements SeekableIterator # basic AR class
         $this->model = get_class($this);
        
         #pull in the schema definition, and set the attributes to null
-            $this->schema_definition = App::$schema_definition[$this->model];
             $this->setup_attributes();
 
         if (!isset($this->primary_key_field)) {$this->primary_key_field = 'id';}
         
-        #check if this model is a changelog
+        #set the primary table, checking first if this model is a changelog
         if (!isset($this->primary_table)) {
-            $changelog_pos = strpos($this->model, '_changelog'); #todo fix this hacky method. right ?
+            $changelog_pos = strpos($this->model, '_changelog');
             if ($changelog_pos > 0)
             {
-                $this->primary_table = tableize(pluralize(substr($this->model, 0, $changelog_pos))).'_changelog';
+                #check if the parent model has a primary_table and use it instead of inferring the table name from the parent model name
+                    $parent_model = substr($this->model, 0, $changelog_pos);
+                    $parent_model = new $parent_model;
+                    if (isset($parent_model->primary_table))
+                    {
+                        $this->primary_table = $parent_model->primary_table.'_changelog'; 
+                    } 
+                    else
+                    {
+                        $this->primary_table = tableize(pluralize(substr($this->model, 0, $changelog_pos))).'_changelog';
+                    }
+                    unset($parent_model);
             }
             else
             {
@@ -62,9 +74,15 @@ class AR implements SeekableIterator # basic AR class
             }
         }
 
-        if (!isset($this->display_field)) {$this->display_field = 'name';}
+        #set the display field
+            if (!isset($this->display_field)) 
+            {
+                if (isset($this->schema_definition['title'])) { $this->display_field = 'title'; }
+                elseif (isset($this->schema_definition['name'])) { $this->display_field = 'name'; }
+                #else { $this->display_field = 'id'; }
+            }
 
-        #split the validations - todo. maybe use getobjectvars todo add all validations
+        #split the validations - todo. maybe use getobjectvars? todo add all validations
             $validations = array('validates_presence_of');
             foreach ($validations as $validation)
             {
@@ -73,6 +91,7 @@ class AR implements SeekableIterator # basic AR class
                     $this->$validation = split(',',$this->$validation);
                 }
             }
+
         if ($collection) {$this->update_attributes($collection, $with_value_changes);} #updates attribs if object is created with a collection
     }
 
@@ -136,6 +155,9 @@ class AR implements SeekableIterator # basic AR class
         #execute before save/update actions
             if (method_exists($this, 'before_'.$save_type)) { $this->{'before_'.$save_type}(); }
 
+        #error if schema definition does not exist
+            if (!$this->schema_definition) { trigger_error("Schema definition does not exist for model ".get_class($this), E_USER_ERROR); }
+
         #build the field => value array, with empty values
             $collection = array_combine(array_keys($this->schema_definition), array_fill(0, sizeof($this->schema_definition), null));
             #debug(get_class($this));debug($save_type);print_r($collection);die();
@@ -171,7 +193,7 @@ class AR implements SeekableIterator # basic AR class
         if ($save_type == "update") { $record_id = $this->update_core($collection); }
         
         #okay... do we have a a changelog?
-            if (property_exists($this->model, 'changelog')){ $this->changelog($record_id, $collection);}
+            if (property_exists($this->model, 'changelog')){ $this->save_changelog($save_type, $record_id, $collection);}
 
     #execute after save/update actions
         if (method_exists($this, 'after_'.$save_type)) { $this->{'after_'.$save_type}(); }
@@ -273,7 +295,7 @@ class AR implements SeekableIterator # basic AR class
         $this->delete_by_sql($sql);
     }
 
-    function changelog($record_id, $collection)
+    function save_changelog($save_type, $record_id, $collection)
     {
 
          #get the highest revision id
@@ -293,17 +315,25 @@ class AR implements SeekableIterator # basic AR class
                  $collection[$this->model.'_id'] = $record_id;
             #revision
                  $collection['revision'] = $revision;
-            #revision
+
+            #created_on
                 if (in_array('created_on', array_keys($collection)))
                 {
                     $collection['created_on'] = $created_on;
                 }
 
-        $fields = implode(',', array_keys($collection)); $values = "'".implode("','", array_values($collection))."'";
+            $changelog_model_name = $this->model.'_changelog';
+            $changelog = new $changelog_model_name($collection);
+            #check if the changelog has an action
+                if (isset($changelog->action)) { $changelog->action = $save_type; }
 
+            $changelog->save();
+        /*
+         * $fields = implode(',', array_keys($collection)); $values = "'".implode("','", array_values($collection))."'";
         $sql = "INSERT INTO ".$this->primary_table."_changelog ($fields) VALUES ($values)";
         #debug ( $sql );
         $save = $this->db->query($sql);App::error_check($save);
+         */
     }
 
     function write_value_changes(&$field, &$value)
