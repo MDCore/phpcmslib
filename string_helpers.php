@@ -18,7 +18,6 @@ function proper_nounize($str)
     $str = str_replace('_', ' ', $str);$result = split(' ', $str);#split $result on " " after converting _ to " "
     return implode(' ', array_map('proper_case', $result)); #map applies the proper_Case method to each element in $result
 }
-
 function foreign_keyize($str)
 {
     #debug(tableize($str));debug(singularize($str));
