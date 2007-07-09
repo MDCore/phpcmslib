@@ -11,6 +11,7 @@ class Application
 
     function init($path_to_root)
     {
+
     # check for application load or reload
         if (!isset($_SESSION[APP_NAME]['application'])) {App::$booting = true;}
         if ( isset($_GET['reload']) )
@@ -20,6 +21,13 @@ class Application
         }
 
         global $environment; #pull in the environment rom the config
+        
+        # check for running from shell, for tests
+        if (isset($_SERVER['SHELL']) && !is_null($_SERVER['SHELL']))
+        {
+            #todo, fix this hack
+            $environment = 'development';    
+        }
         
         #slurp config/application.php settings
             global $default_face; if ($default_face) { App::$default_face = $default_face; }
@@ -31,7 +39,6 @@ class Application
         }
 
         Environment::load($environment, $path_to_root);
-        #App::rebuild();
  
         #load the schema definition
             require ($path_to_root.'/config/cache/schema_definition.php');
@@ -48,11 +55,14 @@ class Application
             App::find_these('controllers', App::$default_face.'/controllers');
 
     #run cron jobs, only on app start, not each page load!
-            require($path_to_root.'/cron_jobs/auto_mailer.php');
-            if (App::$env->run_cron_jobs)
+            if (class_exists('cron_job'))
             {
-                $cron_job = new cron_job;
-                $cron_job->run_all_jobs();
+                require($path_to_root.'/cron_jobs/auto_mailer.php');
+                if (App::$env->run_cron_jobs)
+                {
+                    $cron_job = new cron_job;
+                    $cron_job->run_all_jobs();
+                }
             }
         }
 
@@ -83,6 +93,7 @@ class Application
     function find_these($name, $path)
     {
         if (App::$reloading) {echo "<li>parsing $name folder</li>"; }
+        #
         #check if the dir exists
         if (!file_exists(App::$env->root.'/'.$path))
         {
