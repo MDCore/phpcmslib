@@ -434,10 +434,10 @@ class cm_controller extends action_controller
         $AR = new AR;
         $results_list = $AR->db->query($results_query." limit ". $this->start_limit.', '.$this->row_limit);
         #error check
-        App::error_check($results_list);
+        AR::error_check($results_list);
 
         $sum_query = $results_query;
-        $result2 = $AR->db->query($sum_query); App::error_check($results2); #SQL Query list_query
+        $result2 = $AR->db->query($sum_query); AR::error_check($results2); #SQL Query list_query
         $num_rows = $result2->numRows(); #count
         ?><div class="list_rows"><?=$num_rows; ?> <?
         if ($num_rows != 1) {echo humanize(pluralize($this->list_type));} else {echo humanize($this->list_type);}
@@ -642,7 +642,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
             <?
         $sql = 'SELECT * FROM '.$this->primary_table.' WHERE '.$this->primary_key_field.' = '.$edit_id;
         $AR = new AR;
-        $values = $AR->db->query($sql);App::error_check($values);
+        $values = $AR->db->query($sql);AR::error_check($values);
         $values = $values->fetchRow();
         $this->model_object->update_attributes($values);
         $record = $this->model_object;
@@ -660,7 +660,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
 
         $sql = 'SELECT * FROM '.$this->primary_table.' WHERE '.$this->primary_key_field." = '".$edit_id."'";
         $AR = new AR;
-        $values = $AR->db->query($sql);App::error_check($values);
+        $values = $AR->db->query($sql);AR::error_check($values);
         $values = $values->fetchRow();
         $this->model_object->update_attributes($values);
         $record = $this->model_object;
@@ -732,7 +732,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
 
                     if (method_exists($this, 'assign_login_rights')) { $this->assign_login_rights(); }
 
-                    header('location: '.url_to('default'));die();
+                    #successful login! Do nothing...
                 }
                 else
                 {

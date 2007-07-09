@@ -2,7 +2,7 @@
 /**
  * This file implements the ActiveRecord pattern
  * @author Gavin van Lelyveld <gavin@pedantic.co.za>
- * @version 2.0
+ * @version 0.2
  * @package pedantic/lib
  */
 
@@ -21,7 +21,7 @@ class AR implements SeekableIterator # basic AR class
     {
         if (!$dsn) {$dsn = App::$env->dsn;}
         $this->db =& MDB2::Connect($dsn);
-        App::error_check($this->db);
+        $this->error_check($this->db);
     }
 
     function setup_attributes()
@@ -213,7 +213,7 @@ class AR implements SeekableIterator # basic AR class
         $fields = implode(',', array_keys($collection)); $values = "'".implode("','", array_values($collection))."'";
         $sql = "INSERT INTO ".$this->primary_table." ($fields) VALUES ($values)";
         #debug ( $sql );die();
-        $save = $this->db->query($sql);App::error_check($save);
+        $save = $this->db->query($sql);$this->error_check($save);
         
         #get the key of the new record
             $record_id = $this->db->lastInsertID($this->primary_table,$this->primary_key_field);
@@ -231,7 +231,7 @@ class AR implements SeekableIterator # basic AR class
            $update_sql = implode_with_keys(',', $collection, "");
            $sql = 'UPDATE '.$this->primary_table." SET $update_sql WHERE ".$this->primary_key_field."=".$this->{$this->primary_key_field};
            #debug($sql);
-           $update = $this->db->query($sql);App::error_check($update);
+           $update = $this->db->query($sql);$this->error_check($update);
            return $this->{$this->primary_key_field};
     }
     
@@ -288,7 +288,7 @@ class AR implements SeekableIterator # basic AR class
         {
             $this->count = 0;
             $this->clear_attributes();
-            App::error_check($this->results);
+            $this->error_check($this->results);
             return true;
         }
         return false;
@@ -329,7 +329,7 @@ class AR implements SeekableIterator # basic AR class
          #get the highest revision id
                  $sql = "SELECT MAX(revision) as rev_id, MAX(created_on) as created_on FROM ".$this->primary_table."_changelog WHERE ".$this->model.'_id'." = '".$record_id."'";
                  #debug($sql);
-                 $rev_result = $this->db->query($sql);App::error_check($rev_result);
+                 $rev_result = $this->db->query($sql);$this->error_check($rev_result);
                  if ($rev_result)
                  {
                      $rev_result = $rev_result->fetchRow();
@@ -360,7 +360,7 @@ class AR implements SeekableIterator # basic AR class
          * $fields = implode(',', array_keys($collection)); $values = "'".implode("','", array_values($collection))."'";
         $sql = "INSERT INTO ".$this->primary_table."_changelog ($fields) VALUES ($values)";
         #debug ( $sql );
-        $save = $this->db->query($sql);App::error_check($save);
+        $save = $this->db->query($sql);$this->error_check($save);
          */
     }
 
@@ -406,7 +406,7 @@ class AR implements SeekableIterator # basic AR class
         $this->last_sql_query = $sql; 
         if ( $this->results )
         {
-            App::error_check($this->results);
+            $this->error_check($this->results);
 
             print_r($this->results->numRows());
             $this->count = $this->results->numRows();
@@ -677,6 +677,20 @@ class AR implements SeekableIterator # basic AR class
     function display_name()
     {
         return $this->{$this->display_field};
+    }
+
+    function error_check($result, $die_on_error = true)
+    {
+        if (PEAR::isError($result) || MDB2::isError($result)) {
+            if ($die_on_error)
+            {
+                die('<pre>'.$result->getMessage().' - '.$result->getUserinfo()).'</pre>';
+            }
+            else
+            {
+                return $result->code;
+            }
+        }
     }
     
     #methods required for iterator implementation
