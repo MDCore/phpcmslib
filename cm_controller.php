@@ -732,7 +732,8 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
 
                     if (method_exists($this, 'assign_login_rights')) { $this->assign_login_rights(); }
 
-                    #successful login! Do nothing...
+                    #successful login! redirect to default. 
+                        header('location: '.url_to(array('face' => 'cm')));
                 }
                 else
                 {
