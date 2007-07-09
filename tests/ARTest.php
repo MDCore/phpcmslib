@@ -24,8 +24,6 @@ class ARTest extends PHPUnit_Framework_TestCase {
      * @static
      */
 
-    private $customer_model_object = null;
-
     public static function main() {
         require_once 'PHPUnit/TextUI/TestRunner.php';
 
@@ -44,8 +42,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->db =& MDB2::Connect($dsn);
         App::error_check($this->db);
         
-        $this->db->query('DROP DATABASE IF EXISTS ARTest');
-        $this->db->query('CREATE DATABASE ARTest');
+        $this->db->query('DROP DATABASE IF EXISTS ARTest;CREATE DATABASE ARTest');
         App::error_check($this->db);
         #setup the customer_table
             $this->db->query("
@@ -76,11 +73,12 @@ class ARTest extends PHPUnit_Framework_TestCase {
      */
     protected function setUp() {
 
-       #echo "setup\r\n"; 
+        #echo "\r\nsetup\r\n"; 
         #customer fixtures
-            $this->db->query("INSERT INTO customers (name, company_name, address, active) VALUES ('cust 1', 'company 1', 'address 1', 'Y')");
-            App::error_check($this->db);
-            $this->customer_model_object = new customer;
+            $sql = "INSERT INTO ARTest.customers (id, name, company_name, address, active, created_on, updated_on) VALUES (1, 'cust 1', 'company 1', 'address 1', 'Y', now(), now())";
+            $this->db->query($sql);
+            #print_r($sql);
+            #App::error_check($this->db);
     }
 
     /**
@@ -90,9 +88,9 @@ class ARTest extends PHPUnit_Framework_TestCase {
      * @access protected
      */
     protected function tearDown() {
-       #echo "teardown\r\n"; 
-        $this->db->query('TRUNCATE TABLE customers;');
-        $this->customer_model_object = null;
+        #echo "\r\nteardown\r\n"; 
+        $this->db->query('DELETE FROM ARTest.customers');
+        #App::error_check($this->db);
     }
 
     /**
@@ -145,37 +143,42 @@ class ARTest extends PHPUnit_Framework_TestCase {
         );
     }
 
-    public function test_find_returns_correct_value()
+    public function test_find_returns_expected_values()
     {
-        $this->assertTrue($this->customer_model_object->find(1));
-        $this->assertFalse($this->customer_model_object->find(999));
+        $customer = new customer;
+        $this->assertTrue($customer->find(1), 'Record 1 not found');
+        print_r($customer->last_sql_query);
+        $this->assertFalse($customer->find(999), 'Record 999 was found');
 
-        $this->customer_model_object->find(1);
-        $this->assertEquals(1, $this->customer_model_object->id);
+        $customer->find(1);
+        $this->assertEquals(1, $customer->id, 'record id not equal to one found');
 
-        $this->customer_model_object->find(999);
-        $this->assertEquals(null, $this->customer_model_object->id);
+        $customer->find(999);
+        $this->assertEquals(null, $customer->id,' bad record still has an id');
     }
 
     public function test_update_checks_for_target_record_first()
     {
-        $this->customer_model_object->find(999);
-        $this->assertFalse($this->customer_model_object->update());
+        $customer = new customer;
+        $customer->find(999);
+        $this->assertFalse($customer->update());
     }
     /**
      * testUpdate().
      */
-    public function testUpdate() {
+    public function test_update_saves_to_database() {
         
-        $this->customer_model_object->find(1);
-        $this->customer_model_object->name = 'new customer';
-        $this->assertTrue($this->customer_model_object->update());
+        $customer = new customer;
+        $customer->find(1);
+        $customer->name = 'new customer';
+        $this->assertTrue($customer->update(), 'update was not successful');
 
         $test_model = new customer;
         $test_model->find(1);
-        $this->assertEquals('new customer', $test_model->name);
+        $this->assertEquals('new customer', $test_model->name, "customer name not 'new customer'");
 
         #cleanup
+            $customer = null;
             $test_model = null;
     }
 

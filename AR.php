@@ -404,11 +404,11 @@ class AR implements SeekableIterator # basic AR class
     function find_by_sql($sql)
     {
         $this->last_sql_query = $sql; 
+        $this->results = $this->db->query($sql);
         if ( $this->results )
         {
             $this->error_check($this->results);
 
-            print_r($this->results->numRows());
             $this->count = $this->results->numRows();
             if ($this->count == 0)
             {
@@ -438,7 +438,6 @@ class AR implements SeekableIterator # basic AR class
         $sql = "SELECT * FROM ".$this->primary_table.' '.$sql_criteria;
         #debug($sql);
         $result = $this->find_by_sql($sql);
-        #debug($result);
         return $result;
     }
 
