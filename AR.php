@@ -149,7 +149,7 @@ class AR implements SeekableIterator # basic AR class
 
     function save($save_type = "save")
     {
-        if ($this->count == 0) {return false;}
+        if (!$this->dirty && $this->count == 0) {return false;}
 
         #execute before validation actions
             if (method_exists($this, 'before_validation')) { $this->before_validation(); }
