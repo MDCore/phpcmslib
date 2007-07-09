@@ -454,11 +454,6 @@ class AR implements SeekableIterator # basic AR class
         #$this->results = null;$this->offset = 0;$this->count = 1;
     }
 
-    public function has_attribute($attribute)
-    {
-        if (in_array($attribute, array_keys($this->schema_definition))) { return true; } else { return false; }
-    }
-
     public function update_attributes($collection = null, $with_value_changes = false)
     {
         if (!$collection ) # if no row is passed then set the current row in results
