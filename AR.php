@@ -17,13 +17,22 @@ class AR implements SeekableIterator # basic AR class
     public $preserve_updated_on = false;
     public $db = null, $schema_definition;
 
+    /* 
+     * this method is here so that is is overridable
+     */
     function connect_to_db($dsn = null)
     {
-        if (!$dsn) {$dsn = App::$env->dsn;}
-        $this->db =& MDB2::Connect($dsn);
-        $this->error_check($this->db);
+        if (!$dsn && isset(App::$env)) {$dsn = App::$env->dsn;}
+        if ($dsn)
+        {
+            $this->db =& MDB2::Connect($dsn);
+            $this->error_check($this->db);
+        }
     }
 
+    /*
+     *  this method pulls in the schema definition and creates the attributes in the object, setting them to null
+     */
     function setup_attributes()
     {
         $this->schema_definition = App::$schema_definition[$this->model];
@@ -37,11 +46,8 @@ class AR implements SeekableIterator # basic AR class
 
     function __construct($collection = null, $with_value_changes = true)
     {
-        if (!$this->db)
-        {
-            $this->connect_to_db();
-            $this->db->setFetchMode(MDB2_FETCHMODE_OBJECT);
-        }
+        $this->connect_to_db();
+        if ($this->db) {$this->db->setFetchMode(MDB2_FETCHMODE_OBJECT);}
         
         #get the model name
         $this->model = get_class($this);

@@ -93,24 +93,21 @@ class ARTest extends PHPUnit_Framework_TestCase {
         #App::error_check($this->db);
     }
 
-    /**
-     * @todo Implement testConnect_to_db().
-     */
     public function testConnect_to_db() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+        #not very good testing
+        $customer = new customer;
+        $this->assertNotNull($customer->db, 'connection to database has not been established');
     }
 
-    /**
-     * @todo Implement testSetup_attributes().
-     */
     public function testSetup_attributes() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+        $customer = new customer;
+        $this->assertAttributeNotEquals(null,'schema_definition', $customer, 'schema_definition not set');
+        $this->assertObjectHasAttribute('id', $customer, 'schema_definition not set');
+        $this->assertAttributeEquals(null,'id', $customer, 'schema_definition not set');
+
+        $test = new model_without_schema_def;
+        $this->assertFalse($test->setupAttributes, 'setup_attributes must return false without schema definition');
+        $this->assertAttributeEquals(null,'schema_definition', $test, 'schema_definition exists');
     }
 
     /**
@@ -162,9 +159,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $customer->find(999);
         $this->assertFalse($customer->update());
     }
-    /**
-     * testUpdate().
-     */
+
     public function test_update_saves_to_database() {
         
         $customer = new customer;
@@ -184,18 +179,20 @@ class ARTest extends PHPUnit_Framework_TestCase {
     public function test_should_not_update_if_not_linked_to_a_record()
     {
         $customer = new customer;
-        
         $this->assertFalse($customer->update(), 'Successful update on unlinked record');
     }
 
-    /**
-     * @todo Implement testSave().
-     */
-    public function testSave() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+    public function test_AR_disallows_changing_id()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function test_save_from_collection() {
+        $this->markTestIncomplete();
+    }
+
+    public function test_save_does_not_overwrite_id() {
+        $this->markTestIncomplete();
     }
 
     /**

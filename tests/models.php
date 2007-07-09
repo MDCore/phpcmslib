@@ -13,6 +13,9 @@ class customer extends AR
         $this->db =& MDB2::Connect($dsn);
     }
 }
+class model_without_schema_def extends AR
+{
+}
 
 #a fake mock thingy
 class App
