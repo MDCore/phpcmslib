@@ -147,7 +147,6 @@ class ARTest extends PHPUnit_Framework_TestCase {
     {
         $customer = new customer;
         $this->assertTrue($customer->find(1), 'Record 1 not found');
-        print_r($customer->last_sql_query);
         $this->assertFalse($customer->find(999), 'Record 999 was found');
 
         $customer->find(1);
@@ -171,7 +170,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $customer = new customer;
         $customer->find(1);
         $customer->name = 'new customer';
-        $this->assertTrue($customer->update(), 'update was not successful');
+        $this->assertEquals(1, $customer->update(), 'update was not successful');
 
         $test_model = new customer;
         $test_model->find(1);

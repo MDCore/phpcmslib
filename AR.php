@@ -498,7 +498,7 @@ class AR implements SeekableIterator # basic AR class
     {
         if (isset($this->schema_definition))
         {
-            foreach ($this->schema_definition as $attribute)
+            foreach ($this->schema_definition as $attribute => $meta_data)
             {
                 unset($this->$attribute);
             }
