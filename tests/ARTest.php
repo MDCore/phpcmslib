@@ -183,7 +183,9 @@ class ARTest extends PHPUnit_Framework_TestCase {
 
     public function test_should_not_update_if_not_linked_to_a_record()
     {
-        $this->markTestIncomplete();
+        $customer = new customer;
+        
+        $this->assertFalse($customer->update(), 'Successful update on unlinked record');
     }
 
     /**
