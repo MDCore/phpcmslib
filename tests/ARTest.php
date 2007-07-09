@@ -4,10 +4,10 @@ if (!defined('PHPUnit_MAIN_METHOD')) { define('PHPUnit_MAIN_METHOD', 'ARTest::ma
 }
 
 require_once 'PHPUnit/Framework.php';
+require_once 'MDB2.php';
 
 require_once '../AR.php';
 require_once '../functions.php';
-require_once 'MDB2.php';
 
 #test models
 require_once 'models.php';
@@ -25,7 +25,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
      */
 
     public static function main() {
-        require_once 'PHPUnit/TextUI/TestRunner.php';
+        require_once 'PHPUnit/HTMLUI/TestRunner.php';
 
         $suite  = new PHPUnit_Framework_TestSuite('ARTest');
         $result = PHPUnit_TextUI_TestRunner::run($suite);
@@ -42,7 +42,8 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->db =& MDB2::Connect($dsn);
         App::error_check($this->db);
         
-        $this->db->query('DROP DATABASE IF EXISTS ARTest;CREATE DATABASE ARTest');
+        $this->db->query('DROP DATABASE IF EXISTS ARTest');
+        $this->db->query('CREATE DATABASE ARTest');
         App::error_check($this->db);
         #setup the customer_table
             $this->db->query("
@@ -62,7 +63,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
     }
     public function __destruct()
     {
-        #$this->db->query('DROP DATABASE IF EXISTS ARTest');
+        $this->db->query('DROP DATABASE IF EXISTS ARTest');
         unset($this->db);
     }
     /**
@@ -91,6 +92,15 @@ class ARTest extends PHPUnit_Framework_TestCase {
         #echo "\r\nteardown\r\n"; 
         $this->db->query('DELETE FROM ARTest.customers');
         #App::error_check($this->db);
+    }
+
+    /*
+     * test stuff that happens on construction
+     */
+
+    public function test_construction()
+    {
+        $this->markTestIncomplete();
     }
 
     public function testConnect_to_db() {
@@ -140,6 +150,10 @@ class ARTest extends PHPUnit_Framework_TestCase {
         );
     }
 
+    /* 
+     * finder tests
+     */
+
     public function test_find_returns_expected_values()
     {
         $customer = new customer;
@@ -153,6 +167,33 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(null, $customer->id,' bad record still has an id');
     }
 
+
+    /* 
+     * save tests
+     */
+    public function test_save_from_collection() {
+        $this->markTestIncomplete();
+    }
+
+    public function test_save_does_not_overwrite_id() {
+        $this->markTestIncomplete();
+    }
+
+    public function test_save_with_changelog_adds_to_changelog()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testSave_multiple() {
+        // Remove the following lines when you implement this test.
+        $this->markTestIncomplete(
+          'This test has not been implemented yet.'
+        );
+    }
+
+    /*
+     * update tests
+     */
     public function test_update_checks_for_target_record_first()
     {
         $customer = new customer;
@@ -182,107 +223,43 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertFalse($customer->update(), 'Successful update on unlinked record');
     }
 
+    /*
+     * delete tests
+    */
+    public function test_delete()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function test_delete_with_changelog_marks_as_deleted() {
+        $this->markTestIncomplete();
+    }
+
+    /*
+     * other changelog tests
+     */
+
+    public function test_changelog_table_with_action_sets_actions()
+    {
+        $this->markTestIncomplete();
+        #todo all CUD actions
+    }
+
+    public function test_changelog_without_action()
+    {
+        $this->markTestIncomplete();
+    }
+
+    /* 
+     * misc
+     */
     public function test_AR_disallows_changing_id()
     {
         $this->markTestIncomplete();
     }
 
-    public function test_save_from_collection() {
-        $this->markTestIncomplete();
-    }
-
-    public function test_save_does_not_overwrite_id() {
-        $this->markTestIncomplete();
-    }
-
-    /**
-     * @todo Implement testSave_multiple().
-     */
-    public function testSave_multiple() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-
-    /**
-     * @todo Implement testDelete_by_sql().
-     */
-    public function testDelete_by_sql() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-
-    /**
-     * @todo Implement testDelete().
-     */
-    public function testDelete() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-
-    /**
-     * @todo Implement testSave_changelog().
-     */
-    public function testSave_changelog() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-
-    /**
-     * @todo Implement testDelete_changelog().
-     */
-    public function testDelete_changelog() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-
-    /**
-     * @todo Implement testWrite_value_changes().
-     */
     public function testWrite_value_changes() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-
-    /**
-     * @todo Implement testFind_by_sql().
-     */
-    public function testFind_by_sql() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-
-    /**
-     * @todo Implement testFind().
-     */
-    public function testFind() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-
-    /**
-     * @todo Implement testHas_attribute().
-     */
-    public function testHas_attribute() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+        $this->markTestIncomplete();
     }
 
     /**
