@@ -22,7 +22,7 @@ class schema_interregator
                 $table_name = $model_object->primary_table;
                 echo "writing schema of table <i>$table_name</i> for model <i>$model_name</i><br />";
                 $table_schema = $model_object->db->tableInfo($table_name, null);
-                $error_code = App::error_check($table_schema, false);
+                $error_code = AR::error_check($table_schema, false);
                 #check if there were any errors pulling the schema
                 if ($error_code) 
                 {
