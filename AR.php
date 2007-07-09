@@ -6,7 +6,8 @@
  * @package pedantic/lib
  */
 
-define ('SQL_INSERT_DATE_FORMAT', '%Y-%m-%d');
+if (!defined('SQL_INSERT_DATE_FORMAT')) { define('SQL_INSERT_DATE_FORMAT', '%Y-%m-%d'); }
+if (!defined('SQL_INSERT_DATE_TIME_FORMAT')) { define('SQL_INSERT_DATE_TIME_FORMAT', '%Y-%m-%d %R'); }
 
 class AR implements SeekableIterator # basic AR class
 {
@@ -21,7 +22,6 @@ class AR implements SeekableIterator # basic AR class
         if (!$dsn) {$dsn = App::$env->dsn;}
         $this->db =& MDB2::Connect($dsn);
         App::error_check($this->db);
-        $this->db->setFetchMode(MDB2_FETCHMODE_OBJECT);
     }
 
     function setup_attributes()
@@ -40,6 +40,7 @@ class AR implements SeekableIterator # basic AR class
         if (!$this->db)
         {
             $this->connect_to_db();
+            $this->db->setFetchMode(MDB2_FETCHMODE_OBJECT);
         }
         
         #get the model name
@@ -73,6 +74,9 @@ class AR implements SeekableIterator # basic AR class
                 $this->primary_table = tableize(pluralize($this->model));
             }
         }
+
+        #set that this model has a changelog
+            if (property_exists($this->model, 'changelog')){ $this->has_changelog = true; } else {$this->has_changelog = false; }
 
         #set the display field
             if (!isset($this->display_field)) 
@@ -129,10 +133,11 @@ class AR implements SeekableIterator # basic AR class
 
 
     }
-
-    function create() #create a new record. analogous to ROR new method
+    /*
+     *    create a new record. analogous to ROR new method
+     */
+    function create()
     {
-        #todo check if this function is used for it's described purpose; may be obsolete
         $this->new_record = true;
         $this->clear_attributes();
     }
@@ -144,6 +149,8 @@ class AR implements SeekableIterator # basic AR class
 
     function save($save_type = "save")
     {
+        if ($this->count == 0) {return false;}
+
         #execute before validation actions
             if (method_exists($this, 'before_validation')) { $this->before_validation(); }
             if (method_exists($this, 'before_validation_on_'.$save_type)) { $this->{'before_validation_on_'.$save_type}(); }
@@ -162,41 +169,41 @@ class AR implements SeekableIterator # basic AR class
             $collection = array_combine(array_keys($this->schema_definition), array_fill(0, sizeof($this->schema_definition), null));
             #debug(get_class($this));debug($save_type);print_r($collection);die();
             
-            #remove the PK from attributes
+        #remove the PK from attributes
             if (in_array($this->primary_key_field, array_keys($collection))) { unset ($collection[$this->primary_key_field]); }
 
-            #populate the values in the fields array
-                foreach (array_keys($collection) as $attribute) { $collection[$attribute] = $this->$attribute; } #removed addslashes
+        #populate the values in the fields array
+            foreach (array_keys($collection) as $attribute) { $collection[$attribute] = $this->$attribute; } #removed addslashes
 
-            #set the updated_on and/or created_on time
-                $now = strftime(SQL_DATE_TIME_FORMAT, time());
+        #set the updated_on and/or created_on time
+            $now = strftime(SQL_INSERT_DATE_TIME_FORMAT, time());
 
-            if ($save_type == 'save')
+        if ($save_type == 'save')
+        {
+            #deal with created on, naturally only set on save
+            if (in_array('created_on', array_keys($collection))) { $collection['created_on'] = $now; }
+        }
+
+        #deal with updated_on
+            if (in_array('updated_on', array_keys($collection)) && !$this->preserve_updated_on) { $collection['updated_on'] = $now; }
+
+        #deal with user_id
+            if (in_array('user_id', array_keys($collection)))
             {
-                #deal with created on, naturally only set on save
-                if (in_array('created_on', array_keys($collection))) { $collection['created_on'] = $now; }
+                if ($_SESSION[APP_NAME]['user_id'])
+                {
+                    $collection['user_id'] = $_SESSION[APP_NAME]['user_id'];
+                }
             }
-
-            #deal with updated_on
-                if (in_array('updated_on', array_keys($collection)) && !$this->preserve_updated_on) { $collection['updated_on'] = $now; }
-
-                #deal with user_id
-                    if (in_array('user_id', array_keys($collection)))
-                    {
-                        if ($_SESSION[APP_NAME]['user_id'])
-                        {
-                            $collection['user_id'] = $_SESSION[APP_NAME]['user_id'];
-                        }
-                    }
 
         if ($save_type == "save") { $record_id = $this->save_core($collection); }
         if ($save_type == "update") { $record_id = $this->update_core($collection); }
         
-        #okay... do we have a a changelog?
-            if (property_exists($this->model, 'changelog')){ $this->save_changelog($save_type, $record_id, $collection);}
+        #save/update the changelog
+            if ($this->has_changelog){ $this->save_changelog($save_type, $record_id, $collection);}
 
-    #execute after save/update actions
-        if (method_exists($this, 'after_'.$save_type)) { $this->{'after_'.$save_type}(); }
+        #execute after save/update actions
+            if (method_exists($this, 'after_'.$save_type)) { $this->{'after_'.$save_type}(); }
 
         return $record_id;
     }
@@ -272,6 +279,7 @@ class AR implements SeekableIterator # basic AR class
          * [3] => array('customer_id', => 25, 'product_id' => 4)
          */
     }
+
     function delete_by_sql($sql)
     {
         $this->last_sql_query = $sql; 
@@ -288,12 +296,32 @@ class AR implements SeekableIterator # basic AR class
 
     function delete($criteria)
     {
-        #debug($criteria);
         $sql_criteria = $this->criteria_to_sql($criteria);
+
+        #mark deleted in changelog
+            if ($this->has_changelog){ $this->delete_changelog($save_type, $record_id, $collection);}
+
+
         $sql = "DELETE FROM ".$this->primary_table.' '.$sql_criteria;
         #debug($sql);
         $this->delete_by_sql($sql);
     }
+
+    /*
+     * marks records as deleted in the changelog, if the changelog table has an action field
+     */
+    function delete_changelog($criteria)
+    {
+        #$sql = "SELECT * FROM ".$this->primary_table."_changelog ".$criteria;
+        #$delete_object = new ; #the changelog version of this object
+        #$delete_object->db
+        return true;
+
+    }
+    
+    /* inserts entries inthe the changelog on save or update.
+     * marks the action as saved or updated if the changelog table has an action field
+     */
 
     function save_changelog($save_type, $record_id, $collection)
     {
@@ -376,19 +404,29 @@ class AR implements SeekableIterator # basic AR class
     function find_by_sql($sql)
     {
         $this->last_sql_query = $sql; 
-        $this->results = $this->db->query($sql);
         if ( $this->results )
         {
             App::error_check($this->results);
 
-            $this->count = $this->results->numRows(); #count
-            $this->offset = 0;
-            $this->update_attributes();
+            print_r($this->results->numRows());
+            $this->count = $this->results->numRows();
+            if ($this->count == 0)
+            {
+                $this->clear_attributes();
+                return false;
+            }
+            else
+            {
+                $this->offset = 0;
+                $this->update_attributes();
+                return true;
+            }
         }
         else
         {
             $this->count = 0;
             $this->clear_attributes();
+            return false;
         }
     }
 
@@ -399,7 +437,9 @@ class AR implements SeekableIterator # basic AR class
         #echo 'sql_criteria'; debug($sql_criteria);
         $sql = "SELECT * FROM ".$this->primary_table.' '.$sql_criteria;
         #debug($sql);
-        $this->find_by_sql($sql);
+        $result = $this->find_by_sql($sql);
+        #debug($result);
+        return $result;
     }
 
     protected function dirty()

@@ -310,27 +310,26 @@ class cm_controller extends action_controller
     public function cm_delete()
     {
         # delete these puppies
-        $sql_delete = "DELETE FROM " . $this->primary_table . " WHERE ".$this->primary_key_field." IN (";
-        $records_deleted = 0;
-        foreach ($_POST['delete'] as $delete_id)
-        {
-            if (is_int((int)$delete_id))
+            $sql_delete = "WHERE ".$this->primary_key_field." IN (";
+            $records_deleted = 0;
+            foreach ($_POST['delete'] as $delete_id)
             {
-                $sql_delete .= $delete_id .',';
-                $records_deleted += 1;
+                if (is_int((int)$delete_id))
+                {
+                    $sql_delete .= $delete_id .',';
+                    $records_deleted += 1;
+                }
             }
-        }
-        if (substr($sql_delete, -1, 1) == ',') { $sql_delete = substr($sql_delete, 0, -1); }
-        $sql_delete .= ");";
-
+            if (substr($sql_delete, -1, 1) == ',') { $sql_delete = substr($sql_delete, 0, -1); }
+            $sql_delete .= ");";
+    
         # delete records
-        $AR = new AR;
-        $ign = $AR->db->query($sql_delete);
+            $ign = $model_object->delete($sql_delete);
 
         #set message
-        
-        if ($records_deleted != 1) {$flash = humanize(pluralize($this->list_type));} else {$flash = proper_nounize($this->list_type);}
-        $flash = "Deleted $records_deleted ".$flash;
+            if ($records_deleted != 1) {$flash = proper_nounize(pluralize($this->list_type));} else {$flash = proper_nounize($this->list_type);}
+            $flash = "Deleted $records_deleted ".$flash;
+
         redirect_with_parameters(url_to(array('action' => 'list')), "flash=$flash");
     }
 
