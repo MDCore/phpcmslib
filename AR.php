@@ -281,7 +281,7 @@ class AR implements SeekableIterator # basic AR class
          * [3] => array('product_id' => 4)
          */
 
-        for ( $i=0; $i < sizeof($new_records); $i++) #for each of the non-array values of the collection...
+        for ( $i=0; $i < sizeof($new_records); $i++ ) #for each of the non-array values of the collection...
         { 
             foreach ($collection as $field => $value)#put it in the sub-arrays of each new record
             {

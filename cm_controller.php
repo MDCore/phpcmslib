@@ -643,8 +643,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
         if (!$view_page) {$view_page = $this->view_page;}
         ?><h2>Viewing a<?
         switch(strtolower(substr($this->list_type, 0, 1))) {case 'a': case 'e': case 'i': case 'o': case 'u': echo 'n';}
-        ?> <?=humanize($this->list_type)?></h2>
-            <?
+        ?> <?=humanize($this->list_type)?></h2><?
         $sql = 'SELECT * FROM '.$this->primary_table.' WHERE '.$this->primary_key_field.' = '.$edit_id;
         $AR = new AR;
         $values = $AR->db->query($sql);AR::error_check($values);
