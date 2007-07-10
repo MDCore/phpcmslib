@@ -98,9 +98,40 @@ class ARTest extends PHPUnit_Framework_TestCase {
      * test stuff that happens on construction
      */
 
+    public function test_bad_attributes()
+    {
+        $customer = new customer;
+        try
+        {
+           $foo = $customer->ASDASDASD;
+        }
+        catch(Exception $e)
+        {
+            return;
+        }
+
+        $this->fail('An exception was not raised');
+    }
+
     public function test_construction()
     {
         $this->markTestIncomplete();
+    }
+
+    public function test_init_with_collection_sets_dirty()
+    {
+        $collection = array('name' => 'test_init_with_collection_sets_dirty');
+        $customer = new customer($collection);
+        $this->assertEquals(true, $customer->dirty, 'dirty not being set to true');
+    }
+
+    public function test_find_after_setting_dirty_sets_to_false()
+    {
+        $collection = array('name' => 'test_init_with_collection_sets_dirty');
+        $customer = new customer($collection);
+        $customer->find(1);
+        $this->assertEquals(false, $customer->dirty, 'dirty not false after find');
+        #$this->fail('this is not working for some strange reason');
     }
 
     public function testConnect_to_db() {
@@ -116,7 +147,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertAttributeEquals(null,'id', $customer, 'schema_definition not set');
 
         $test = new model_without_schema_def;
-        $this->assertFalse($test->setupAttributes, 'setup_attributes must return false without schema definition');
+        $this->assertFalse($test->setup_attributes(), 'setup_attributes must return false without schema definition');
         $this->assertAttributeEquals(null,'schema_definition', $test, 'schema_definition exists');
     }
 
