@@ -90,7 +90,7 @@ class AR implements SeekableIterator # basic AR class
             {
                 if (isset($this->schema_definition['title'])) { $this->display_field = 'title'; }
                 elseif (isset($this->schema_definition['name'])) { $this->display_field = 'name'; }
-                #else { $this->display_field = 'id'; }
+                else { $this->display_field = 'id'; }
             }
 
         #split the validations - todo. maybe use getobjectvars? todo add all validations
