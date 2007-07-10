@@ -109,7 +109,7 @@ class action_controller
         if (method_exists(App::$controller, $action_name) || method_exists(App::$controller, '__call'))
         {
             # check for ajax requests, and automatically set render_inline and layout = null
-            if ($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
             {
                 $this->layout = null; $this->render_inline();
             }

@@ -4,7 +4,7 @@
  * @author Gavin van Lelyveld <gavin@pedantic.co.za>
  * @version 0.2
  * @package pedantic/lib
- */
+ **/
 
 if (!defined('SQL_INSERT_DATE_FORMAT')) { define('SQL_INSERT_DATE_FORMAT', '%Y-%m-%d'); }
 if (!defined('SQL_INSERT_DATE_TIME_FORMAT')) { define('SQL_INSERT_DATE_TIME_FORMAT', '%Y-%m-%d %R'); }
@@ -35,8 +35,9 @@ class AR implements SeekableIterator # basic AR class
      */
     function setup_attributes()
     {
+        if (!isset(App::$schema_definition[$this->model])) { return false; }
+
         $this->schema_definition = App::$schema_definition[$this->model];
-        if (!$this->schema_definition) { return false; }
                     
         foreach ($this->schema_definition as $field => $meta_data) 
         {
@@ -117,25 +118,35 @@ class AR implements SeekableIterator # basic AR class
 
     function __get($name)
     {
-    #relationships magic
-        #todo other relationships ?
-        if ($this->has_one($name))
-        {
-            $has_one = new $name;
-            $fk = foreign_keyize($name);
-            $has_one->find($this->$fk);
-            return $has_one;
-        }
+        #relationships magic
+            #todo other relationships ?
+            if ($this->has_one($name))
+            {
+                $has_one = new $name;
+                $fk = foreign_keyize($name);
+                $has_one->find($this->$fk);
+                return $has_one;
+            }
         #check for properties with this name
-        elseif (is_array($this->schema_definition) && in_array($name, array_keys($this->schema_definition)))
+        /*elseif (is_array($this->schema_definition) && in_array($name, array_keys($this->schema_definition)))
         {
             return null;#it isn't set for some reason
+        }*/
+        elseif (isset($this->$name)) 
+        {
+            #echo "\r\nreturning $name with value ";var_dump($this->$name);echo "\r\n";
+            return $this->$name; 
         }
-        elseif ($name = 'Object'){ return false; }
+        else
+        {
+            throw new Exception("Property $name not defined");
+                return null;
+        }
+        /*elseif ($name = 'Object'){ return false; }
         else
         {
             trigger_error("<i>$name</i> is not a relationship or a or property of <i>".get_class($this).'</i>', E_USER_ERROR); 
-        }
+        }*/
 
 
     }
@@ -447,13 +458,6 @@ class AR implements SeekableIterator # basic AR class
         return $result;
     }
 
-    protected function dirty()
-    {
-        $this->dirty = true;
-        #don't do any of this. It kills an update loop.
-        #$this->results = null;$this->offset = 0;$this->count = 1;
-    }
-
     public function update_attributes($collection = null, $with_value_changes = false)
     {
         if (!$collection ) # if no row is passed then set the current row in results
@@ -462,12 +466,13 @@ class AR implements SeekableIterator # basic AR class
             {
                 $collection = $this->results->fetchRow();
                 $with_value_changes = false;
+                $this->dirty = false;
             }
         }
         else
         {
             #this object's data is dirty because it is coming from a collection
-                $this->dirty();
+                $this->dirty = true;
                 $with_value_changes = true;
         }
 
@@ -501,7 +506,7 @@ class AR implements SeekableIterator # basic AR class
         {
             foreach ($this->schema_definition as $attribute => $meta_data)
             {
-                unset($this->$attribute);
+                $this->$attribute = null;
             }
         }
     }

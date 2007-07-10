@@ -13,7 +13,7 @@ function render_content()
     #print_r(App::$route);die();
 
     global $view_parameters; if($view_parameters) { foreach ($view_parameters as $variable => $value) { $$variable = $value; } }
-    if (App::$controller->action_rendered_inline)
+    if (isset(App::$controller->action_rendered_inline) && App::$controller->action_rendered_inline)
     {
         echo App::$render_contents; #dump the action rendered content
     }

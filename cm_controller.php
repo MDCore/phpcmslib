@@ -324,7 +324,7 @@ class cm_controller extends action_controller
             $sql_delete .= ");";
     
         # delete records
-            $ign = $model_object->delete($sql_delete);
+            $ign = $this->model_object->delete($sql_delete);
 
         #set message
             if ($records_deleted != 1) {$flash = proper_nounize(pluralize($this->list_type));} else {$flash = proper_nounize($this->list_type);}
@@ -354,7 +354,7 @@ class cm_controller extends action_controller
 
     public function cm_list()
     {
-        $page_title = $this->page_title;
+        if (isset($this->page_title)) { $page_title = $this->page_title; }
 
         # the list title
         ?> <h2><?=$this->list_title;?><?=stripslashes($this->foreign_key_title);?></h2><?
@@ -363,13 +363,16 @@ class cm_controller extends action_controller
             $this->list_fields = split_aliased_string($this->list_fields);
 
         #setup paging
-            if (isset($_GET['start'])) {
+            if (isset($_GET['start'])) 
+            {
                 $this->start_limit = $_GET['start'];
-            } else {
+            }
+            else
+            {
                 $this->start_limit = 0;
             }
-            $this->paging_back = $this->start_limit - $this->limit;
-            $this->paging_next = $this->start_limit + $this->limit;
+            $this->paging_back = $this->start_limit;# - $this->limit; /* todo what the hell does this do ??? */
+            $this->paging_next = $this->start_limit;# + $this->limit;
 
             if ($this->allow_filters && $this->has_filters)
             {
@@ -381,7 +384,7 @@ class cm_controller extends action_controller
         
         $list_sql = explode_sql($this->sql_query);
         
-        if ($list_sql['WHERE'] == '') {$list_sql['WHERE'] = 'WHERE 1=1';}
+        if (!isset($list_sql['WHERE']) || $list_sql['WHERE'] == '') {$list_sql['WHERE'] = 'WHERE 1=1';}
         foreach ($this->foreign_keys as $key => $value) {
             $list_sql['WHERE'] .= " AND $key='$value'";
         }
@@ -427,10 +430,10 @@ class cm_controller extends action_controller
         
         #turn the array into a string
 
-        if ( $this->debug ) { print_r ( $list_sql ); }
+        if (isset($this->debug) && $this->debug ) { print_r ( $list_sql ); }
             $results_query = implode_sql($list_sql);
 
-        if ( $this->debug ) { debug ( $results_query ); }
+        if (isset($this->debug) && $this->debug ) { debug ( $results_query ); }
         $AR = new AR;
         $results_list = $AR->db->query($results_query." limit ". $this->start_limit.', '.$this->row_limit);
         #error check
@@ -466,7 +469,7 @@ class cm_controller extends action_controller
         ?><thead><tr><?
         if ($this->show_delete) {?><td><input type="checkbox" id="delete_all" name="delete_all" onclick="select_all_rows();" value="on" /></td><?}
         if (!($this->show_delete) && $this->allow_edit) { ?><th>&nbsp;</th><? }
-        if (!($this->show_delete) && $this->allow_view) { ?><th>&nbsp;</th><? }
+        if (!isset($this->show_delete) || !($this->show_delete) && $this->allow_view) { ?><th>&nbsp;</th><? }
         if ($this->related_pages && sizeof($this->related_pages) > 0)
         {
             foreach ($this->related_pages as $related_page) { ?><th>&nbsp;</th><? } 
@@ -568,7 +571,7 @@ class cm_controller extends action_controller
     public function list_paging($num_rows)
     {
 
-        if ($num_rows <= $this->row_limit) {return;}
+        if ($num_rows <= $this->row_limit) {return false;}
         ?><table align="center" width="50%">
         <tr><td align="left"><?
         if ($this->paging_back >= 0)
@@ -605,11 +608,11 @@ class cm_controller extends action_controller
     {
         /* this whole filter button thing is an enormous hack. todo is fix draw_filters() */
 
-        ?><span class="button" id="bt_show_filters" <? if ($this->filter_object->has_filter_values) { echo 'action="h"'; }
+        ?><span class="button" id="bt_show_filters" <? if (isset($this->filter_object->has_filter_values) && $this->filter_object->has_filter_values) { echo 'action="h"'; }
 ?> onclick="
 $('#filters').slideToggle('slow');
 if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $(this).html('Hide filters'); }
-        "><? if (!$this->filter_object->has_filter_values) {
+        "><? if ( !isset($this->filter_object->has_filter_values) || !$this->filter_object->has_filter_values) {
             ?>Show filters</span><div id="filters" style="display: none"><? } else { ?> Hide filters</span><div id="filters" style="display: block"><? } ?>
     <form id="frm_filter" method="get"><? echo page_parameters('/^filter/,/^start$/', false, 'hidden');
             ?><table><tr><?
@@ -710,7 +713,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
 
     public function check_for_print()
     {
-        if ($_GET['print'] == 'y') { $this->layout = 'print'; }
+        if (isset($_GET['print']) && $_GET['print'] == 'y') { $this->layout = 'print'; }
         define('PRINTING_MODE', true); #hackety hack hack ? 
     }
 

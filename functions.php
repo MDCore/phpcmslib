@@ -199,8 +199,8 @@ function url_to($path)
     $url = App::$env->url;
 
     if (is_array($path)) { $target = $path; } else { $target = build_route($path); }
-    if (!$target['face']) { $target['face'] = App::$default_face; }
-    if (!$target['controller']) { $target['controller'] = App::$controller->controller_name; }
+    if (!isset($target['face'])) { $target['face'] = App::$default_face; }
+    if (!isset($target['controller'])) { $target['controller'] = App::$controller->controller_name; }
     $target['controller'] = str_replace('_controller', '', $target['controller']);
 
     #echo "<!--";print_r($target);echo "-->";
@@ -219,7 +219,7 @@ function url_to($path)
         $url .= $target['controller']; 
 
     #no specified action?  let the controller decide
-        if ($target['action'] != '') { $url .= '/'.$target['action']; }
+        if (isset($target['action']) && $target['action'] != '') { $url .= '/'.$target['action']; }
 
     return $url;
 }
