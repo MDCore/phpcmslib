@@ -123,10 +123,16 @@ class action_controller
                 App::$controller->$action_name();
             }
         }
+        else
+        {
+            #raise an exception!
+        }
 
     }
 
-    /* this method essentialy means: don't try and load a view file, I'm rendering all the content inside this method */
+    /*
+     *  this method essentialy means: don't try and load a view file, I'm rendering all the content inside this method
+     */
     function render_inline() { $this->action_rendered_inline = true; }
 
     function __construct()
