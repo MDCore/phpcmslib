@@ -112,8 +112,14 @@ class AR implements SeekableIterator # basic AR class
         if (substr($method_name, 0, 8) == 'find_by_')
         {
             $find_by = substr($method_name, 8);
-            $this->find("WHERE $find_by = '$params[0]'"); #todo expand this to multiple params
+            return $this->find("WHERE $find_by = '$params[0]'"); #todo expand this to multiple params
         }
+        else
+        {
+            throw new Exception("Method $method_name not defined");
+                return null;
+        }
+            
     }
 
     function __get($name)
@@ -147,15 +153,13 @@ class AR implements SeekableIterator # basic AR class
         {
             trigger_error("<i>$name</i> is not a relationship or a or property of <i>".get_class($this).'</i>', E_USER_ERROR); 
         }*/
-
-
     }
+
     /*
-     *    create a new record. analogous to ROR new method
+     *    create a new record. analogous to ROR new method. A shortcut for clear_attributes
      */
     function create()
     {
-        $this->new_record = true;
         $this->clear_attributes();
     }
 
@@ -311,17 +315,27 @@ class AR implements SeekableIterator # basic AR class
         return false;
     }
 
-    function delete($criteria)
+    function delete($criteria = null)
     {
-        $sql_criteria = $this->criteria_to_sql($criteria);
+        if ($criteria)
+        {
+            $sql_criteria = $this->criteria_to_sql($criteria);
+        }
+        elseif ($this->count > 0)
+        {
+            $sql_criteria = ' WHERE '.$this->primary_table.'.'.$this->primary_key_field.' = '.$this->{$this->primary_key_field};
+        }
+        else
+        {
+            return false;
+        }
 
         #mark deleted in changelog
-            if ($this->has_changelog){ $this->delete_changelog($save_type, $record_id, $collection);}
-
+            #if ($this->has_changelog){ $this->delete_changelog($save_type, $record_id, $collection);}
 
         $sql = "DELETE FROM ".$this->primary_table.' '.$sql_criteria;
         #debug($sql);
-        $this->delete_by_sql($sql);
+        return $this->delete_by_sql($sql);
     }
 
     /*
@@ -500,7 +514,7 @@ class AR implements SeekableIterator # basic AR class
         }
     }
 
-    function clear_attributes()
+    public function clear_attributes()
     {
         if (isset($this->schema_definition))
         {
@@ -508,6 +522,7 @@ class AR implements SeekableIterator # basic AR class
             {
                 $this->$attribute = null;
             }
+            $this->dirty = false;
         }
     }
 
@@ -689,7 +704,9 @@ class AR implements SeekableIterator # basic AR class
         if (PEAR::isError($result) || MDB2::isError($result)) {
             if ($die_on_error)
             {
-                die('<pre>'.$result->getMessage().' - '.$result->getUserinfo()).'</pre>';
+                #die('<pre>'.$result->getMessage().' - '.$result->getUserinfo()).'</pre>';
+                throw new Exception($result->getMessage().' - '.$result->getUserinfo());
+                return null;
             }
             else
             {

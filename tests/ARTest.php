@@ -98,40 +98,13 @@ class ARTest extends PHPUnit_Framework_TestCase {
      * test stuff that happens on construction
      */
 
-    public function test_bad_attributes()
-    {
-        $customer = new customer;
-        try
-        {
-           $foo = $customer->ASDASDASD;
-        }
-        catch(Exception $e)
-        {
-            return;
-        }
-
-        $this->fail('An exception was not raised');
-    }
-
-    public function test_construction()
-    {
-        $this->markTestIncomplete();
-    }
-
-    public function test_init_with_collection_sets_dirty()
+    public function test_dirty_property()
     {
         $collection = array('name' => 'test_init_with_collection_sets_dirty');
         $customer = new customer($collection);
-        $this->assertEquals(true, $customer->dirty, 'dirty not being set to true');
-    }
-
-    public function test_find_after_setting_dirty_sets_to_false()
-    {
-        $collection = array('name' => 'test_init_with_collection_sets_dirty');
-        $customer = new customer($collection);
+        $this->assertTrue($customer->dirty, 'dirty not being set to true');
         $customer->find(1);
-        $this->assertEquals(false, $customer->dirty, 'dirty not false after find');
-        #$this->fail('this is not working for some strange reason');
+        $this->assertFalse($customer->dirty, 'dirty not false after find');
     }
 
     public function testConnect_to_db() {
@@ -152,62 +125,103 @@ class ARTest extends PHPUnit_Framework_TestCase {
     }
 
     /**
-     * @todo Implement test__call().
+     * test __call().
      */
-    public function test__call() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+    public function test_bad_method_call()
+    {
+        $customer = new customer;
+        try
+        {
+           $foo = $customer->ASDASDASD();
+        }
+        catch(Exception $e)
+        {
+            return;
+        }
+
+        $this->fail('An exception was not raised');
+    }
+
+    public function test_single_finder()
+    {
+        $customer = new customer;
+        $this->assertTrue($customer->find_by_id(1));
+        $this->assertTrue($customer->name = 'cust 1');
+        
+        $test = new customer;
+        $this->assertTrue($test->find_by_name('cust 1'));
+        $this->assertTrue($test->id = 1);
+    }
+
+    public function test_single_finder_bad_data()
+    {
+        $customer = new customer;
+        $this->assertFalse($customer->find_by_id(999));
+        $this->assertEquals(0, $customer->count);
+    }
+
+    public function test_multiple_finder()
+    {
+        $customer = new customer;
+        $this->assertTrue($customer->find_by_id_and_name(1, 'cust 1'));
+        $this->assertTrue($customer->id == 1);
+        $this->assertTrue($customer->name == 'cust 1');
+    }
+
+    public function test_multiple_finder_bad_data()
+    {
+        $customer = new customer;
+        $this->assertFalse($customer->find_by_id_and_name(999, 'bob'));
+        $this->assertEquals(0, $customer->count);
     }
 
     /**
-     * @todo Implement test__get().
+     * test __get().
      */
-    public function test__get() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+    public function test_bad_attributes()
+    {
+        $customer = new customer;
+        try
+        {
+           $foo = $customer->ASDASDASD;
+        }
+        catch(Exception $e)
+        {
+            return;
+        }
+
+        $this->fail('An exception was not raised');
+    }
+    public function test_follow_relationships()
+    {
+        $this->markTestIncomplete();
     }
 
     /**
      * @todo Implement testCreate().
      */
-    public function testCreate() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-
-    /* 
-     * finder tests
-     */
-
-    public function test_find_returns_expected_values()
+    public function testCreate()
     {
-        $customer = new customer;
-        $this->assertTrue($customer->find(1), 'Record 1 not found');
-        $this->assertFalse($customer->find(999), 'Record 999 was found');
-
-        $customer->find(1);
-        $this->assertEquals(1, $customer->id, 'record id not equal to one found');
-
-        $customer->find(999);
-        $this->assertEquals(null, $customer->id,' bad record still has an id');
+        #see testClearAttributes
     }
-
 
     /* 
      * save tests
      */
     public function test_save_from_collection() {
-        $this->markTestIncomplete();
-    }
+        $collection = array('name' => 'new name');
+        $customer = new customer($collection);
+        $this->assertEquals(2, $customer->save());
 
-    public function test_save_does_not_overwrite_id() {
-        $this->markTestIncomplete();
+    }
+    public function test_save_cannot_set_id()
+    {
+        $collection = array('id' => 80, 'name' => 'new name');
+        $customer = new customer($collection);
+        $this->assertNotEquals(80, $customer->save());
+
+        $test = new customer; $test->find(3);
+        $this->assertEquals('new name', $test->name);
     }
 
     public function test_save_with_changelog_adds_to_changelog()
@@ -257,9 +271,32 @@ class ARTest extends PHPUnit_Framework_TestCase {
     /*
      * delete tests
     */
-    public function test_delete()
+    public function test_delete_without_criteria()
     {
-        $this->markTestIncomplete();
+        $customer = new customer;
+        $customer->find(1);
+        $this->AssertTrue($customer->delete());
+        $customer = null;
+
+        $test = new customer;
+        $this->assertFalse($test->find(1));
+    }
+
+    public function test_delete_with_criteria()
+    {
+        $customer = new customer;$customer->find(1);
+        $this->AssertTrue($customer->delete('WHERE id=1'));
+    }
+    public function test_delete_with_bad_criteria()
+    {
+        $customer = new customer;$customer->find(1);
+        $this->AssertFalse($customer->delete('WHERE id=999'), 'This method must return false if no records were affected');
+    }
+
+    public function test_delete_on_empty()
+    {
+        $customer = new customer;
+        $this->AssertFalse($customer->delete());
     }
 
     public function test_delete_with_changelog_marks_as_deleted() {
@@ -286,7 +323,17 @@ class ARTest extends PHPUnit_Framework_TestCase {
      */
     public function test_AR_disallows_changing_id()
     {
-        $this->markTestIncomplete();
+        $customer = new customer;$customer->find(1);
+        try
+        {
+            $customer->id = 2;
+        }
+        catch(Exception $e)
+        {
+            return;
+        }
+
+        $this->fail('An exception was not raised');
     }
 
     public function testWrite_value_changes() {
@@ -307,10 +354,18 @@ class ARTest extends PHPUnit_Framework_TestCase {
      * @todo Implement testClear_attributes().
      */
     public function testClear_attributes() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+        $customer = new customer;
+        $customer->find(1);
+        $customer->clear_attributes();
+        $this->assertNotEquals(1, $customer->id); 
+        $customer_table = null;
+
+        $collection = array('name' => 'new name');
+        $c2 = new customer($collection);
+        $c2->clear_attributes();
+        $this->assertFalse($c2->dirty, 'this method must set dirty to false');
+        $this->assertNotEquals('new name', $customer->name);
+        $c2 = null;
     }
 
     /**
