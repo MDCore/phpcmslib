@@ -189,9 +189,9 @@ class ARTest extends PHPUnit_Framework_TestCase {
         {
             return;
         }
-
         $this->fail('An exception was not raised');
     }
+
     public function test_follow_relationships()
     {
         $this->markTestIncomplete();

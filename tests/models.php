@@ -14,6 +14,15 @@ class customer extends AR
     }
 }
 
+class product extends AR
+{
+    public $has_one = "category";
+}
+class category extends AR
+{
+    public $belongs_to = "product";
+}
+
 class model_without_schema_def extends AR
 {
 }
@@ -36,6 +45,41 @@ class App
     }
     
     static $schema_definition = array(
+    'product' => Array(
+	'id' => Array(
+		'type' => 'int',
+		'mdb2type' => 'integer',
+		'length' => '4',
+		'default' => ''
+	),
+	'category_id' => Array(
+		'type' => 'int',
+		'mdb2type' => 'integer',
+		'length' => '4',
+		'default' => ''
+	),
+	'name' => Array(
+		'type' => 'varchar',
+		'mdb2type' => 'text',
+		'length' => '255',
+		'default' => ''
+            ),
+        ),
+    'category' => Array(
+	'id' => Array(
+		'type' => 'int',
+		'mdb2type' => 'integer',
+		'length' => '4',
+		'default' => ''
+	),
+	'name' => Array(
+		'type' => 'varchar',
+		'mdb2type' => 'text',
+		'length' => '255',
+		'default' => ''
+            ),
+        ),
+
     'customer' => Array(
 	'id' => Array(
 		'type' => 'int',
