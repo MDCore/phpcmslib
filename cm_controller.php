@@ -72,11 +72,11 @@ class cm_controller extends action_controller
             else
             {
                 #using a custom sql query
-                if (strpos($this->sql_query, '__pk__', 0) == null) #todo automate this requirement i.e. have it put in automagically if it does not exist
+                /*if (strpos($this->sql_query, '__pk__', 0) == null) #todo automate this requirement i.e. have it put in automagically if it does not exist
                 {
                     die('<strong>Fatal Error</strong>: Custom SQL query does not have Primary Key definition (__pk__)');
                 }
-                $this->sql_query = str_replace('__pk__', $sql_pk, $this->sql_query );
+                 */
             }
 
         if ( isset( $this->view_page ) )
@@ -106,7 +106,7 @@ class cm_controller extends action_controller
             if (!isset($this->foreign_key_title_prefix)) {$this->foreign_key_title_prefix = ' in ';}
             if (isset($_GET['fk_t'])) {$fk_t= $_GET['fk_t']; $this->foreign_key_title = $this->foreign_key_title_prefix.$fk_t; } else {$this->foreign_key_title = '';}
 
-            #changes for print mode
+        #changes for print mode
             if (defined('PRINTING_MODE'))
             {
                 $this->allow_filters = false;
@@ -134,7 +134,7 @@ class cm_controller extends action_controller
             switch ($page)
             {
             case 'list':
-                $this->cm_list();
+                if (method_exists('_list', $this)) { $this->_list(); } else { $this->cm_list(); }
                 #require the additional scripts #todo remove this.. possibly redundant with controllers / actions
                     if (isset($this->additional_scripts))
                     {
@@ -371,8 +371,8 @@ class cm_controller extends action_controller
             {
                 $this->start_limit = 0;
             }
-            $this->paging_back = $this->start_limit;# - $this->limit; /* todo what the hell does this do ??? */
-            $this->paging_next = $this->start_limit;# + $this->limit;
+            $this->paging_back = $this->start_limit - $this->row_limit;
+            $this->paging_next = $this->start_limit + $this->row_limit;
 
             if ($this->allow_filters && $this->has_filters)
             {
@@ -382,7 +382,7 @@ class cm_controller extends action_controller
 
     #---------query, sql_query, sql query ---------------------------------------#
         
-        $list_sql = explode_sql($this->sql_query);
+        if (!is_array($this->sql_query)) {$list_sql = explode_sql($this->sql_query);} else {$list_sql = $this->sql_query;}
         
         if (!isset($list_sql['WHERE']) || $list_sql['WHERE'] == '') {$list_sql['WHERE'] = 'WHERE 1=1';}
         foreach ($this->foreign_keys as $key => $value) {
@@ -432,6 +432,8 @@ class cm_controller extends action_controller
 
         if (isset($this->debug) && $this->debug ) { print_r ( $list_sql ); }
             $results_query = implode_sql($list_sql);
+            $sql_pk = $this->primary_table.".".$this->primary_key_field." as __pk_field";
+            $results_query = str_replace( '__pk__', $sql_pk, $results_query );
 
         if (isset($this->debug) && $this->debug ) { debug ( $results_query ); }
         $AR = new AR;
