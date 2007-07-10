@@ -12,7 +12,7 @@ class schema_interregator
 
             $model_name = str_replace('.php', '', $model_name);
             $model_object = new $model_name;
-            if (!$model_object->virtual)
+            if (!isset($model_object->virtual))
             {
                 $model_object->connect_to_db();
                 #load the appropriate mdb2 modules
