@@ -116,7 +116,7 @@ class filter
                 if ($lnk_model)
                 {
                     $lnk_model_object = new $lnk_model;
-                    $lnk_model_table = $lnk_model_object->primary_table;
+                    $lnk_model_table = $lnk_model_object->schema_table;
                     
                     #meet up with the link table, dog
                     $filter_field = $lnk_model_table.'.'.foreign_keyize(singularize($name));

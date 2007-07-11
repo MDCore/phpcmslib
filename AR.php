@@ -59,26 +59,26 @@ class AR implements SeekableIterator # basic AR class
         if (!isset($this->primary_key_field)) {$this->primary_key_field = 'id';}
         
         #set the primary table, checking first if this model is a changelog
-        if (!isset($this->primary_table)) {
+        if (!isset($this->schema_table)) {
             $changelog_pos = strpos($this->model, '_changelog');
             if ($changelog_pos > 0)
             {
-                #check if the parent model has a primary_table and use it instead of inferring the table name from the parent model name
+                #check if the parent model has a schema_table and use it instead of inferring the table name from the parent model name
                     $parent_model = substr($this->model, 0, $changelog_pos);
                     $parent_model = new $parent_model;
-                    if (isset($parent_model->primary_table))
+                    if (isset($parent_model->schema_table))
                     {
-                        $this->primary_table = $parent_model->primary_table.'_changelog'; 
+                        $this->schema_table = $parent_model->schema_table.'_changelog'; 
                     } 
                     else
                     {
-                        $this->primary_table = tableize(pluralize(substr($this->model, 0, $changelog_pos))).'_changelog';
+                        $this->schema_table = tableize(pluralize(substr($this->model, 0, $changelog_pos))).'_changelog';
                     }
                     unset($parent_model);
             }
             else
             {
-                $this->primary_table = tableize(pluralize($this->model));
+                $this->schema_table = tableize(pluralize($this->model));
             }
         }
 
@@ -142,6 +142,12 @@ class AR implements SeekableIterator # basic AR class
         {
             #echo "\r\nreturning $name with value ";var_dump($this->$name);echo "\r\n";
             return $this->$name; 
+        }
+            #deprecated stuffs
+        elseif ($name == 'schema_table' && isset($this->schema_table))
+        {
+            trigger_error('<i>schema_table</i> is deprecated; use <i>schema_table</i>', E_USER_WARNING); 
+            return $this->schema_table;
         }
         else
         {
@@ -232,12 +238,12 @@ class AR implements SeekableIterator # basic AR class
     private function save_core($collection)
     {
         $fields = implode(',', array_keys($collection)); $values = "'".implode("','", array_values($collection))."'";
-        $sql = "INSERT INTO ".$this->primary_table." ($fields) VALUES ($values)";
+        $sql = "INSERT INTO ".$this->schema_table." ($fields) VALUES ($values)";
         #debug ( $sql );die();
         $save = $this->db->query($sql);$this->error_check($save);
         
         #get the key of the new record
-            $record_id = $this->db->lastInsertID($this->primary_table,$this->primary_key_field);
+            $record_id = $this->db->lastInsertID($this->schema_table,$this->primary_key_field);
         return $record_id;
     }
 
@@ -250,7 +256,7 @@ class AR implements SeekableIterator # basic AR class
            }
 
            $update_sql = implode_with_keys(',', $collection, "");
-           $sql = 'UPDATE '.$this->primary_table." SET $update_sql WHERE ".$this->primary_key_field."=".$this->{$this->primary_key_field};
+           $sql = 'UPDATE '.$this->schema_table." SET $update_sql WHERE ".$this->primary_key_field."=".$this->{$this->primary_key_field};
            #debug($sql);
            $update = $this->db->query($sql);$this->error_check($update);
            return $this->{$this->primary_key_field};
@@ -323,7 +329,7 @@ class AR implements SeekableIterator # basic AR class
         }
         elseif ($this->count > 0)
         {
-            $sql_criteria = ' WHERE '.$this->primary_table.'.'.$this->primary_key_field.' = '.$this->{$this->primary_key_field};
+            $sql_criteria = ' WHERE '.$this->schema_table.'.'.$this->primary_key_field.' = '.$this->{$this->primary_key_field};
         }
         else
         {
@@ -333,7 +339,7 @@ class AR implements SeekableIterator # basic AR class
         #mark deleted in changelog
             #if ($this->has_changelog){ $this->delete_changelog($save_type, $record_id, $collection);}
 
-        $sql = "DELETE FROM ".$this->primary_table.' '.$sql_criteria;
+        $sql = "DELETE FROM ".$this->schema_table.' '.$sql_criteria;
         #debug($sql);
         return $this->delete_by_sql($sql);
     }
@@ -343,7 +349,7 @@ class AR implements SeekableIterator # basic AR class
      */
     function delete_changelog($criteria)
     {
-        #$sql = "SELECT * FROM ".$this->primary_table."_changelog ".$criteria;
+        #$sql = "SELECT * FROM ".$this->schema_table."_changelog ".$criteria;
         #$delete_object = new ; #the changelog version of this object
         #$delete_object->db
         return true;
@@ -358,7 +364,7 @@ class AR implements SeekableIterator # basic AR class
     {
 
          #get the highest revision id
-                 $sql = "SELECT MAX(revision) as rev_id, MAX(created_on) as created_on FROM ".$this->primary_table."_changelog WHERE ".$this->model.'_id'." = '".$record_id."'";
+                 $sql = "SELECT MAX(revision) as rev_id, MAX(created_on) as created_on FROM ".$this->schema_table."_changelog WHERE ".$this->model.'_id'." = '".$record_id."'";
                  #debug($sql);
                  $rev_result = $this->db->query($sql);$this->error_check($rev_result);
                  if ($rev_result)
@@ -389,7 +395,7 @@ class AR implements SeekableIterator # basic AR class
             $changelog->save();
         /*
          * $fields = implode(',', array_keys($collection)); $values = "'".implode("','", array_values($collection))."'";
-        $sql = "INSERT INTO ".$this->primary_table."_changelog ($fields) VALUES ($values)";
+        $sql = "INSERT INTO ".$this->schema_table."_changelog ($fields) VALUES ($values)";
         #debug ( $sql );
         $save = $this->db->query($sql);$this->error_check($save);
          */
@@ -466,7 +472,7 @@ class AR implements SeekableIterator # basic AR class
         #echo 'criteria';debug($criteria);
         $sql_criteria = $this->criteria_to_sql($criteria);
         #echo 'sql_criteria'; debug($sql_criteria);
-        $sql = "SELECT * FROM ".$this->primary_table.' '.$sql_criteria;
+        $sql = "SELECT * FROM ".$this->schema_table.' '.$sql_criteria;
         #debug($sql);
         $result = $this->find_by_sql($sql);
         return $result;
@@ -531,7 +537,7 @@ class AR implements SeekableIterator # basic AR class
         if (!$field) {$field = $this->display_field;}
         $result = Array();
        #todo lose the criteria and the custom sql. use finders and iterators 
-        $sql = "SELECT *, ".$this->primary_table.'.' .$this->primary_key_field." as __pk_field FROM ".$this->primary_table;
+        $sql = "SELECT *, ".$this->schema_table.'.' .$this->primary_key_field." as __pk_field FROM ".$this->schema_table;
         if ($criteria) {$sql .= ' '.$criteria;}
         #debug($sql);
         $options = $this->db->query($sql);
@@ -661,7 +667,7 @@ class AR implements SeekableIterator # basic AR class
 
     function criteria_to_sql($criteria) #this method takes dynamic criteria and converts it to SQL 
     {
-        if (is_numeric($criteria)) {$sql_criteria = 'WHERE '.$this->primary_table.'.'.$this->primary_key_field.'='.$criteria;} #if passed a numeric value assume it's a Primary Key
+        if (is_numeric($criteria)) {$sql_criteria = 'WHERE '.$this->schema_table.'.'.$this->primary_key_field.'='.$criteria;} #if passed a numeric value assume it's a Primary Key
         elseif (is_string($criteria)) 
         {
             if (strtolower($criteria)== 'all') 
@@ -678,7 +684,7 @@ class AR implements SeekableIterator # basic AR class
             if (sizeof($criteria) > 0)
             {
                 #I assume we are passing an array of ID's
-                $sql_criteria = 'WHERE '.$this->primary_table.'.'.$this->primary_key_field.' in (';
+                $sql_criteria = 'WHERE '.$this->schema_table.'.'.$this->primary_key_field.' in (';
                 foreach ($criteria as $id)
                 {
                     $sql_criteria .= $id.',';

@@ -61,22 +61,17 @@ class cm_controller extends action_controller
             
         #pull certain variables from the model
             $this->primary_key_field = $this->model_object->primary_key_field;
-            $this->primary_table = $this->model_object->primary_table;
+            $this->schema_table = $this->model_object->schema_table;
             
         # setup the SQL query for the list page
-            $sql_pk = $this->primary_table.".".$this->primary_key_field." as __pk_field";
+            $sql_pk = $this->schema_table.".".$this->primary_key_field." as __pk_field";
             if (!isset($this->sql_query))
             {
-                $this->sql_query = "SELECT ".$this->primary_table.".*, $sql_pk FROM ".$this->primary_table;
+                $this->sql_query = "SELECT ".$this->schema_table.".*, $sql_pk FROM ".$this->schema_table;
             }
             else
             {
-                #using a custom sql query
-                /*if (strpos($this->sql_query, '__pk__', 0) == null) #todo automate this requirement i.e. have it put in automagically if it does not exist
-                {
-                    die('<strong>Fatal Error</strong>: Custom SQL query does not have Primary Key definition (__pk__)');
-                }
-                 */
+                #oh... um.. right then... well... ok.
             }
 
         if ( isset( $this->view_page ) )
@@ -167,7 +162,15 @@ class cm_controller extends action_controller
         if (!isset($related_page['fk'])) {$related_page['fk'] = foreign_keyize($this->list_type);}
         if (!isset($related_page['fk_title_field'])) {$related_page['fk_title_field'] = $this->model_object->display_field;}
         
-        ?><td class="action_link"><a href="<?=url_to(array('controller' => $related_page['controller']));?>?fk=<?=$related_page['fk'];?>~<?=$row->id?>&fk_t=<?=urlencode($row->$related_page['fk_title_field']);?>"><?=htmlentities(humanize($related_page['controller']));?></a></td><?
+        ?><td class="action_link"><a href="<?=url_to( array(
+            'controller' => $related_page['controller'],
+            'action'     => $related_page['action']
+        ));
+        ?>?fk=<?=$related_page['fk'];?>~<?=$row->id?>&fk_t=<?=urlencode($row->{$related_page['fk_title_field']});?>"><?
+
+        if (isset($related_page['title'])) { echo $related_page['title']; } else echo htmlentities(proper_nounize($related_page['controller']));
+
+        ?></a></td><?
 
     }
 
@@ -432,7 +435,7 @@ class cm_controller extends action_controller
 
         if (isset($this->debug) && $this->debug ) { print_r ( $list_sql ); }
             $results_query = implode_sql($list_sql);
-            $sql_pk = $this->primary_table.".".$this->primary_key_field." as __pk_field";
+            $sql_pk = $this->schema_table.".".$this->primary_key_field." as __pk_field";
             $results_query = str_replace( '__pk__', $sql_pk, $results_query );
 
         if (isset($this->debug) && $this->debug ) { debug ( $results_query ); }
@@ -532,6 +535,18 @@ class cm_controller extends action_controller
             }
 
             #related pages
+            /* a related page draws an extra action link in the list next to say, edit or delete like so:
+            *     [ edit ] [ delete ] [ related ]
+            *
+            *     This is the structure of a related page:
+            *           It is an array of arrays: each related page is a record in the primary array.
+            *           A single record is structured like so:
+            *                   title                   : the title of the related page. e.g. "related" would be the title in the example above. If this is not set then the target controller name will be used.
+            *                   controller              : the target controller, without _controller appended. E.g. Orders
+            *                   action                  : the target action. not required.
+            *                   fk                      : the foreign key name that the target controller is going to expect. the list page will append the primary key of this table.
+            *                   fk_title_field          : the name that will be passed to the target action as extra title text.
+            */                           
                 if ($this->related_pages && sizeof($this->related_pages) > 0)
                 {
                     foreach ($this->related_pages as $related_page ) { echo $this->related_page_anchor($related_page, $row); } 
@@ -644,7 +659,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
         ?><h2>Viewing a<?
         switch(strtolower(substr($this->list_type, 0, 1))) {case 'a': case 'e': case 'i': case 'o': case 'u': echo 'n';}
         ?> <?=humanize($this->list_type)?></h2><?
-        $sql = 'SELECT * FROM '.$this->primary_table.' WHERE '.$this->primary_key_field.' = '.$edit_id;
+        $sql = 'SELECT * FROM '.$this->schema_table.' WHERE '.$this->primary_key_field.' = '.$edit_id;
         $AR = new AR;
         $values = $AR->db->query($sql);AR::error_check($values);
         $values = $values->fetchRow();
@@ -662,7 +677,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
         ?><h2><?=$this->edit_page_title;?></h2><?
         ?><form method="post" enctype="multipart/form-data" action="<?=href_to(array('action' => 'update')).page_parameters('/^edit/')?>&edit_id=<?=$edit_id?>"><?
 
-        $sql = 'SELECT * FROM '.$this->primary_table.' WHERE '.$this->primary_key_field." = '".$edit_id."'";
+        $sql = 'SELECT * FROM '.$this->schema_table.' WHERE '.$this->primary_key_field." = '".$edit_id."'";
         $AR = new AR;
         $values = $AR->db->query($sql);AR::error_check($values);
         $values = $values->fetchRow();
