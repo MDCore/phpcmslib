@@ -3,6 +3,13 @@ require_once('string_helpers.php');
 require_once('form_helpers.php');
 
 define('MENU_PAGE_PARAMETERS_TO_SKIP', '/_id$/,/^sort/,/^filter_/,/^fk$/');
+$sql_phrases = array(
+    'SELECT'    => ', ',
+    'FROM'      => ', ',
+    'WHERE'     => ' ',
+    'GROUP BY'  => ', ',
+    'ORDER BY'  => ' '
+);
 
 #this method does a redirect with standard parameters stripped
 function redirect_with_parameters($url, $additional_parameters = '', $return_url = false)
@@ -17,24 +24,91 @@ function redirect_with_parameters($url, $additional_parameters = '', $return_url
         return $url;
     }
 }
-function implode_sql($sql_array)
+
+function SQL_merge($array_1, $array_2)
+{
+    $result = array();
+    global $sql_phrases;
+    foreach($sql_phrases as $phrase => $join_text)
+    {
+        foreach(array($array_1, $array_2) as $candidate)
+        {
+            #candidate
+                if (isset($candidate[$phrase])) 
+                {
+                    if (is_array($candidate[$phrase]))
+                    {
+                        if (is_array($result[$phrase])) 
+                        {
+                            $result[$phrase] = array_merge($result[$phrase], $candidate[$phrase]); 
+                        }
+                        else
+                        {
+                            $result[$phrase] = $candidate[$phrase];
+                        }
+                    }
+                    else
+                    {
+                        $result[$phrase][] = $candidate[$phrase]; 
+                    }
+                }
+        }
+    }
+    return $result;
+}
+
+function SQL_implode($sql_array, $prepend_phrases = true)
 {
     $result = ''; 
-    if ($sql_array['SELECT'] != '') { $result .= $sql_array['SELECT']. ' '; }
-    if ($sql_array['FROM'] != '') { $result .= $sql_array['FROM']. ' '; }
-    if ($sql_array['WHERE'] != '') { $result .= $sql_array['WHERE']. ' '; }
-    if ($sql_array['GROUP BY'] != '') { $result .= $sql_array['GROUP BY']. ' '; }
-    if ($sql_array['ORDER BY'] != '') { $result .= $sql_array['ORDER BY']. ' '; }
+    global $sql_phrases;
+    foreach($sql_phrases as $phrase => $join_text)
+    {
+        $this_phrase = '';
+        if ($sql_array[$phrase] != '') 
+        {
+            if (!is_array($sql_array[$phrase]))
+            {
+                if (substr(trim($sql_array[$phrase]), 0, strlen($phrase)) == $phrase) #are they appending the phrase ? e.g. passing WHERE in the string
+                {
+                   $sql_array[$phrase] = trim(substr(trim($sql_array[$phrase]), strlen($phrase)));
+                }
+                $this_phrase .= $sql_array[$phrase];
+            }
+            else
+            {
+                foreach ($sql_array[$phrase] as $item)
+                {
+                    $this_phrase .= trim($item).$join_text;
+                }
+                $this_phrase = substr($this_phrase, 0, strlen($this_phrase) - strlen($join_text));
+            }
+
+            $result .= ' ';
+            #some special cases where we want to tweak the phrase
+                switch ($phrase)
+                {
+                case 'WHERE':
+                    if (substr($this_phrase, 0, 4) == 'AND ') { $this_phrase = substr($this_phrase, 4); }
+                    break;
+                default:
+                }
+
+            #prepend the phrase, if asked for
+                if ($prepend_phrases) { $this_phrase = $phrase.' '.$this_phrase; };
+
+            $result .= $this_phrase;
+        }
+    }
     return trim($result);
 }
 
-function explode_sql($sql)
+function SQL_explode($sql)
 {
-    #todo - add subquery checks. I'll do this when I need a subquery split, thanks.
+    #todo - add subquery checks. I'll do this when I need a subquery split, thanks. and use a recursive function!
 
-    $result = Array();
+    $result = array();
     
-    $phrases = Array('ORDER BY', 'GROUP BY', 'WHERE', 'FROM', 'SELECT');
+    $phrases = array_reverse(split(SQL_PHRASES));
 
     foreach ($phrases as $phrase)
 

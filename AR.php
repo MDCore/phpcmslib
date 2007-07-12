@@ -112,7 +112,7 @@ class AR implements SeekableIterator # basic AR class
         if (substr($method_name, 0, 8) == 'find_by_')
         {
             $find_by = substr($method_name, 8);
-            return $this->find("WHERE $find_by = '$params[0]'"); #todo expand this to multiple params
+            return $this->find("$find_by = '$params[0]'", $params[1]); #todo expand this to multiple params
         }
         else
         {
@@ -125,28 +125,25 @@ class AR implements SeekableIterator # basic AR class
     function __get($name)
     {
         #relationships magic
-            #todo other relationships ?
-            if ($this->has_one($name))
-            {
-                $has_one = new $name;
-                $fk = foreign_keyize($name);
-                $has_one->find($this->$fk);
-                return $has_one;
-            }
-        #check for properties with this name
-        /*elseif (is_array($this->schema_definition) && in_array($name, array_keys($this->schema_definition)))
+        #todo other relationships ?
+        if ($this->has_one($name))
         {
-            return null;#it isn't set for some reason
-        }*/
+            if ($this->count == 0) { return false; }
+            $has_one = new $name;
+            $fk = foreign_keyize($name);
+            if (!$this->$fk) { return false; }
+            $has_one->find($this->$fk);
+            return $has_one;
+        }
         elseif (isset($this->$name)) 
         {
             #echo "\r\nreturning $name with value ";var_dump($this->$name);echo "\r\n";
             return $this->$name; 
         }
             #deprecated stuffs
-        elseif ($name == 'schema_table' && isset($this->schema_table))
+        elseif ($name == 'primary_table' && isset($this->schema_table))
         {
-            trigger_error('<i>schema_table</i> is deprecated; use <i>schema_table</i>', E_USER_WARNING); 
+            trigger_error('<i>primary_table</i> is deprecated; use <i>schema_table</i>', E_USER_WARNING); 
             return $this->schema_table;
         }
         else
@@ -467,14 +464,15 @@ class AR implements SeekableIterator # basic AR class
         }
     }
 
-    function find($criteria) 
+    function find($finder_criteria, $additional_sql_options = null) 
     {
-        #echo 'criteria';debug($criteria);
-        $sql_criteria = $this->criteria_to_sql($criteria);
-        #echo 'sql_criteria'; debug($sql_criteria);
-        $sql = "SELECT * FROM ".$this->schema_table.' '.$sql_criteria;
-        #debug($sql);
-        $result = $this->find_by_sql($sql);
+        $sql['SELECT']      = "*";
+        $sql['FROM']        = $this->schema_table;
+        $sql['WHERE']       = $this->criteria_to_sql($finder_criteria);
+
+        if ($additional_sql_options) { $sql = SQL_merge($sql, $additional_sql_options); }
+
+        $result = $this->find_by_sql(SQL_implode($sql));
         return $result;
     }
 
@@ -664,15 +662,15 @@ class AR implements SeekableIterator # basic AR class
 
             return true;
     }
-
+    
     function criteria_to_sql($criteria) #this method takes dynamic criteria and converts it to SQL 
     {
-        if (is_numeric($criteria)) {$sql_criteria = 'WHERE '.$this->schema_table.'.'.$this->primary_key_field.'='.$criteria;} #if passed a numeric value assume it's a Primary Key
+        if (is_numeric($criteria)) {$sql_criteria = $this->schema_table.'.'.$this->primary_key_field.'='.$criteria;} #if passed a numeric value assume it's a Primary Key
         elseif (is_string($criteria)) 
         {
             if (strtolower($criteria)== 'all') 
             {
-                $sql_criteria = ' WHERE 1=1';
+                $sql_criteria = '1=1';
             }
             else
             {
@@ -684,7 +682,7 @@ class AR implements SeekableIterator # basic AR class
             if (sizeof($criteria) > 0)
             {
                 #I assume we are passing an array of ID's
-                $sql_criteria = 'WHERE '.$this->schema_table.'.'.$this->primary_key_field.' in (';
+                $sql_criteria = $this->schema_table.'.'.$this->primary_key_field.' in (';
                 foreach ($criteria as $id)
                 {
                     $sql_criteria .= $id.',';
@@ -694,7 +692,7 @@ class AR implements SeekableIterator # basic AR class
             }
             else
             {
-                $sql_criteria = ' WHERE 1=2';
+                $sql_criteria = '1=2';
             }
         }
         return $sql_criteria;

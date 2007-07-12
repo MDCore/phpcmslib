@@ -396,9 +396,9 @@ class cm_controller extends action_controller
 
     #---------query, sql_query, sql query ---------------------------------------#
         
-        if (!is_array($this->sql_query)) {$list_sql = explode_sql($this->sql_query);} else {$list_sql = $this->sql_query;}
+        if (!is_array($this->sql_query)) {$list_sql = SQL_explode($this->sql_query);} else {$list_sql = $this->sql_query;}
         
-        if (!isset($list_sql['WHERE']) || $list_sql['WHERE'] == '') {$list_sql['WHERE'] = 'WHERE 1=1';}
+        if (!isset($list_sql['WHERE']) || $list_sql['WHERE'] == '') {$list_sql['WHERE'] = '1=1';}
         foreach ($this->foreign_keys as $key => $value) {
             $list_sql['WHERE'] .= " AND $key='$value'";
         }
@@ -445,7 +445,7 @@ class cm_controller extends action_controller
         #turn the array into a string
 
         if (isset($this->debug) && $this->debug ) { print_r ( $list_sql ); }
-            $results_query = implode_sql($list_sql);
+            $results_query = SQL_implode($list_sql);
             $sql_pk = $this->schema_table.".".$this->primary_key_field." as __pk_field";
             $results_query = str_replace( '__pk__', $sql_pk, $results_query );
 
