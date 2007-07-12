@@ -5,6 +5,7 @@ class action_controller
     public $layout = null;
     public $face = "site";
     public $virtual = false;
+    public $rendered_content = null;
 
     public $before_action_filter = null, $after_action_filter = null;
     public $before_controller_load_filter = null, $before_controller_execute_filter = null, $after_controller_filter = null;
@@ -30,7 +31,7 @@ class action_controller
          *  since we may want to switch controllers
          */
 
-        if ($controller == null) {$controller = App::$controller; }
+        if ($controller == null) {$controller = $this; }
         
         $only = $except = null;
 
@@ -82,12 +83,46 @@ class action_controller
         }
     }
 
+    public function render()
+    {
+        if (isset($this->layout)  && $this->layout)
+        {
+            $this->render_layout();
+        }
+        else
+        {
+            $this->render_content(); #no layout to call render_content for itself.. so this effectively means "render without a layout"
+        }
+    }
+
+    function render_content()
+    {
+        if (isset($this->action_rendered_inline) && $this->action_rendered_inline)
+        {
+            echo $this->render_contents; #dump the action rendered content
+        }
+        else #render the view file
+        {
+            $this->render_view();
+        }
+    }
+
+    function render_layout()
+    {
+        if ($this->view_parameters) {foreach ($this->view_parameters as $variable => $value) { $$variable = $value; } }
+
+        if ($layout_path = App::require_this('layout', $this->layout)) { require ($layout_path); }
+
+    }
+
     function render_view($view_name = null)
     {
         if (!$view_name) { $view_name = App::$route['action']; }
         global $path_to_root;
+        
         # set up the view_parameters
-            global $view_parameters; if ($view_parameters) {foreach ($view_parameters as $variable => $value) { $$variable = $value; } }
+            if ($this->view_parameters) {foreach ($this->view_parameters as $variable => $value) { $$variable = $value; } }
+
         $view_url = $path_to_root."/".$this->face."/views/".$this->controller_name."/$view_name.php";
         #debug($view_url);
         require ($view_url);
@@ -106,7 +141,7 @@ class action_controller
     function execute_action($action_name = null)
     {
         if (!$action_name) { $action_name = App::$route['action']; }
-        if (method_exists(App::$controller, $action_name) || method_exists(App::$controller, '__call'))
+        if (method_exists($this, $action_name) || method_exists($this, '__call'))
         {
             # check for ajax requests, and automatically set render_inline and layout = null
             if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
@@ -116,11 +151,11 @@ class action_controller
             #debug('execute_action');
             if (isset(App::$route['id']) && App::$route['id'])
             {
-                App::$controller->$action_name(App::$route['id']);
+                $this->$action_name(App::$route['id']);
             }
             else
             {
-                App::$controller->$action_name();
+                $this->$action_name();
             }
         }
         else

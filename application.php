@@ -125,8 +125,8 @@ class Application
         if (isset($_SESSION[APP_NAME]['application'][$type_name]) && in_array($name.'.php', array_keys($_SESSION[APP_NAME]['application'][$type_name])))
         {
             #echo '<pre>';print_r($_SESSION[APP_NAME]['application'][$type_name][$name.'.php']);echo '</pre>';
-            require($_SESSION[APP_NAME]['application'][$type_name][$name.'.php']);
-            return true;
+            $file_to_require = $_SESSION[APP_NAME]['application'][$type_name][$name.'.php'];
+            return $file_to_require;
         }
         else
         {

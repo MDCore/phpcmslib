@@ -158,15 +158,26 @@ class cm_controller extends action_controller
     
     function related_page_anchor($related_page, $row)
     {
-        $related_page['controller'] = $related_page[0];
-        if (!isset($related_page['fk'])) {$related_page['fk'] = foreign_keyize($this->list_type);}
-        if (!isset($related_page['fk_title_field'])) {$related_page['fk_title_field'] = $this->model_object->display_field;}
+        if (!isset($related_page['controller'])) {$related_page['controller'] = $related_page[0];}
+        #if (!isset($related_page['fk'])) {$related_page['fk'] = foreign_keyize($this->list_type);}
+        #if (!isset($related_page['fk_title_field'])) {$related_page['fk_title_field'] = $this->model_object->display_field;}
         
-        ?><td class="action_link"><a href="<?=url_to( array(
+        $target = array(
             'controller' => $related_page['controller'],
             'action'     => $related_page['action']
-        ));
-        ?>?fk=<?=$related_page['fk'];?>~<?=$row->id?>&fk_t=<?=urlencode($row->{$related_page['fk_title_field']});?>"><?
+        );
+        if (isset($related_page['id'])) { $target['id'] = $row->{$related_page['id']}; }
+        ?><td class="action_link"><a href="<?echo url_to($target);
+
+        if (isset($related_page['fk']))
+        {
+            ?>?fk=<?=$related_page['fk'];?>~<? echo $row->id;
+            if (isset($related_page['fk_title_field']))
+            {
+                ?>&amp;fk_t=<?=urlencode($row->{$related_page['fk_title_field']});
+            }
+        }
+        ?>"><?
 
         if (isset($related_page['title'])) { echo $related_page['title']; } else echo htmlentities(proper_nounize($related_page['controller']));
 
@@ -542,10 +553,11 @@ class cm_controller extends action_controller
             *           It is an array of arrays: each related page is a record in the primary array.
             *           A single record is structured like so:
             *                   title                   : the title of the related page. e.g. "related" would be the title in the example above. If this is not set then the target controller name will be used.
-            *                   controller              : the target controller, without _controller appended. E.g. Orders
-            *                   action                  : the target action. not required.
-            *                   fk                      : the foreign key name that the target controller is going to expect. the list page will append the primary key of this table.
-            *                   fk_title_field          : the name that will be passed to the target action as extra title text.
+            *                   controller              : the target route controller, without _controller appended. E.g. Orders
+            *                   action                  : the target route action. not required.
+            *                   id                      : the target route id. the value of this field name in this record will be passed as the id. not required.
+            *                   fk                      : the foreign key name that the target controller is going to expect. the list page will append the primary key of this table. not required
+            *                   fk_title_field          : the name that will be passed to the target action as extra title text. not required
             */                           
                 if ($this->related_pages && sizeof($this->related_pages) > 0)
                 {

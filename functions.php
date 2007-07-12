@@ -219,7 +219,14 @@ function url_to($path)
         $url .= $target['controller']; 
 
     #no specified action?  let the controller decide
-        if (isset($target['action']) && $target['action'] != '') { $url .= '/'.$target['action']; }
+        if (isset($target['action']) && $target['action'] != '') 
+        {
+            $url .= '/'.$target['action'];
+            if (isset($target['id']) && $target['id'] != '') 
+            {
+                $url .= '/'.$target['id'];
+            }
+        }
 
     return $url;
 }

@@ -20,11 +20,11 @@ $path_to_root = '../../..';
     
     #echo '<pre>';print_r(App::$route);echo '</pre>';
 #load the controller
-    $view_parameters = null;
     #load the face_controller for this face first
-    if (App::require_this('controller', 'face_controller'))
+    if ($face_controller_path = App::require_this('controller', 'face_controller'))
     {
         #the face controller was found
+        require($face_controller_path);
         $face_controller = new face_controller;
     }
     else
@@ -37,9 +37,10 @@ $path_to_root = '../../..';
     
 #-------------------------------------------------------------------------------------------------
 
-    if (App::require_this('controller', App::$route['controller']))
+    if ($controller_path = App::require_this('controller', App::$route['controller']))
     {
         #controller found!
+        require($controller_path);
         $controller = new App::$route['controller'];
     }
 #-------------------------------------------------------------------------------------------------
@@ -62,15 +63,14 @@ $path_to_root = '../../..';
     #execute the action
         ob_start(); #cache the output
         App::$controller->execute_action();
-        App::$render_contents = ob_get_contents(); #save the output, for later rendering
+        App::$controller->render_contents = ob_get_contents(); #save the output, for later rendering
         ob_clean(); #drop the output contents
 
 #-------------------------------------------------------------------------------------------------
 
-#load the layout
+#do the rendering
     #echo '<pre>';print_r(App::$route);print_r(App::$controller);echo '</pre>';die();
-    if (App::$controller->layout) { render_layout(); } else { render_content(); } # the layout calls render_content which renders the view
-
+        App::$controller->render();
 #-------------------------------------------------------------------------------------------------
 
 #after_controller_filter
