@@ -25,38 +25,6 @@ function redirect_with_parameters($url, $additional_parameters = '', $return_url
     }
 }
 
-function SQL_merge($array_1, $array_2)
-{
-    $result = array();
-    global $sql_phrases;
-    foreach($sql_phrases as $phrase => $join_text)
-    {
-        foreach(array($array_1, $array_2) as $candidate)
-        {
-            #candidate
-                if (isset($candidate[$phrase])) 
-                {
-                    if (is_array($candidate[$phrase]))
-                    {
-                        if (is_array($result[$phrase])) 
-                        {
-                            $result[$phrase] = array_merge($result[$phrase], $candidate[$phrase]); 
-                        }
-                        else
-                        {
-                            $result[$phrase] = $candidate[$phrase];
-                        }
-                    }
-                    else
-                    {
-                        $result[$phrase][] = $candidate[$phrase]; 
-                    }
-                }
-        }
-    }
-    return $result;
-}
-
 function SQL_implode($sql_array, $prepend_phrases = true)
 {
     $result = ''; 
@@ -101,7 +69,6 @@ function SQL_implode($sql_array, $prepend_phrases = true)
     }
     return trim($result);
 }
-
 function SQL_explode($sql)
 {
     #todo - add subquery checks. I'll do this when I need a subquery split, thanks. and use a recursive function!
@@ -111,7 +78,6 @@ function SQL_explode($sql)
     $phrases = array_reverse(split(SQL_PHRASES));
 
     foreach ($phrases as $phrase)
-
     {
         $phrasepos = strpos(strtolower($sql), strtolower($phrase));
         if (!($phrasepos === false))
@@ -123,6 +89,38 @@ function SQL_explode($sql)
     return $result;
 
 }
+function SQL_merge($array_1, $array_2)
+{
+    $result = array();
+    global $sql_phrases;
+    foreach($sql_phrases as $phrase => $join_text)
+    {
+        foreach(array($array_1, $array_2) as $candidate)
+        {
+            #candidate
+                if (isset($candidate[$phrase])) 
+                {
+                    if (is_array($candidate[$phrase]))
+                    {
+                        if (is_array($result[$phrase])) 
+                        {
+                            $result[$phrase] = array_merge($result[$phrase], $candidate[$phrase]); 
+                        }
+                        else
+                        {
+                            $result[$phrase] = $candidate[$phrase];
+                        }
+                    }
+                    else
+                    {
+                        $result[$phrase][] = $candidate[$phrase]; 
+                    }
+                }
+        }
+    }
+    return $result;
+}
+
 function implode_with_keys($glue, $array, $valwrap='')
 {
    foreach($array AS $key => $value) {
@@ -149,7 +147,7 @@ function split_aliased_string($str)
 function page_parameters($except = '', $always_return_something = true, $method = 'querystring')
 {
     # methods are querystring or hidden
-    if ($except != '') {$except = split(',',$except);} else {$except = array();}
+    if ($except != '') { $except = split(',',$except); } else { $except = array(); }
 
     $return = '';
     if (isset($_GET))
@@ -320,13 +318,12 @@ function route_from_path($path)
     if ($path)
     {
         $path = split('/', $path);
-        if (!in_array($path[0], App::$allowed_faces) && App::$default_face) #the first param is not a face, and we use default faces
+        if (!in_array($path[0], App::$allowed_faces) && App::$default_face) #ie the first param is not a face, or not an allowed face, but we have a default face set
         {
             $result['controller'] = $path[0].'_controller';
 
             if (isset($path[1])) { $result['action'] = $path[1]; }
             if (isset($path[2])) { $result['id'] = $path[2]; }
-            
         }
         else
         {
