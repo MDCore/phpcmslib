@@ -502,14 +502,28 @@ class ARTest extends PHPUnit_Framework_TestCase {
         );
     }
 
-    /**
-     * @todo Implement testCriteria_to_sql().
-     */
-    public function testCriteria_to_sql() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+    public function testCriteria_to_sql_single_id()
+    {
+        $customer = new customer;
+        $this->assertEquals('customers.id=1', $customer->criteria_to_sql(1));
+    }
+    public function testCriteria_all()
+    {
+        $customer = new customer;
+        $this->assertEquals('1=1', $customer->criteria_to_sql('all'));
+    }
+    public function testcriteria_to_sql_array_of_ids()
+    {
+        $customer = new customer;
+        #array of id's
+            $this->assertEquals('customers.id IN (1,2,4)', $customer->criteria_to_sql(array(1, 2, 4)));
+        #empty array
+            $this->assertEquals('1=2', $customer->criteria_to_sql(array()));
+    }
+    public function testcriteria_to_sql_pure_sql()
+    {
+        $customer = new customer;
+        $this->assertEquals('WHERE t=f', 'WHERE t=f');
     }
 
     public function testDisplay_name()
