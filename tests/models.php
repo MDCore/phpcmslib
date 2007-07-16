@@ -15,6 +15,7 @@ class db_conn extends AR
 }
 class customer extends db_conn
 {
+    public $display_field = 'company_name';
 }
 
 class product extends db_conn
@@ -29,18 +30,17 @@ class category extends db_conn
 class user extends db_conn
 {
     public $has_many_through = array(
-        "finds" => "find_user"
+        "finds" => "user_finds"
     );
 }
-class find_user extends db_conn
+class user_find extends db_conn
 {
     public $has_many = "users,finds";
-    public $schema_table = "finds_users";
 }
 class find extends db_conn
 {
     public $has_many_through = array(
-        "users" => "find_user"
+        "users" => "user_finds"
     );
 }
 
@@ -88,14 +88,14 @@ static $schema_sql = array(
               PRIMARY KEY  (`id`)
             ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
           'insert' => "INSERT INTO users (id, name) VALUES (1, 'Jim')"),
-    "find_user" => array('create' => 
-            "create table ARTest.finds_users (
+    "user_find" => array('create' => 
+            "create table ARTest.user_finds (
               `id` int(11) NOT NULL auto_increment,
               `find_id` int(11) NOT NULL,
               `user_id` int(11) NOT NULL,
               PRIMARY KEY  (`id`)
             ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-          'insert' => "INSERT INTO finds_users (id, find_id, user_id) VALUES (1, 1, 1)"),
+          'insert' => "INSERT INTO user_finds (id, find_id, user_id) VALUES (1, 1, 1)"),
     "find" => array('create' => 
             "create table ARTest.finds (
               `id` int(11) NOT NULL auto_increment,
@@ -182,7 +182,7 @@ static $schema_sql = array(
 		'default' => ''
             ),
         ),
-    'find_user' => Array(
+    'user_find' => Array(
 	'id' => Array(
 		'type' => 'int',
 		'mdb2type' => 'integer',

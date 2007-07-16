@@ -115,6 +115,17 @@ class functions_test extends PHPUnit_Framework_TestCase {
 
         $this->assertEquals($expected, SQL_implode($input));
     }
+    public function testSQLImplode6a()
+    {
+        $input = array(
+            'WHERE' => array("t4 = 'a'", "t43 = 'b'"),
+            'SELECT' => array('t.1', 't.2'),
+            'FROM' => 't'
+        );
+        $expected = "SELECT t.1, t.2 FROM t WHERE t4 = 'a' t43 = 'b'"; /* note: this is meant to be bad SQL! */
+
+        $this->assertEquals($expected, SQL_implode($input));
+    }
     /*
      * Test what happens when the phrase is prefixed in the string e.g. the WHERE phrase, as below
      */

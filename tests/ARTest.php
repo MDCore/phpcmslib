@@ -175,24 +175,42 @@ class ARTest extends PHPUnit_Framework_TestCase {
     {
         $customer = new customer;
         $this->assertTrue($customer->find_by_name('cust 1', array('ORDER BY' => 'id DESC')));
-        $this->assertEquals("SELECT * FROM customers WHERE name = 'cust 1' ORDER BY id DESC", $customer->last_sql_query);
+        $this->assertEquals("SELECT * FROM customers WHERE (name = 'cust 1') ORDER BY id DESC", $customer->last_sql_query);
+    }
+    public function test_single_finder_with_attributes3()
+    {
+        $customer = new customer;
+        $this->assertTrue($customer->find_by_name('cust 1', array('WHERE' => 'AND name != \'cats\'')));
+        $this->assertEquals("SELECT * FROM customers WHERE (name = 'cust 1') AND name != 'cats'", $customer->last_sql_query);
+    }
+    public function test_single_finder_with_attributes4()
+    {
+        $customer = new customer;
+        $this->assertTrue($customer->find_by_name('cust 1', array('WHERE' => array("AND name != 'cats'", "AND name != 'lol'"))));
+        $this->assertEquals("SELECT * FROM customers WHERE (name = 'cust 1') AND name != 'cats' AND name != 'lol'", $customer->last_sql_query);
     }
 
     public function test_multiple_finder()
     {
         $customer = new customer;
-        /*$this->assertTrue($customer->find_by_id_and_name(1, 'cust 1'));
+        $this->assertTrue($customer->find_by_id_and_name(1, 'cust 1'));
         $this->assertTrue($customer->id == 1);
-        $this->assertTrue($customer->name == 'cust 1');*/
-        $this->markTestIncomplete();
+        $this->assertTrue($customer->name == 'cust 1');
+    }
+
+    public function test_multiple_finder2()
+    {
+        $customer = new customer;
+        $this->assertTrue($customer->find_by_id_and_name(1, 'cust 1', array('ORDER BY' => array('id DESC'))));
+        $this->assertTrue($customer->id == 1);
+        $this->assertTrue($customer->name == 'cust 1');
     }
 
     public function test_multiple_finder_bad_data()
     {
-        /*$customer = new customer;
+        $customer = new customer;
         $this->assertFalse($customer->find_by_id_and_name(999, 'bob'));
-        $this->assertEquals(0, $customer->count);*/
-        $this->markTestIncomplete();
+        $this->assertEquals(0, $customer->count);
     }
 
     /**
@@ -225,26 +243,21 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $category = new category;
         $category->find(1);
         $this->assertEquals('product', get_class($category->products));
+        $this->assertEquals(1, $category->products->count);
     }
     public function test_find_has_many_through()
     {
         $user = new user;
         $user->find(1);
         $this->assertEquals('find', get_class($user->finds));
+        $this->assertEquals(1, $user->finds->count);
     }
     public function test_find_HMT_link_table()
     {
         $user = new user;
         $user->find(1);
-        $this->assertEquals('find_user', get_class($user->finds_users));
-    }
-
-    /**
-     * @todo Implement testCreate().
-     */
-    public function testCreate()
-    {
-        #see testClearAttributes
+        $this->assertEquals('user_find', get_class($user->user_finds));
+        $this->assertEquals(1, $user->user_finds->count);
     }
 
     /* 
@@ -499,14 +512,19 @@ class ARTest extends PHPUnit_Framework_TestCase {
         );
     }
 
-    /**
-     * @todo Implement testDisplay_name().
-     */
-    public function testDisplay_name() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+    public function testDisplay_name()
+    {
+        $customer = new customer;
+        $this->assertFalse($customer->display_name());
+
+        $customer->find(1);
+        $this->assertEquals('company 1', $customer->display_name());
+
+        $user = new user; $user->find(1);
+        $this->assertEquals('Jim', $user->display_name());
+
+        $user_find = new user_find; $user_find->find(1);
+        $this->assertEquals(1, $user_find->display_name());
     }
 }
 

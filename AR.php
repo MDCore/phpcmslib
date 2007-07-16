@@ -106,13 +106,26 @@ class AR implements SeekableIterator # basic AR class
         if ($collection) {$this->update_attributes($collection, $with_value_changes);} #updates attribs if object is created with a collection
     }
 
+    /* 
+     * this method handles dynamic finders also known as magic methods.
+     * an example would be: customer->find_by_firstname_and_lastname('john', 'smith');
+     */
     function __call($method_name, $params)
     {
         #overload finders
         if (substr($method_name, 0, 8) == 'find_by_')
         {
             $find_by = substr($method_name, 8);
-            return $this->find("$find_by = '$params[0]'", $params[1]); #todo expand this to multiple params
+            $find_by = explode('_and_', $find_by);
+            $finder_criteria = '';
+            $cnt = 0;
+            foreach ($find_by as $finder_criterion)
+            {
+                $finder_criteria.= $finder_criterion." = '".$params[$cnt++]."' AND ";
+            }
+            if ($cnt > 0 ) { $finder_criteria = '('.substr($finder_criteria, 0, strlen($finder_criteria)-5).')'; }
+
+            return $this->find($finder_criteria, $params[$cnt]);
         }
         else
         {
@@ -147,20 +160,24 @@ class AR implements SeekableIterator # basic AR class
         elseif ($this->has_many_through($name))
         {
             if ($this->count == 0) { return false; }
-            
-            $link = $this->has_many_through($name); $link = new $link;
-            $fk = foreign_keyize($this->model);
-            $fkfunc = "find_by_$fk";
-            $link = 
-            print_r($link->{$name});
+
+            $ro = singularize($name); $ro = new $ro;
+            $link = singularize($this->has_many_through($name)); $link = new $link;
+            $ro->find_by_sql('
+                SELECT '.$ro->schema_table.'.* 
+                FROM '.$ro->schema_table. ' INNER JOIN '.$link->schema_table.'
+                WHERE '.$link->schema_table.'.'.foreign_keyize($this->model).' = \''.$this->{$this->primary_key_field}.'\''
+            );
+            return $ro;
         }
         elseif ($this->through_model($name))
         {
             if ($this->count == 0) { return false; }
-            $ro = new $this->through_model($name);
-            $ro->$name;
+            $ro = singularize($name);
+            $ro = new $ro;
+            $fkfunc = "find_by_".foreign_keyize($this->model);
+            $ro->$fkfunc($this->{$this->primary_key_field});
             return $ro;
-
         }
         #attributes / properties of the object
         elseif (isset($this->$name)) 
@@ -622,7 +639,7 @@ class AR implements SeekableIterator # basic AR class
 
     function through_model($model_name) #todo use a better name
     {
-        if (!isset($this->has_many_through)) {return false;}
+        if (!isset($this->has_many_through)) { return false; }
         if (in_array($model_name, array_values($this->has_many_through)))
         {
             return true;
@@ -738,6 +755,7 @@ class AR implements SeekableIterator # basic AR class
 
     function display_name()
     {
+        if ($this->count == 0) { return false; }
         return $this->{$this->display_field};
     }
 
