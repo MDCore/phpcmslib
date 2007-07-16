@@ -141,7 +141,6 @@ class functions_test extends PHPUnit_Framework_TestCase {
         $this->assertEquals($expected, SQL_implode($input));
     }
 
-
     public function testSQLExplode1()
     {
         $this->markTestIncomplete();
@@ -169,6 +168,42 @@ class functions_test extends PHPUnit_Framework_TestCase {
 
         $this->assertEquals($expected, SQL_merge($input_1, $input_2));
     }
+
+    public function testImplodeWithKeys()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testSplitAliasedString()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testPageParameters()
+    {
+        /* totest:
+         * except == ''
+         * except = array()
+         * except = csv
+         * various $_GET options
+         * always_return_something true or false
+         * method == querystring
+         * method == hidden
+         * method == catsatonthemat
+         */
+        $this->markTestIncomplete();
+    }
+
+    public function testUrlTo()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testRouteFromPath()
+    {
+        $this->markTestIncomplete();
+    }
+
 }
 
 // Call functions_test::main() if this source file is executed directly.
