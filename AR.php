@@ -125,16 +125,44 @@ class AR implements SeekableIterator # basic AR class
     function __get($name)
     {
         #relationships magic
-        #todo other relationships ?
         if ($this->has_one($name))
         {
             if ($this->count == 0) { return false; }
-            $has_one = new $name;
+            $ro = new $name;
             $fk = foreign_keyize($name);
             if (!$this->$fk) { return false; }
-            $has_one->find($this->$fk);
-            return $has_one;
+            $ro->find($this->$fk);
+            return $ro;
         }
+        elseif ($this->belongs_to(singularize($name)) || $this->has_many($name))
+        {
+            if ($this->count == 0) { return false; }
+            $ro = singularize($name); $ro = new $ro;
+            $fk = foreign_keyize($this->model);
+            $fkfunc = "find_by_$fk";
+
+            $ro->$fkfunc($this->{$this->primary_key_field}); // using areal world example: a category has_many products. this line translated means "return $product->find_by_category_id ($category->id )" */
+            return $ro;
+        }
+        elseif ($this->has_many_through($name))
+        {
+            if ($this->count == 0) { return false; }
+            
+            $link = $this->has_many_through($name); $link = new $link;
+            $fk = foreign_keyize($this->model);
+            $fkfunc = "find_by_$fk";
+            $link = 
+            print_r($link->{$name});
+        }
+        elseif ($this->through_model($name))
+        {
+            if ($this->count == 0) { return false; }
+            $ro = new $this->through_model($name);
+            $ro->$name;
+            return $ro;
+
+        }
+        #attributes / properties of the object
         elseif (isset($this->$name)) 
         {
             #echo "\r\nreturning $name with value ";var_dump($this->$name);echo "\r\n";
@@ -580,6 +608,16 @@ class AR implements SeekableIterator # basic AR class
     { 
         if (!isset($this->has_one)) {return false;}
         return in_array($model_name, split(',',$this->has_one));
+    }
+    function has_many($model_name)
+    { 
+        if (!isset($this->has_many)) {return false;}
+        return in_array($model_name, split(',',$this->has_many));
+    }
+    function belongs_to($model_name)
+    { 
+        if (!isset($this->belong_to)) {return false;}
+        return in_array($model_name, split(',',$this->belongs_to));
     }
 
     function through_model($model_name) #todo use a better name

@@ -137,23 +137,6 @@ class ARTest extends PHPUnit_Framework_TestCase {
 
         $this->fail('An exception was not raised');
     }
-    public function test_find_has_one()
-    {
-        $product = new product;
-        $this->assertFalse($product->category, 'relationship is being found despite there being no records');
-
-        $product->find(1);
-        $this->assertTrue($product->category); /* should is_a_type_of or something or other */
-    }
-    public function test_find_belongs_to()
-    {
-    }
-    public function test_find_has_many_through()
-    {
-    }
-    public function test_find_HMT_link_table()
-    {
-    }
 
     public function test_single_finder()
     {
@@ -229,9 +212,31 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->fail('An exception was not raised');
     }
 
-    public function test_follow_relationships()
+    public function test_has_one()
     {
-        $this->markTestIncomplete();
+        $product = new product;
+        $this->assertFalse($product->category, 'relationship is being found despite there being no records');
+
+        $product->find(1);
+        $this->assertEquals('category', get_class($product->category));
+    }
+    public function test_find_belongs_to()
+    {
+        $category = new category;
+        $category->find(1);
+        $this->assertEquals('product', get_class($category->products));
+    }
+    public function test_find_has_many_through()
+    {
+        $user = new user;
+        $user->find(1);
+        $this->assertEquals('find', get_class($user->finds));
+    }
+    public function test_find_HMT_link_table()
+    {
+        $user = new user;
+        $user->find(1);
+        $this->assertEquals('find_user', get_class($user->finds_users));
     }
 
     /**

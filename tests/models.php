@@ -23,7 +23,7 @@ class product extends db_conn
 }
 class category extends db_conn
 {
-    public $belongs_to = "product";
+    public $has_many = "products";
 }
 
 class user extends db_conn
@@ -31,11 +31,10 @@ class user extends db_conn
     public $has_many_through = array(
         "finds" => "find_user"
     );
-
 }
 class find_user extends db_conn
 {
-    public $has_one = "user,find";
+    public $has_many = "users,finds";
     public $schema_table = "finds_users";
 }
 class find extends db_conn
@@ -88,7 +87,7 @@ static $schema_sql = array(
               `name` varchar(255) NOT NULL,
               PRIMARY KEY  (`id`)
             ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-          'insert' => "INSERT INTO users (id, name) VALUES (1, 'Jim'"),
+          'insert' => "INSERT INTO users (id, name) VALUES (1, 'Jim')"),
     "find_user" => array('create' => 
             "create table ARTest.finds_users (
               `id` int(11) NOT NULL auto_increment,
@@ -96,14 +95,14 @@ static $schema_sql = array(
               `user_id` int(11) NOT NULL,
               PRIMARY KEY  (`id`)
             ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-          'insert' => "INSERT INTO finds_users (id, find_id, user_id) VALUES (1, 1, 1"),
+          'insert' => "INSERT INTO finds_users (id, find_id, user_id) VALUES (1, 1, 1)"),
     "find" => array('create' => 
             "create table ARTest.finds (
               `id` int(11) NOT NULL auto_increment,
               `name` varchar(255) NOT NULL,
               PRIMARY KEY  (`id`)
           ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-          'insert' => "INSERT INTO finds (id, name) VALUES (1, 'Shoe'"),
+          'insert' => "INSERT INTO finds (id, name) VALUES (1, 'Shoe')"),
       );
 
     function error_check($result, $die_on_error = true)
@@ -154,6 +153,54 @@ static $schema_sql = array(
 		'length' => '255',
 		'default' => ''
             ),
+        ),
+    'user' => Array(
+	'id' => Array(
+		'type' => 'int',
+		'mdb2type' => 'integer',
+		'length' => '4',
+		'default' => ''
+	),
+	'name' => Array(
+		'type' => 'varchar',
+		'mdb2type' => 'text',
+		'length' => '255',
+		'default' => ''
+            ),
+        ),
+    'find' => Array(
+	'id' => Array(
+		'type' => 'int',
+		'mdb2type' => 'integer',
+		'length' => '4',
+		'default' => ''
+	),
+	'name' => Array(
+		'type' => 'varchar',
+		'mdb2type' => 'text',
+		'length' => '255',
+		'default' => ''
+            ),
+        ),
+    'find_user' => Array(
+	'id' => Array(
+		'type' => 'int',
+		'mdb2type' => 'integer',
+		'length' => '4',
+		'default' => ''
+	),
+	'find_id' => Array(
+		'type' => 'int',
+		'mdb2type' => 'integer',
+		'length' => '4',
+		'default' => ''
+	),
+	'user_id' => Array(
+		'type' => 'int',
+		'mdb2type' => 'integer',
+		'length' => '4',
+		'default' => ''
+	),
         ),
 
     'customer' => Array(
