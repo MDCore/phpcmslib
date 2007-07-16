@@ -696,26 +696,26 @@ class AR implements SeekableIterator # basic AR class
                 }
             }
         }
-            if (method_exists($this, 'validate'))
+        if (method_exists($this, 'validate'))
+        {
+            $custom_validation_result = $this->validate();
+            if ($custom_validation_result)
             {
-                $custom_validation_result = $this->validate();
-                if ($custom_validation_result)
-                {
-                    $validation_result = array_merge($validation_result, $custom_validation_result);
-                }
+                $validation_result = array_merge($validation_result, $custom_validation_result);
             }
-            if (isset($validation_result) && sizeof($validation_result) > 0)
+        }
+        if (isset($validation_result) && sizeof($validation_result) > 0)
+        {
+            $this->validation_result = $validation_result;
+            $this->validation_errors = 'Error:';
+            foreach ($this->validation_result as $single_result)
             {
-                $this->validation_result = $validation_result;
-                $this->validation_errors = 'Error:';
-                foreach ($this->validation_result as $single_result)
-                {
-                    $this->validation_errors .= '<br />'.$single_result['message'];
-                }
-                return false;
+                $this->validation_errors .= '<br />'.$single_result['message'];
             }
+            return false;
+        }
 
-            return true;
+        return true;
     }
     
     function criteria_to_sql($criteria) #this method takes dynamic criteria and converts it to SQL 
@@ -737,7 +737,7 @@ class AR implements SeekableIterator # basic AR class
             if (sizeof($criteria) > 0)
             {
                 #I assume we are passing an array of ID's
-                $sql_criteria = $this->schema_table.'.'.$this->primary_key_field.' in (';
+                $sql_criteria = $this->schema_table.'.'.$this->primary_key_field.' IN (';
                 foreach ($criteria as $id)
                 {
                     $sql_criteria .= $id.',';
