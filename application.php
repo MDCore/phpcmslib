@@ -151,44 +151,4 @@ class Application
 }
 #convenience method
 class App extends Application { var $foo = ''; } #foo is there cos I read something about empty classes not working so lekker. yes, yes, where's my proof...
-
-function build_route($path)
-{
-    #default route
-    $result = array(
-        'face' => '',
-        'controller' => 'default_controller',
-        'action' => '',
-        'id' => ''
-        );
-    $result['face'] = App::$default_face;
-        
-    if ($path)
-    {
-        $path = split('/', $path);
-        if (!in_array($path[0], App::$allowed_faces) && App::$default_face) #the first param is not a face, and we use default faces
-        {
-            $result['controller'] = $path[0].'_controller';
-
-            if (isset($path[1])) { $result['action'] = $path[1]; }
-            if (isset($path[2])) { $result['id'] = $path[2]; }
-            
-        }
-        else
-        {
-            $result['face'] = $path[0];
-            #verify the face
-            if (!in_array($result['face'], App::$allowed_faces)) { trigger_error('Face <i>'.$result['face'].'</i> not found', E_USER_ERROR); }
-
-            if ($path[1]) {$result['controller'] = $path[1].'_controller';}
-
-            if (isset($path[2])) { $result['action'] = $path[2]; }
-            if (isset($path[3])) { $result['id'] = $path[3]; }
-        }
-    }
-
-    return $result;
-}
-/* todo move these methods into helper functions */
-
 ?>

@@ -272,7 +272,7 @@ function url_to($path)
 {
     $url = App::$env->url;
 
-    if (is_array($path)) { $target = $path; } else { $target = build_route($path); }
+    if (is_array($path)) { $target = $path; } else { $target = route_from_path($path); }
     if (!isset($target['face'])) { $target['face'] = App::$default_face; }
     if (!isset($target['controller'])) { $target['controller'] = App::$controller->controller_name; }
     $target['controller'] = str_replace('_controller', '', $target['controller']);
@@ -305,4 +305,42 @@ function url_to($path)
     return $url;
 }
 function href_to($path) { return url_to($path); }
+
+function route_from_path($path)
+{
+    #default route
+    $result = array(
+        'face' => '',
+        'controller' => 'default_controller',
+        'action' => '',
+        'id' => ''
+        );
+    $result['face'] = App::$default_face;
+        
+    if ($path)
+    {
+        $path = split('/', $path);
+        if (!in_array($path[0], App::$allowed_faces) && App::$default_face) #the first param is not a face, and we use default faces
+        {
+            $result['controller'] = $path[0].'_controller';
+
+            if (isset($path[1])) { $result['action'] = $path[1]; }
+            if (isset($path[2])) { $result['id'] = $path[2]; }
+            
+        }
+        else
+        {
+            $result['face'] = $path[0];
+            #verify the face
+            if (!in_array($result['face'], App::$allowed_faces)) { trigger_error('Face <i>'.$result['face'].'</i> not found', E_USER_ERROR); }
+
+            if ($path[1]) {$result['controller'] = $path[1].'_controller';}
+
+            if (isset($path[2])) { $result['action'] = $path[2]; }
+            if (isset($path[3])) { $result['id'] = $path[3]; }
+        }
+    }
+
+    return $result;
+}
 ?>
