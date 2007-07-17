@@ -93,7 +93,7 @@ class schema_interregator
         $filename = realpath($path_to_root).'/config/cache/schema_definition.php';
         #echo $filename;
 
-        #touch($filename);
+        touch($filename);
         file_put_contents($filename, $source);
     }
 
