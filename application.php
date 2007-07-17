@@ -41,7 +41,7 @@ class Application
         Environment::load($environment, $path_to_root);
  
         #load the schema definition
-            require ($path_to_root.'/config/cache/schema_definition.php');
+            include $path_to_root.'/config/cache/schema_definition.php';
             if (!isset($schema_definition) || $schema_definition == null) { trigger_error('Schema definition not set', E_USER_ERROR);  }
             App::$schema_definition = $schema_definition;
 
