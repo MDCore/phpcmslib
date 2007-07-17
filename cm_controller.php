@@ -396,11 +396,12 @@ class cm_controller extends action_controller
 
     #---------query, sql_query, sql query ---------------------------------------#
         
-        if (!is_array($this->sql_query)) {$list_sql = SQL_explode($this->sql_query);} else {$list_sql = $this->sql_query;}
+        if (!is_array($this->sql_query)) {$list_sql = SQL_explode($this->sql_query);} else { $list_sql = $this->sql_query; }
         
-        if (!isset($list_sql['WHERE']) || $list_sql['WHERE'] == '') {$list_sql['WHERE'] = '1=1';}
+
+        #if (!isset($list_sql['WHERE']) || $list_sql['WHERE'] == '') { $list_sql['WHERE'] = '1=1'; }
         foreach ($this->foreign_keys as $key => $value) {
-            $list_sql['WHERE'] .= " AND $key='$value'";
+            $list_sql['WHERE'][] = " AND $key='$value'";
         }
         
         $filter_sql = $this->filter_object->sql_criteria();
@@ -411,7 +412,7 @@ class cm_controller extends action_controller
                 if ($filter_sql['FROM']) { foreach ($filter_sql['FROM'] as $filter_from) { $list_sql['FROM'] .= ' ' . $filter_from; }}
 
             #join where's
-            foreach ($filter_sql['WHERE'] as $filter_where) { $list_sql['WHERE'] .= ' AND '. $filter_where; }
+            foreach ($filter_sql['WHERE'] as $filter_where) { $list_sql['WHERE'][] = ' AND '. $filter_where; }
         }
 
         #sorting
@@ -439,17 +440,17 @@ class cm_controller extends action_controller
         }
         if ($this->list_sort_field)
         {
-            $list_sql['ORDER BY'] = " ORDER BY ".$this->list_sort_field.' '.$this->list_sort_type;
+            $list_sql['ORDER BY'][] = $this->list_sort_field.' '.$this->list_sort_type;
         }
         
         #turn the array into a string
 
-        if (isset($this->debug) && $this->debug ) { print_r ( $list_sql ); }
+        #print_r ( $list_sql );
             $results_query = SQL_implode($list_sql);
             $sql_pk = $this->schema_table.".".$this->primary_key_field." as __pk_field";
             $results_query = str_replace( '__pk__', $sql_pk, $results_query );
 
-        if (isset($this->debug) && $this->debug ) { debug ( $results_query ); }
+        #debug ( $results_query );
         $AR = new AR;
         $results_list = $AR->db->query($results_query." limit ". $this->start_limit.', '.$this->row_limit);
         #error check

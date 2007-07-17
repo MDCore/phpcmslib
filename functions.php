@@ -75,9 +75,10 @@ function SQL_explode($sql)
 
     $result = array();
     
-    $phrases = array_reverse(split(SQL_PHRASES));
+    global $sql_phrases;
+    $phrases = array_reverse($sql_phrases);
 
-    foreach ($phrases as $phrase)
+    foreach ($phrases as $phrase => $jointext)
     {
         $phrasepos = strpos(strtolower($sql), strtolower($phrase));
         if (!($phrasepos === false))
