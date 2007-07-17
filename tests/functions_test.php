@@ -104,7 +104,7 @@ class functions_test extends PHPUnit_Framework_TestCase {
 
         $this->assertEquals($expected, SQL_implode($input));
     }
-    public function testSQLImplode6()
+    public function testSQLImplode5a()
     {
         $input = array(
             'WHERE' => array("t4 = 'a'", " AND t43 = 'b'"), /* note the subtle difference from above test */
@@ -115,7 +115,7 @@ class functions_test extends PHPUnit_Framework_TestCase {
 
         $this->assertEquals($expected, SQL_implode($input));
     }
-    public function testSQLImplode6a()
+    public function testSQLImplode6()
     {
         $input = array(
             'WHERE' => array("t4 = 'a'", "t43 = 'b'"),
@@ -143,6 +143,69 @@ class functions_test extends PHPUnit_Framework_TestCase {
 
     public function testSQLExplode1()
     {
+        $input = "SELECT * FROM t";
+        $expected = array(
+            "SELECT"    => '*',
+            "FROM"      => 't'
+        );
+        $this->assertEquals($expected, SQL_explode($input));
+    }
+    public function testSQLExplode2()
+    {
+        $input = "SELECT a, b as cats, c FROM t INNER JOIN bob";
+        $expected = array(
+            "SELECT"    => array('a', 'b as cats', 'c'),
+            "FROM"      => array('t INNER JOIN bob'),
+        );
+        $this->assertEquals($expected, SQL_explode($input));
+    }
+    public function testSQLExplode3()
+    {
+        $input = "SELECT a, b as cats, c FROM t INNER JOIN bob ON bob.a = t.p WHERE id=3 AND (t='a' OR t='b') ORDER BY p ASC";
+        $expected = array(
+            "SELECT"    => array('a', 'b as cats', 'c'),
+            "FROM"      => array('t INNER JOIN bob ON bob.a = t.p'),
+            "WHERE"     => array("id=3 AND (t='a' OR t='b')"),
+            "ORDER BY"  => array('p ASC'),
+        );
+        $this->assertEquals($expected, SQL_explode($input));
+    }
+    
+     public function testSQLExplode4()
+    {
+        $input = "SELECT a, b as cats, c FROM t INNER JOIN bob ON bob.a = t.p WHERE id=3 AND (t='a' AND t='b') ORDER BY p ASC";
+        $expected = array(
+            "SELECT"    => array('a', 'b as cats', 'c'),
+            "FROM"      => array('t INNER JOIN bob ON bob.a = t.p'),
+            "WHERE"     => array("id=3 AND (t='a' AND t='b')"),
+            "ORDER BY"  => array('p ASC'),
+        );
+        $this->assertEquals($expected, SQL_explode($input));
+    }
+
+    public function testSQLExplode5()
+    {
+        $input = "SELECT a, b as cats, sum(c) as ctotal FROM t INNER JOIN bob ON bob.a = t.p WHERE id=3 AND (t='a' AND t='b') GROUP BY sum(c) ORDER BY p ASC";
+        $expected = array(
+            "SELECT"    => array('a', 'b as cats', 'sum(c) as ctotal'),
+            "FROM"      => array('t INNER JOIN bob ON bob.a = t.p'),
+            "WHERE"     => array("id=3 AND (t='a' AND t='b')"),
+            "ORDER BY"  => array('p ASC'),
+            "GROUP BY"  => array('sum(c)'),
+        );
+        $this->assertEquals($expected, SQL_explode($input));
+    }
+    public function testSQLExplode6()
+    {
+        $input = "SELECT a, b as cats, (SELECT ID FROM bob d WHERE d.id = t.id) as pha FROM t INNER JOIN bob ON bob.a = t.p WHERE id=3 AND (t='a' AND t='b') GROUP BY sum(c) ORDER BY p ASC";
+        $expected = array(
+            "SELECT"    => array('a', 'b as cats', '(SELECT ID FROM bob d WHERE d.id = t.id) as pha'),
+            "FROM"      => array('t INNER JOIN bob ON bob.a = t.p'),
+            "WHERE"     => array("id=3 AND (t='a' AND t='b')"),
+            "ORDER BY"  => array('p ASC'),
+            "GROUP BY"  => array('sum(c)'),
+        );
+        #$this->assertEquals($expected, SQL_explode($input));
         $this->markTestIncomplete();
     }
 

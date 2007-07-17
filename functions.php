@@ -8,7 +8,7 @@ $sql_phrases = array(
     'FROM'      => ', ',
     'WHERE'     => ' ',
     'GROUP BY'  => ', ',
-    'ORDER BY'  => ' '
+    'ORDER BY'  => ','
 );
 
 #this method does a redirect with standard parameters stripped
@@ -72,22 +72,39 @@ function SQL_implode($sql_array, $prepend_phrases = true)
 function SQL_explode($sql)
 {
     #todo - add subquery checks. I'll do this when I need a subquery split, thanks. and use a recursive function!
-
     $result = array();
     
     global $sql_phrases;
-    $phrases = array_reverse($sql_phrases);
 
-    foreach ($phrases as $phrase => $jointext)
+    /*
+     * todo tokenize this sql statement eg: 
+    *           $sql = SELECT a, b, (SELECT cats from foo where foo.id = blah.id) as meh FROM blah"
+     * tokenize should do this:
+     *          $sql = SELECT a, b, (~#1#~) as meh FROM blah
+     */
+    foreach (array_reverse($sql_phrases) as $phrase => $join_text)
     {
         $phrasepos = strpos(strtolower($sql), strtolower($phrase));
         if (!($phrasepos === false))
         {
-            $result[$phrase] = substr($sql, $phrasepos);
+
+            switch ($phrase)
+            {
+            case 'WHERE':
+                $result[$phrase] = array(substr($sql, $phrasepos + strlen($phrase)+1));
+                break;
+            default:
+                $result[$phrase] = substr($sql, $phrasepos + strlen($phrase)+1);
+                if (strpos($sql, $join_text) > 1)
+                {
+                    #split this phrase into an array
+                    $result[$phrase] = explode($join_text, $result[$phrase]);
+                }
+            }
             $sql = substr($sql, 0, $phrasepos-1);
         }
     }
-    return $result;
+    return array_reverse($result);
 
 }
 function SQL_merge($array_1, $array_2)
@@ -132,6 +149,8 @@ function implode_with_keys($glue, $array, $valwrap='')
 
 function split_aliased_string($str)
 {
+    /* todo: is this method necessary now that sql queries are being broken up into arrays ?
+     */
     if (strlen($str) == 0) { return Array(); }
 
     $new_fields = Array();
