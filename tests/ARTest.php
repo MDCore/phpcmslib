@@ -260,9 +260,25 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(1, $user->user_finds->count);
     }
 
+    /* validation tests */
+    public function test_is_valid()
+    {
+        $this->markTestIncomplete();
+    }
+    public function test_custom_validation()
+    {
+        $this->markTestIncomplete();
+    }
     /* 
      * save tests
      */
+    public function test_save_with_direct_value_updates()
+    {
+        $category = new category;
+        $category->name = 'a new category';
+        $this->assertTrue($category->is_valid());
+        $this->assertTrue($category->save(), 'this save should be successful since this is a valid record');
+    }
     public function test_save_from_collection() {
         $collection = array('name' => 'new name');
         $customer = new customer($collection);
@@ -271,15 +287,16 @@ class ARTest extends PHPUnit_Framework_TestCase {
     }
     public function test_save_cannot_set_id()
     {
-        /*
+        
+        $this->markTestSkipped();return;
+
         $collection = array('id' => 80, 'name' => 'new name');
         $customer = new customer($collection);
         $this->assertNotEquals(80, $customer->save());
 
         $test = new customer; $test->find(3);
         $this->assertEquals('new name', $test->name);
-         */
-        $this->markTestIncomplete();
+       
     }
 
     public function test_save_with_changelog_adds_to_changelog()
@@ -347,11 +364,9 @@ class ARTest extends PHPUnit_Framework_TestCase {
     }
     public function test_delete_with_bad_criteria()
     {
-        /*
+        $this->markTestSkipped();return;
         $customer = new customer;$customer->find(1);
         $this->AssertFalse($customer->delete('WHERE id=999'), 'This method must return false if no records were affected');
-         */
-        $this->markTestIncomplete();
     }
 
     public function test_delete_on_empty()

@@ -11,11 +11,12 @@ if (!defined('SQL_INSERT_DATE_TIME_FORMAT')) { define('SQL_INSERT_DATE_TIME_FORM
 
 class AR implements SeekableIterator # basic AR class
 {
-    private $offset = 0; private $dirty = false; private $results;
+    private $offset = 0; public $dirty = false; private $results;
     public $count = 0; public $attributes = null;
     public $validation_result = null;
     public $preserve_updated_on = false;
     public $db = null, $schema_definition;
+    public $validation_errors = null;
 
     /* 
      * this method is here so that is is overridable
