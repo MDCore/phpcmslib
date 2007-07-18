@@ -131,11 +131,27 @@ class action_controller
         return true;
     }
 
-    function render_partial($partial_name)
+    function render_partial($partial_name, $collection = null)
     {
         $this->layout = null;
-        $this->render_view('_'.$partial_name);
-        $this->render_inline();
+        if (!$collection)
+        {
+            $this->render_view('_'.$partial_name);
+        }
+        else
+        {
+            $counter = 0;
+            $item_name = array_keys($collection);
+            $item_name = $item_name[0];
+            foreach($collection[$item_name] as $collection_item)
+            {
+                $counter++;
+                $this->view_parameters['counter'] = $counter;
+                $this->view_parameters[$item_name] = $collection_item;
+                $this->render_view('_'.$partial_name);
+            }
+        }
+        #$this->render_inline();
     }
 
     function execute_action($action_name = null)
