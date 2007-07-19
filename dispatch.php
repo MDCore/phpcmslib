@@ -1,14 +1,15 @@
 <?
+if (isset($config['profiling']) && $config['profiling'] == true) apd_set_pprof_trace();
 $path_to_root = '../../..';
 require ('./init.php');
 
-$dispatch = new dispatch; $dispatch->process($_GET);
+$dispatch = new dispatch; $dispatch->process();
 
 class dispatch
 {
-    private function path_from_collection($collection)
+    private function path_from_collection(&$collection)
     {
-        #print_r($collection);die();
+        #print_r($collection);#die();
 
         #get the path, and remove the path from $collection
         if (sizeof($collection) > 0) 
@@ -23,8 +24,9 @@ class dispatch
 
     }
 
-    public function process($collection)
+    public function process(&$collection = null)
     {
+        if (!$collection) { $collection = &$_GET; }
         $path = $this->path_from_collection($collection);
 
         #-------------------------------------------------------------------------------------------------
