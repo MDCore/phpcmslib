@@ -16,6 +16,10 @@ class db_conn extends AR
 class customer extends db_conn
 {
     public $display_field = 'company_name';
+    public $changelog;
+}
+class customer_changelog extends db_conn
+{
 }
 
 class product extends db_conn
@@ -66,6 +70,22 @@ static $schema_sql = array(
               PRIMARY KEY  (`id`)
           ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
           'insert' => "INSERT INTO ARTest.customers (id, name, company_name, address, active, created_on, updated_on) VALUES (1, 'cust 1', 'company 1', 'address 1', 'Y', now(), now())"),
+    "customer_changelog" => array('create' => 
+            "CREATE TABLE ARTest.customers_changelog (
+              `id` int(11) NOT NULL auto_increment,
+              `created_on` datetime NOT NULL,
+              `updated_on` datetime NOT NULL,
+              `revision` int(11) NOT NULL,
+              `action` varchar(255) NOT NULL,
+              `customer_id` int(11) NOT NULL,
+
+              `name` varchar(255) NOT NULL,
+              `company_name` varchar(255) NOT NULL,
+              `address` text NOT NULL,
+              `active` char(1) NOT NULL default 'Y',
+              PRIMARY KEY  (`id`)
+          ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
+          'insert' => "INSERT INTO ARTest.customers_changelog (revision, action, customer_id, id, name, company_name, address, active, created_on, updated_on) VALUES (1, 'insert', 1, 1, 'cust 1', 'company 1', 'address 1', 'Y', now(), now())"),
     "product" => array('create' => 
             "create table ARTest.products (
               `id` int(11) NOT NULL auto_increment,
@@ -208,6 +228,69 @@ static $schema_sql = array(
 		'type' => 'int',
 		'mdb2type' => 'integer',
 		'length' => '4',
+		'default' => ''
+	),
+	'created_on' => Array(
+		'type' => 'datetime',
+		'mdb2type' => 'timestamp',
+		'length' => '',
+		'default' => ''
+	),
+	'updated_on' => Array(
+		'type' => 'datetime',
+		'mdb2type' => 'timestamp',
+		'length' => '',
+		'default' => ''
+	),
+	'name' => Array(
+		'type' => 'varchar',
+		'mdb2type' => 'text',
+		'length' => '255',
+		'default' => ''
+	),
+	'company_name' => Array(
+		'type' => 'varchar',
+		'mdb2type' => 'text',
+		'length' => '255',
+		'default' => ''
+	),
+	'address' => Array(
+		'type' => 'text',
+		'mdb2type' => 'text',
+		'length' => '',
+		'default' => ''
+	),
+	'active' => Array(
+		'type' => 'char',
+		'mdb2type' => 'text',
+		'length' => '1',
+		'default' => 'Y'
+            ),
+            ),
+            
+    'customer_changelog' => Array(
+	'id' => Array(
+		'type' => 'int',
+		'mdb2type' => 'integer',
+		'length' => '4',
+		'default' => ''
+	),
+	'revision' => Array(
+		'type' => 'int',
+		'mdb2type' => 'integer',
+		'length' => '4',
+		'default' => ''
+	),
+	'customer_id' => Array(
+		'type' => 'int',
+		'mdb2type' => 'integer',
+		'length' => '4',
+		'default' => ''
+	),
+	'action' => Array(
+		'type' => 'varchar',
+		'mdb2type' => 'text',
+		'length' => '255',
 		'default' => ''
 	),
 	'created_on' => Array(

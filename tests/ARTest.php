@@ -1,4 +1,8 @@
 <?php
+/* todo
+ * - create a table with stacks and stacks of data and modify certain tests to use that
+ */                                                      
+
 // Call ARTest::main() if this source file is executed directly.
 if (!defined('PHPUnit_MAIN_METHOD')) { define('PHPUnit_MAIN_METHOD', 'ARTest::main');
 }
@@ -141,6 +145,12 @@ class ARTest extends PHPUnit_Framework_TestCase {
 
         $this->fail('An exception was not raised');
     }
+    public function test_find_all()
+    {
+        $customer = new customer;
+        $this->assertTrue($customer->find('all'));
+        $this->assertEquals(1, $customer->count);
+    }
     public function test_single_finder()
     {
         $customer = new customer;
@@ -151,12 +161,6 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertTrue($test->find_by_name('cust 1'));
         $this->assertEquals(1, $test->id);
 
-    }
-    public function test_find_all()
-    {
-        $customer = new customer;
-        $this->assertTrue($customer->find('all'));
-        $this->assertEquals(1, $customer->count);
     }
 
     public function test_single_finder_bad_data()
@@ -190,6 +194,23 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertTrue($customer->find_by_name('cust 1', array('WHERE' => array("AND name != 'cats'", "AND name != 'lol'"))));
         $this->assertEquals("SELECT * FROM customers WHERE (name = 'cust 1') AND name != 'cats' AND name != 'lol'", $customer->last_sql_query);
     }
+
+    public function test_special_finders()
+    {
+        $customer = new customer;
+        $customer->find_most_recent_by_id(1);
+        $this->assertEquals(1, $customer->id);
+
+        $customer = new customer;
+        $collection = array('name' => 'new name');
+        $customer = new customer($collection);
+        $customer->save();
+
+        $ct = new customer;
+        $ct->find_most_recent_by_id_and_name(2, 'new name');
+        $this->assertEquals(2, $customer->id);
+    }
+
     public function test_multiple_finder()
     {
         $customer = new customer;
@@ -214,12 +235,19 @@ class ARTest extends PHPUnit_Framework_TestCase {
 /*
  * test __isset()
  */
-/*
- * test __get()
- */
     public function test__isset()
     {
         $this->markTestIncomplete();
+    }
+/*
+ * test __get()
+ */
+    public function test_get_record()
+    {
+        $customer = new customer;
+        $customer->find(1);
+        $this->assertNotNull($customer->record, 'record property is not returning array of record values');
+        $this->assertEquals(1, $customer->record['id']);
     }
 
     public function test_bad_attributes()
@@ -400,24 +428,75 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $customer = new customer;
         $this->AssertFalse($customer->delete());
     }
-    public function test_delete_with_changelog_marks_as_deleted() {
-        $this->markTestIncomplete();
-    }
 
     /*
      * changelog tests
      */
-
-    public function test_changelog_table_with_action_sets_actions()
+    public function test_changelog_highest_revision()
     {
-        $this->markTestIncomplete();
-        #todo all CUD actions
+        $customer = new customer;
+        $result = $customer->changelog_highest_revision(1);
+        $this->assertEquals(1, $result[0], 'changelog_highest_revision not returning results');
+    }
+    public function test_changelog_relationship()
+    {
+        $customer = new customer; $customer->find(1);
+        $this->assertEquals('customer_changelog', get_class($customer->changelog));
+
+        $user = new user;
+        try
+        {
+            $f = $user->changelog;
+        }
+        catch(Exception $e)
+        {
+            return;
+        }
+        $this->fail('An exception was not raised when trying to catch to find a changelog on a changelog-less model');
     }
 
-    public function test_changelog_without_action()
+    public function test_changelog_insert()
     {
-        $this->markTestIncomplete();
+        $customer =  new customer();
+        $customer->find(1);
+        $collection = array('name' => 'new name');
+        $customer->update_attributes($collection);
+        $customer->update();
+
+        #indirect test
+        $this->assertEquals(2, $customer->changelog->revision, 'indirect test failed');
+
+        #direct test
+        $cc = new customer_changelog;
+        $cc->find_most_recent_by_customer_id(1);
+        $this->assertEquals(2, $cc->revision, 'direct test failed');
+
     }
+    public function test_changelog_delete()
+    {
+        $customer = new customer();
+        $customer->find(1);
+        $customer->delete();
+        
+        #indirect
+        $cc = new customer_changelog;
+        $cc->find_most_recent_by_customer_id(1);
+        $this->assertEquals('delete', $cc->action, 'direct test failed');
+        $this->assertEquals(2, $cc->revision, 'direct test failed');
+
+        #direct
+        try
+        {
+            $t = $customer->changelog;
+
+        }
+        catch(Exception $e)
+        {
+            return;
+        }
+        $this->fail('An exception was not raised when accessing the changelog on a non-existent customer');
+    }
+
     /* 
      * misc
      */

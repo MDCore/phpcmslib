@@ -21,7 +21,7 @@ class AR implements SeekableIterator # basic AR class
 
     private $offset = 0;
     private $results;
-    public $values = array();
+    private $values = array();
 
     /* 
      * this method is here so that is is overridable
@@ -85,7 +85,7 @@ class AR implements SeekableIterator # basic AR class
         }
 
         #set that this model has a changelog
-            if (property_exists($this->model, 'changelog')){ $this->has_changelog = true; } else {$this->has_changelog = false; }
+            if (property_exists($this->model, 'changelog')){ $this->has_changelog = true; unset($this->changelog); } else {$this->has_changelog = false; }
 
         #set the display field
             if (!isset($this->display_field)) 
@@ -115,19 +115,37 @@ class AR implements SeekableIterator # basic AR class
     private function __call($method_name, $params)
     {
         #overload finders
-        if (substr($method_name, 0, 8) == 'find_by_')
+        $finder_criteria_pos = null; $finder_type = null;
+        if (substr($method_name, 0, 8) == 'find_by_') { $finder_criteria_pos = 8; }
+        if (substr($method_name, 0, 20) == 'find_most_recent_by_') { $finder_criteria_pos = 20; $finder_type = 'most recent'; }
+        if (substr($method_name, 0, 11) == 'find_first_by_') { $finder_criteria_pos = 11; $finder_type = 'first'; }
+        
+        if ($finder_criteria_pos)
         {
-            $find_by = substr($method_name, 8);
+            $find_by = substr($method_name, $finder_criteria_pos);
             $find_by = explode('_and_', $find_by);
             $finder_criteria = '';
             $cnt = 0;
             foreach ($find_by as $finder_criterion)
             {
-                $finder_criteria.= $finder_criterion." = '".$params[$cnt++]."' AND ";
+                $finder_criteria.= $finder_criterion." = '".$params[$cnt]."' AND ";
+                $cnt++;
             }
             if ($cnt > 0 ) { $finder_criteria = '('.substr($finder_criteria, 0, strlen($finder_criteria)-5).')'; }
+            
+            #extra params for special finders
+            if (is_array($params[$cnt])) { $additional_criteria = $params[$cnt]; }
+                switch ( $finder_type )
+                {
+                case 'most recent':
+                    $additional_criteria['ORDER BY'][] = $this->primary_key_field.' DESC';
+                    break;
+                case 'first':
+                    $additional_criteria['ORDER BY'][] = $this->primary_key_field.' ASC';
+                    break;
+                }
 
-            return $this->find($finder_criteria, $params[$cnt]);
+            return $this->find($finder_criteria, $additional_criteria);
         }
         else
         {
@@ -151,6 +169,25 @@ class AR implements SeekableIterator # basic AR class
     }
     private function __get($name)
     {
+        #check for record_properties request
+            if ($name == 'record') { return $this->values; }
+        #check for changelog request
+            if ($name == 'changelog' && $this->has_changelog)
+            {
+                if ($this->count == 0)
+                {
+                    throw new Exception("no changelog for empty ".$this->model);
+                    return null;
+                }
+                $changelog_model_name = $this->model.'_changelog';
+                $changelog = new $changelog_model_name();
+                $changelog_find_method = 'find_most_recent_by_'.$this->model.'_id';
+                $changelog->$changelog_find_method($this->values[$this->primary_key_field]);
+
+                $this->changelog = $changelog;
+                $changelog = null;
+                return $this->changelog;
+            }
         #attributes / properties of the record
         if (array_key_exists($name, $this->values)) 
         {
@@ -174,7 +211,7 @@ class AR implements SeekableIterator # basic AR class
             $fk = foreign_keyize($this->model);
             $fkfunc = "find_by_$fk";
 
-            $ro->$fkfunc($this->{$this->primary_key_field}); // using areal world example: a category has_many products. this line translated means "return $product->find_by_category_id ($category->id )" */
+            $ro->$fkfunc($this->values[$this->primary_key_field]); // using areal world example: a category has_many products. this line translated means "return $product->find_by_category_id ($category->id )" */
             return $ro;
         }
         elseif ($this->has_many_through($name))
@@ -186,7 +223,7 @@ class AR implements SeekableIterator # basic AR class
             $ro->find_by_sql('
                 SELECT '.$ro->schema_table.'.* 
                 FROM '.$ro->schema_table. ' INNER JOIN '.$link->schema_table.'
-                WHERE '.$link->schema_table.'.'.foreign_keyize($this->model).' = \''.$this->{$this->primary_key_field}.'\''
+                WHERE '.$link->schema_table.'.'.foreign_keyize($this->model).' = \''.$this->values[$this->primary_key_field].'\''
             );
             return $ro;
         }
@@ -196,7 +233,7 @@ class AR implements SeekableIterator # basic AR class
             $ro = singularize($name);
             $ro = new $ro;
             $fkfunc = "find_by_".foreign_keyize($this->model);
-            $ro->$fkfunc($this->{$this->primary_key_field});
+            $ro->$fkfunc($this->values[$this->primary_key_field]);
             return $ro;
         }
         #deprecated stuffs
@@ -294,9 +331,12 @@ class AR implements SeekableIterator # basic AR class
 
         if ($save_type == "save") { $record_id = $this->save_core($collection); }
         if ($save_type == "update") { $record_id = $this->update_core($collection); }
+
+        #if the save failed, raise an error
+           #todo... pass the exception back up to here, instead of doing an error check inside *_core 
         
         #save/update the changelog
-            if ($this->has_changelog){ $this->changelog_entry($save_type, $record_id, $collection); }
+            if ($this->has_changelog){ $this->changelog_entry($save_type); }
 
         #execute after save/update actions
             if (method_exists($this, 'after_'.$save_type)) { $this->{'after_'.$save_type}(); }
@@ -308,26 +348,29 @@ class AR implements SeekableIterator # basic AR class
     {
         $fields = implode(',', array_keys($collection)); $values = "'".implode("','", array_values($collection))."'";
         $sql = "INSERT INTO ".$this->schema_table." ($fields) VALUES ($values)";
+        $this->last_sql_query = $sql;
         #debug ( $sql );die();
         $save = $this->db->query($sql);$this->error_check($save);
         
         #get the key of the new record
             $record_id = $this->db->lastInsertID($this->schema_table,$this->primary_key_field);
+            $this->values[$this->primary_key_field] = $record_id;
         return $record_id;
     }
     private function update_core($collection)
     {
-           //$values = array_map("enquote", $values);
-           foreach ($collection as $field => $value)
-           {
-               $collection[$field] = "'".$value."'";
-           }
+       //$values = array_map("enquote", $values);
+       foreach ($collection as $field => $value)
+       {
+           $collection[$field] = "'".$value."'";
+       }
 
-           $update_sql = implode_with_keys(',', $collection, "");
-           $sql = 'UPDATE '.$this->schema_table." SET $update_sql WHERE ".$this->primary_key_field."=".$this->{$this->primary_key_field};
-           #debug($sql);
-           $update = $this->db->query($sql);$this->error_check($update);
-           return $this->{$this->primary_key_field};
+       $update_sql = implode_with_keys(',', $collection, "");
+       $sql = 'UPDATE '.$this->schema_table." SET $update_sql WHERE ".$this->primary_key_field."=".$this->values[$this->primary_key_field];
+       #debug($sql);
+        $this->last_sql_query = $sql;
+       $update = $this->db->query($sql);$this->error_check($update);
+       return $this->values[$this->primary_key_field];
     }
     
     function save_multiple($collection)
@@ -396,7 +439,7 @@ class AR implements SeekableIterator # basic AR class
         }
         elseif ($this->count > 0)
         {
-            $sql_criteria = ' WHERE '.$this->schema_table.'.'.$this->primary_key_field.' = '.$this->{$this->primary_key_field};
+            $sql_criteria = ' WHERE '.$this->schema_table.'.'.$this->primary_key_field.' = '.$this->values[$this->primary_key_field];
         }
         else
         {
@@ -404,15 +447,18 @@ class AR implements SeekableIterator # basic AR class
         }
 
         #mark deleted in changelog
-        if ($this->has_changelog)
-        {
-           $to_delete = new $this->model;
-           $to_delete->find_by_sql($sql_criteria);
-           foreach($to_delete as $record)
-           {
-               $this->changelog_entry('delete', $record->{$record_id->primary_key_field}, $record);
-           }
-        }
+            if ($this->has_changelog)
+            {
+               $to_delete = new $this->model;
+                $changelog_criteria['SELECT']      = "*";
+                $changelog_criteria['FROM']        = $this->schema_table;
+                $changelog_criteria['WHERE']       = $sql_criteria;
+               $to_delete->find_by_sql(SQL_implode($changelog_criteria));
+               foreach($to_delete as $record)
+               {
+                   $this->changelog_entry('delete');
+               }
+            }
 
         $sql = "DELETE FROM ".$this->schema_table.' '.$sql_criteria;
         #debug($sql);
@@ -423,34 +469,31 @@ class AR implements SeekableIterator # basic AR class
     /* inserts entries inthe the changelog on save or update.
      * marks the action as saved or updated if the changelog table has an action field
      */
-    function changelog_entry($action, $record_id, $collection)
+    function changelog_entry($action)
     {
-        if (!is_array($collection)) # must be a record; convert it's data to an array
-        {
-            $record = $collection; $collection = array();
-            foreach ($record->schema_definition as $field => $meta_data)
-            {
-                $collection[$field] = $record->$field;
-            }
-        }
+        #setup some values
+            $record_id = $this->values[$this->primary_key_field];
+            $collection = $this->values;
+            $result = $this->changelog_highest_revision($record_id);
+            $revision = $result[0]; $original_created_on = $result[1];
 
-        $result = changelog_highest_revision($record_id);
-        $revision = result(0); $created_on = result(1);
-
-        #record_id
+        #remove the id
+            unset($collection[$this->primary_key_field]);
+        #"model" id
             $collection[$this->model.'_id'] = $record_id;
         #revision
-            $collection['revision'] = $revision;
+            $collection['revision'] = $revision + 1;
         #created_on
-            if (in_array('created_on', array_keys($collection))) { $collection['created_on'] = $created_on; }
+            if (in_array('created_on', array_keys($collection))) { $collection['created_on'] = $original_created_on; }
+        #action
+            $collection['action'] = $action;
 
         #instantiate the changelog object and save
             $changelog_model_name = $this->model.'_changelog';
             $changelog = new $changelog_model_name($collection);
-            #check if the changelog has an action
-                if (isset($changelog->schema_definition['action'])) { $changelog->action = $action; }
             $changelog->save();
     }
+
     function changelog_highest_revision($record_id)
     {
         #get the highest revision id
@@ -461,12 +504,14 @@ class AR implements SeekableIterator # basic AR class
         {
             $rev_result = $rev_result->fetchRow();
 
-            $revision = $rev_result->rev_id +1;
+            $revision = $rev_result->rev_id;
             $created_on = $rev_result->created_on;
         }
-        else {$revision = 1;}
+        else {$revision = 0;}
 
-        return array($revision, $created_on);
+        
+        $return = array($revision, $created_on);
+        return $return;
     }
 
     function write_value_changes(&$field, &$value)
@@ -780,7 +825,7 @@ class AR implements SeekableIterator # basic AR class
     function display_name()
     {
         if ($this->count == 0) { return false; }
-        return $this->{$this->display_field};
+        return $this->values[$this->display_field];
     }
 
     function error_check($result, $die_on_error = true)
