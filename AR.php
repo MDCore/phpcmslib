@@ -109,7 +109,7 @@ class AR implements SeekableIterator # basic AR class
     }
 
     /* 
-     * this method handles dynamic finders also known as magic methods.
+     * this method handles dynamic finders, also known as magic methods.
      * an example would be: customer->find_by_firstname_and_lastname('john', 'smith');
      */
     private function __call($method_name, $params)
@@ -251,6 +251,12 @@ class AR implements SeekableIterator # basic AR class
     private function __set($name, $value)
     {
         
+        ##check for primary_key_field
+        if (isset($this->primary_key_field) && $name == $this->primary_key_field)
+        {
+            throw new Exception('Cannot modify primary key field');
+            return false;
+        }
         #check for properties, or values, of the record and set those in the values array
         if (isset($this->schema_definition) && (in_array($name, array_keys($this->values))))
         {

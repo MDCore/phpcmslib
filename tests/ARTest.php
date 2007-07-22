@@ -237,7 +237,8 @@ class ARTest extends PHPUnit_Framework_TestCase {
  */
     public function test__isset()
     {
-        $this->markTestIncomplete();
+        $customer = new customer;
+        $this->assertTrue(isset($customer->id));
     }
 /*
  * test __get()
@@ -320,10 +321,10 @@ class ARTest extends PHPUnit_Framework_TestCase {
     /* validation tests */
     public function test_is_valid()
     {
-        $this->markTestIncomplete();
-    }
-    public function test_custom_validation()
-    {
+        /* test:
+         *      validates_presence_of
+         *      custom validate method
+         */
         $this->markTestIncomplete();
     }
     /* 
@@ -345,21 +346,15 @@ class ARTest extends PHPUnit_Framework_TestCase {
     }
     public function test_save_cannot_set_id()
     {
-        
-        $this->markTestSkipped();return;
-
         $collection = array('id' => 80, 'name' => 'new name');
         $customer = new customer($collection);
-        $this->assertNotEquals(80, $customer->save());
+        $customer_id = $customer->save();
+        $this->assertNotEquals(80, $customer_id, 'customer id was set');
+        $this->assertEquals(2, $customer_id);
 
-        $test = new customer; $test->find(3);
+        $test = new customer; $test->find(2);
         $this->assertEquals('new name', $test->name);
        
-    }
-
-    public function test_save_with_changelog_adds_to_changelog()
-    {
-        $this->markTestIncomplete();
     }
 
     public function testSave_multiple() {
@@ -416,12 +411,6 @@ class ARTest extends PHPUnit_Framework_TestCase {
     {
         $customer = new customer;$customer->find(1);
         $this->AssertTrue($customer->delete('WHERE id=1'));
-    }
-    public function test_delete_with_bad_criteria()
-    {
-        $this->markTestSkipped();return;
-        $customer = new customer;$customer->find(1);
-        $this->AssertFalse($customer->delete('WHERE id=999'), 'This method must return false if no records were affected');
     }
     public function test_delete_on_empty()
     {
@@ -502,7 +491,6 @@ class ARTest extends PHPUnit_Framework_TestCase {
      */
     public function test_AR_disallows_changing_id()
     {
-        /*
         $customer = new customer;$customer->find(1);
         try
         {
@@ -514,8 +502,6 @@ class ARTest extends PHPUnit_Framework_TestCase {
         }
 
         $this->fail('An exception was not raised');
-*/
-        $this->markTestIncomplete();
     }
 
     public function testWrite_value_changes() {
