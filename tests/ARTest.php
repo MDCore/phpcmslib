@@ -145,6 +145,21 @@ class ARTest extends PHPUnit_Framework_TestCase {
 
         $this->fail('An exception was not raised');
     }
+    public function test_find_without_criteria()
+    {
+        $customer = new customer;
+        try
+        {
+            $customer->find();
+        }
+        catch(Exception $e)
+        {
+            return;
+        }
+
+        $this->fail('An exception was not raised');
+    }
+
     public function test_find_all()
     {
         $customer = new customer;
@@ -537,6 +552,19 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $c2 = null;
     }
 
+    public function test_as_collection()
+    {
+        $customer = new customer;
+        $customer->find('all');
+        $expected = array(1 => array('company_name' =>'company 1'));
+        $this->assertEquals($expected, $customer->as_collection());
+
+        $expected = array(1 => array('name' => 'cust 1'));
+        $this->assertEquals($expected, $customer->as_collection('name'));
+
+        $expected = array(1 => array('name' => 'cust 1', 'company_name' => 'company 1'));
+        $this->assertEquals($expected, $customer->as_collection(array('name', 'company_name')));
+    }
     /**
      * @todo Implement testAs_array().
      */

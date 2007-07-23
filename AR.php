@@ -586,8 +586,13 @@ class AR implements SeekableIterator # basic AR class
         }
     }
 
-    function find($finder_criteria, $additional_sql_options = null) 
+    function find($finder_criteria = null, $additional_sql_options = null) 
     {
+        if (!$finder_criteria)
+        {
+            throw new Exception('No criteria specified for finder');
+            return;
+        }
         $sql['SELECT']      = "*";
         $sql['FROM']        = $this->schema_table;
         $sql['WHERE']       = $this->criteria_to_sql($finder_criteria);
@@ -650,6 +655,23 @@ class AR implements SeekableIterator # basic AR class
         $this->dirty = false;
     }
 
+    function as_collection($fields = null)
+    {
+        if (!$fields) {$fields = $this->display_field;}
+        if (!is_array($fields)) { $fields = array($fields); } #always make an array out of the fields
+        $result = Array();
+
+        $current_index = $this->results->offset; #get the current index of the MDB2 resultset, since we are going to be messing with it; I want to come back to the same place later
+        $this->results->seek(0); #go to the beginning of the resultset
+        while($record = $this->results->fetchRow())
+        {
+            $row = array();
+            foreach($fields as $field) { $row[$field] = $record->$field; } #create an array of all the requested fields
+            $result[$record->{$this->primary_key_field}] = $row;
+        }
+        $this->results->seek($current_index); #go back to the index stored earlier
+        return $result;
+    }
     function as_array($field = null, $criteria = null)
     {
         if (!$field) {$field = $this->display_field;}
@@ -899,6 +921,13 @@ class AR implements SeekableIterator # basic AR class
         $this->seek($this->offset+1);
     }
 
+static $sql_phrases = array(
+    'SELECT'    => ', ',
+    'FROM'      => ', ',
+    'WHERE'     => ' ',
+    'GROUP BY'  => ', ',
+    'ORDER BY'  => ','
+);
 }
 /* AR HELPERS starts here */
 function compare_records($record1, $record2, $include_boilerplate = false)

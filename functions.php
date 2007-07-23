@@ -3,13 +3,6 @@ require_once('string_helpers.php');
 require_once('form_helpers.php');
 
 define('MENU_PAGE_PARAMETERS_TO_SKIP', '/_id$/,/^sort/,/^filter_/,/^fk$/');
-$sql_phrases = array(
-    'SELECT'    => ', ',
-    'FROM'      => ', ',
-    'WHERE'     => ' ',
-    'GROUP BY'  => ', ',
-    'ORDER BY'  => ','
-);
 
 #this method does a redirect with standard parameters stripped
 function redirect_with_parameters($url, $additional_parameters = '', $return_url = false)
@@ -28,8 +21,7 @@ function redirect_with_parameters($url, $additional_parameters = '', $return_url
 function SQL_implode($sql_array, $prepend_phrases = true)
 {
     $result = ''; 
-    global $sql_phrases;
-    foreach($sql_phrases as $phrase => $join_text)
+    foreach(AR::$sql_phrases as $phrase => $join_text)
     {
         $this_phrase = '';
         if ($sql_array[$phrase] != '') 
@@ -74,15 +66,13 @@ function SQL_explode($sql)
     #todo - add subquery checks. I'll do this when I need a subquery split, thanks. and use a recursive function!
     $result = array();
     
-    global $sql_phrases;
-
     /*
      * todo tokenize this sql statement eg: 
     *           $sql = SELECT a, b, (SELECT cats from foo where foo.id = blah.id) as meh FROM blah"
      * tokenize should do this:
      *          $sql = SELECT a, b, (~#1#~) as meh FROM blah
      */
-    foreach (array_reverse($sql_phrases) as $phrase => $join_text)
+    foreach (array_reverse(AR::$sql_phrases) as $phrase => $join_text)
     {
         $phrasepos = strpos(strtolower($sql), strtolower($phrase));
         if (!($phrasepos === false))
@@ -110,8 +100,7 @@ function SQL_explode($sql)
 function SQL_merge($array_1, $array_2)
 {
     $result = array();
-    global $sql_phrases;
-    foreach($sql_phrases as $phrase => $join_text)
+    foreach(AR::$sql_phrases as $phrase => $join_text)
     {
         foreach(array($array_1, $array_2) as $candidate)
         {
