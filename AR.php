@@ -18,6 +18,7 @@ class AR implements SeekableIterator # basic AR class
     public $validation_errors = null;
     public $preserve_updated_on = false;
     public $db = null, $schema_definition;
+    public $dsn;
 
     private $offset = 0;
     private $results;
@@ -31,8 +32,14 @@ class AR implements SeekableIterator # basic AR class
         if (!$dsn && isset(App::$env)) {$dsn = App::$env->dsn;}
         if ($dsn)
         {
-            $this->db =& MDB2::Connect($dsn);
+            #debug("connecting to ".$dsn['database']);
+            $this->dsn = $dsn;
+            $this->db =& MDB2::factory($dsn);
             $this->error_check($this->db);
+        }
+        else
+        {
+            #raise an exception here ?
         }
     }
 
@@ -197,6 +204,7 @@ class AR implements SeekableIterator # basic AR class
         #relationships magic
         elseif ($this->has_one($name))
         {
+            #debug('finding by '.$name);
             if ($this->count == 0) { return false; }
             $ro = new $name;
             $fk = foreign_keyize($name);
@@ -206,6 +214,7 @@ class AR implements SeekableIterator # basic AR class
         }
         elseif ($this->belongs_to(singularize($name)) || $this->has_many($name))
         {
+            #echo 'finding by '.$name;
             if ($this->count == 0) { return false; }
             $ro = singularize($name); $ro = new $ro;
             $fk = foreign_keyize($this->model);
@@ -353,7 +362,7 @@ class AR implements SeekableIterator # basic AR class
     private function save_core($collection)
     {
         $fields = implode(',', array_keys($collection)); $values = "'".implode("','", array_values($collection))."'";
-        $sql = "INSERT INTO ".$this->schema_table." ($fields) VALUES ($values)";
+        $sql = 'INSERT INTO '.$this->schema_table." ($fields) VALUES ($values)";
         $this->last_sql_query = $sql;
         #debug ( $sql );die();
         $save = $this->db->query($sql);$this->error_check($save);
@@ -560,6 +569,7 @@ class AR implements SeekableIterator # basic AR class
     function find_by_sql($sql)
     {
         $this->last_sql_query = $sql; 
+        $this->last_finder_sql_query = $sql;
         $this->results = $this->db->query($sql);
         if ( $this->results )
         {
@@ -605,7 +615,7 @@ class AR implements SeekableIterator # basic AR class
 
     public function update_attributes($collection = null, $with_value_changes = false)
     {
-        if (!$collection ) # if no row is passed then set the current row in results
+        if ( !$collection ) # if no row is passed then set the current row in results
         {
             if ($this->results && !MDB2::isError($this->results))
             {
@@ -622,7 +632,7 @@ class AR implements SeekableIterator # basic AR class
                 $with_value_changes = true;
         }
 
-        if ($collection)  # it's possible no collection was set with the DB lookup: checking again.
+        if ( $collection )  # it's possible no collection was set with the DB lookup: checking again.
         {
         #set row variables to properties
             foreach ($collection as $field => $value)
@@ -655,8 +665,9 @@ class AR implements SeekableIterator # basic AR class
         $this->dirty = false;
     }
 
-    function as_collection($fields = null)
+    function as_collection($fields = null, $key_field = null)
     {
+        if (!$key_field) { $key_field = $this->primary_key_field; }
         if (!$fields) {$fields = $this->display_field;}
         if (!is_array($fields)) { $fields = array($fields); } #always make an array out of the fields
         $result = Array();
@@ -667,7 +678,7 @@ class AR implements SeekableIterator # basic AR class
         {
             $row = array();
             foreach($fields as $field) { $row[$field] = $record->$field; } #create an array of all the requested fields
-            $result[$record->{$this->primary_key_field}] = $row;
+            $result[$record->$key_field] = $row;
         }
         $this->results->seek($current_index); #go back to the index stored earlier
         return $result;
