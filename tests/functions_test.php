@@ -260,6 +260,7 @@ class functions_test extends PHPUnit_Framework_TestCase {
     public function testUrlTo()
     {
         $this->markTestIncomplete();
+        #test passing each section alone and getting an expected result. had to fix a bug coz I didn't include "id" in the sameness comparison
     }
 
     public function testRouteFromPath()

@@ -288,7 +288,7 @@ function url_to($path)
     
     #route's are the same so just send bank emptystring
         $app_route_controller = str_replace('_controller', '', App::$route['controller']);
-        if ($target['face'] == App::$route['face'] && $target['controller'] == $app_route_controller && $target['action'] == App::$route['action']) { return ''; }
+        if ($target['face'] == App::$route['face'] && $target['controller'] == $app_route_controller && $target['action'] == App::$route['action'] && $target['id'] == App::$route['id']) { return ''; }
 
     #base URL
         $url = App::$env->url.'/';
