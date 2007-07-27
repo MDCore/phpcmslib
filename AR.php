@@ -14,12 +14,16 @@ class AR implements SeekableIterator # basic AR class
     public $dirty = false;
     public $new = true;
     public $count = 0;
-    public $validation_result = null;
-    public $validation_errors = null;
+    public $validation_result = null; public $validation_errors = null;
     public $preserve_updated_on = false;
     public $db = null, $schema_definition;
     public $dsn;
 
+    /* AR related fields - need to be here now that __set forbids settings random properties */    
+    /*
+        public $model, $primary_key_field, $schema_table, $display_field, $last_sql_query, $last_finder_sql_query;
+        public $has_changelog;
+     */
     private $offset = 0;
     private $results;
     private $values = array();
@@ -275,6 +279,8 @@ class AR implements SeekableIterator # basic AR class
         }
         else
         {
+            #raise an error
+            #throw new Exception("$name is an invalid property");
             $this->$name = $value;
         }
 
@@ -454,6 +460,7 @@ class AR implements SeekableIterator # basic AR class
         }
         elseif ($this->count > 0)
         {
+            #i.e. delete just this record
             $sql_criteria = ' WHERE '.$this->schema_table.'.'.$this->primary_key_field.' = '.$this->values[$this->primary_key_field];
         }
         else
