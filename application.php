@@ -97,7 +97,7 @@ class Application
         #check if the dir exists
         if (!file_exists(App::$env->root.'/'.$path))
         {
-            if (App::$reloading) {echo "<li>$name folder not found</li>"; }
+            if (App::$reloading) {echo "<li>$name folder not found (".App::$env->root.'/'.$path.")</li>"; }
             return false;
         }
 
