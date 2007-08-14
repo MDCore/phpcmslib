@@ -349,4 +349,20 @@ function route_from_path($path)
 
     return $result;
 }
+
+    function as_hiddens($collection, $prefix = null)
+    {
+        foreach ($collection as $name => $value)
+        {
+            if (is_array($value)) {
+                as_hiddens($value, $name);
+                #print_r($value);die();
+            }
+            else
+            {
+                if (!is_null($prefix)) { $name = $prefix.'['.$name.']'; }
+                echo '<input type="hidden" name="'.$name.'" value="'.$value.'" />';
+            }
+        }
+    }
 ?>

@@ -460,5 +460,6 @@ class forms
         <br /><strong>Note:</strong> All fields marked with <strong>*</strong> are required.
 <?
     }
+
 }
 ?>
