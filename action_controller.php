@@ -134,6 +134,10 @@ class action_controller
     function render_partial($partial_name, $collection = null)
     {
         $this->layout = null;
+
+        # set up the view_parameters
+            if ($this->view_parameters) {foreach ($this->view_parameters as $variable => $value) { $$variable = $value; } }
+
         if (!$collection)
         {
             $this->render_view('_'.$partial_name);
