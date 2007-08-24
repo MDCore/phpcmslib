@@ -1,6 +1,6 @@
 <?php
 if (!defined('PHPUnit_MAIN_METHOD')) {
-    define('PHPUnit_MAIN_METHOD', 'lib_allTests::main');
+    define('PHPUnit_MAIN_METHOD', 'allTests::main');
 }
  
 require_once 'PHPUnit/Framework.php';
@@ -10,7 +10,7 @@ require_once 'ARTest.php';
 require_once 'functions_test.php';
 # include new tests suites here
  
-class lib_allTests
+class allTests
 {
     public static function main()
     {
@@ -29,7 +29,7 @@ class lib_allTests
     }
 }
  
-if (PHPUnit_MAIN_METHOD == 'lib_allTests::main') {
-    lib_allTests::main();
+if (PHPUnit_MAIN_METHOD == 'allTests::main') {
+    allTests::main();
 }
 ?>

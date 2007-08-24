@@ -350,19 +350,47 @@ function route_from_path($path)
     return $result;
 }
 
-    function as_hiddens($collection, $prefix = null)
+    function as_hiddens($collection, $prefixes = null)
     {
+        $these_prefixes = $prefixes;
+        $result = '';
         foreach ($collection as $name => $value)
         {
-            if (is_array($value)) {
-                as_hiddens($value, $name);
+            if (is_array($value))
+            {
+                if ($prefixes != null) { $these_prefixes[] = $name; } else { $these_prefixes = array($name); }
+                #var_dump($these_prefixes);
+                $result .= as_hiddens($value, $these_prefixes);
+                #$prefixes = null;
                 #print_r($value);die();
             }
             else
             {
-                if (!is_null($prefix)) { $name = $prefix.'['.$name.']'; }
-                echo '<input type="hidden" name="'.$name.'" value="'.$value.'" />';
+                #echo 'prefixes:';var_dump($prefixes);echo "\r\n"; 
+                if (!is_null($prefixes))
+                {
+                    $cnt = 0;
+                    $this_prefix = '';
+                    foreach ($prefixes as $prefix)
+                    {
+                        $cnt++;
+                        if ($cnt == 1)
+                        {
+                            $this_prefix .= $prefix;
+                        }
+                        else
+                        {
+                            $this_prefix .= '['.$prefix.']';
+                        }
+                    }
+                    $name = $this_prefix.'['.$name.']';
+                    #if ($cnt > 1) { $name .= '[]'; }; #append an array thing to this because there 
+                }
+                $this_hidden = '<input type="hidden" name="'.$name.'" value="'.$value.'" />';
+                #var_dump($this_hidden);
+                $result .= $this_hidden;
             }
         }
+        return $result;
     }
 ?>

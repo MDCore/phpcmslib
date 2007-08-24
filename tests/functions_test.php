@@ -171,7 +171,7 @@ class functions_test extends PHPUnit_Framework_TestCase {
         $this->assertEquals($expected, SQL_explode($input));
     }
     
-     public function testSQLExplode4()
+    public function testSQLExplode4()
     {
         $input = "SELECT a, b as cats, c FROM t INNER JOIN bob ON bob.a = t.p WHERE id=3 AND (t='a' AND t='b') ORDER BY p ASC";
         $expected = array(
@@ -266,6 +266,47 @@ class functions_test extends PHPUnit_Framework_TestCase {
     public function testRouteFromPath()
     {
         $this->markTestIncomplete();
+    }
+    public function testAsHiddens1()
+    {
+        $input = array('cat' => array(
+                    'legs' => 4,
+                    'tail' => 1,
+                    'eyes' => 2
+                )
+            );
+        $expected = '<input type="hidden" name="cat[legs]" value="4" /><input type="hidden" name="cat[tail]" value="1" /><input type="hidden" name="cat[eyes]" value="2" />';
+        $result = as_hiddens($input);
+        $this->assertEquals($expected, $result);
+    }
+    public function testAsHiddens2()
+    {
+        $input = array('cat' => array(
+                'legs' => array(
+                    'leg1' => 'brown',
+                    'leg2' => 'white',
+                    'leg3' => 'black',
+                    'leg4' => 'white'
+                ),
+                'tail' => 1,
+                'eyes' => 2
+                )
+            );
+        $expected = '<input type="hidden" name="cat[legs][leg1]" value="brown" /><input type="hidden" name="cat[legs][leg2]" value="white" /><input type="hidden" name="cat[legs][leg3]" value="black" /><input type="hidden" name="cat[legs][leg4]" value="white" /><input type="hidden" name="cat[tail]" value="1" /><input type="hidden" name="cat[eyes]" value="2" />';
+        $result = as_hiddens($input);
+        $this->assertequals($expected, $result);
+    }
+    public function testAsHiddens3()
+    {
+        $input = array(
+                    'leg1' => 'brown',
+                    'leg2' => 'white',
+                    'leg3' => 'black',
+                    'leg4' => 'white'
+                );
+        $expected = '<input type="hidden" name="leg1" value="brown" /><input type="hidden" name="leg2" value="white" /><input type="hidden" name="leg3" value="black" /><input type="hidden" name="leg4" value="white" />';
+        $result = as_hiddens($input);
+        $this->assertequals($expected, $result);
     }
 
 }
