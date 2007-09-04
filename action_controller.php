@@ -5,7 +5,6 @@ class action_controller
     public $layout = null;
     public $face = "site";
     public $virtual = false;
-    public $rendered_content = null;
 
     public $before_action_filter = null, $after_action_filter = null;
     public $before_controller_load_filter = null, $before_controller_execute_filter = null, $after_controller_filter = null;
@@ -83,19 +82,37 @@ class action_controller
         }
     }
 
-    public function render()
+    public function render($url_as_array = null, $layout = null)
     {
-        if (isset($this->layout)  && $this->layout)
+        if (!isset($layout)) { $layout = $this->layout; }
+        if (isset($layout) && $layout)
         {
-            $this->render_layout();
+            $this->render_layout($layout);
         }
         else
         {
-            $this->render_content(); #no layout to call render_content for itself.. so this effectively means "render without a layout"
+            $this->render_content($url_as_array); #no layout to call render_content for itself.. so this effectively means "render without a layout"
         }
     }
+    public function render_as_string($url_as_array, $layout = null)
+    { #currently can't do other controllers; execute action only takes an action, not a controller (yet)
 
-    function render_content()
+        #execute the action, saving the contents
+            ob_start();
+                $this->execute_action($url_as_array['action']);
+                $this->render_contents = ob_get_contents();
+            ob_clean();
+
+        #render the layout (if application) and view
+            ob_start();
+                $this->render($url_as_array, $layout);
+                $result = ob_get_contents();
+            ob_clean();
+
+        return $result;
+    }
+
+    function render_content($url_as_array = null)
     {
         if (isset($this->action_rendered_inline) && $this->action_rendered_inline)
         {
@@ -103,29 +120,47 @@ class action_controller
         }
         else #render the view file
         {
-            $this->render_view();
+            $this->render_view($url_as_array);
         }
     }
 
-    function render_layout()
+    function render_layout($layout = null)
     {
+        if (!$layout) { $layout = $this->layout; }
         if ($this->view_parameters) {foreach ($this->view_parameters as $variable => $value) { $$variable = $value; } }
 
-        if ($layout_path = App::require_this('layout', $this->layout)) { require ($layout_path); }
+        if ($layout_path = App::require_this('layout', $layout)) { require ($layout_path); }
 
     }
 
-    function render_view($view_name = null)
+    function render_view($url = null)
     {
-        if (!$view_name) { $view_name = App::$route['action']; }
+        if (is_null($url))
+        {
+            $url = App::$route;
+        }
+        elseif (is_string($url)) #just passing a view name
+        {
+            $view = $url;
+            $url = App::$route; $url['action'] = $view;
+        }
+        else #they've passed a url array
+        {
+        }
+
+        #clean up the controller_name
+        {
+            $url['controller'] = str_replace('_controller', '', $url['controller']);
+
+        }
         global $path_to_root;
         
         # set up the view_parameters
             if ($this->view_parameters) {foreach ($this->view_parameters as $variable => $value) { $$variable = $value; } }
 
-        $view_url = $path_to_root."/".$this->face."/views/".$this->controller_name."/$view_name.php";
-        #debug($view_url);
-        require ($view_url);
+        $view_path = $path_to_root."/".$this->face."/views/".$url['controller'].'/'.$url['action'].'.php';
+        #print_r($url); debug($view_path);
+        require ($view_path);
 
         $this->has_rendered = true;
         return true;
@@ -158,9 +193,21 @@ class action_controller
         #$this->render_inline();
     }
 
-    function execute_action($action_name = null)
+    function execute_action($url = null)
     {
-        if (!$action_name) { $action_name = App::$route['action']; }
+        if (is_array($url))
+        {
+            $action_name = $url['action'];
+        }
+        elseif (is_string($url))
+        {
+            $action_name = $url;
+        }
+        else
+        {
+           $action_name = App::$route['action']; 
+        }
+
         if (method_exists($this, $action_name) || method_exists($this, '__call'))
         {
             # check for ajax requests, and automatically set render_inline and layout = null
