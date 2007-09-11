@@ -197,6 +197,7 @@ class action_controller
             # check for ajax requests, and automatically set render_inline and layout = null
             if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' && !$ignore_ajax_request_settings)
             {
+                $this->request_type = 'ajax';
                 $this->layout = null; $this->render_inline();
             }
             #debug('execute_action');
