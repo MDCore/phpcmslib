@@ -742,8 +742,11 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
 
     public function check_for_print()
     {
-        if (isset($_GET['print']) && $_GET['print'] == 'y') { $this->layout = 'print'; }
-        define('PRINTING_MODE', true); #hackety hack hack ? 
+        if (isset($_GET['print']) && $_GET['print'] == 'y') {
+            $this->layout = 'print';
+            define('PRINTING_MODE', true); #hackety hack hack ? 
+        }
+        
     }
 
     public function is_logged_in()
