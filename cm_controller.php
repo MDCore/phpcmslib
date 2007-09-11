@@ -99,7 +99,6 @@ class cm_controller extends action_controller
 
         #some fk stuff
             if (!isset($this->foreign_key_title_prefix)) {$this->foreign_key_title_prefix = ' in ';}
-            if (isset($_GET['fk_t'])) {$fk_t= $_GET['fk_t']; $this->foreign_key_title = $this->foreign_key_title_prefix.$fk_t; } else {$this->foreign_key_title = '';}
 
         #changes for print mode
             if (defined('PRINTING_MODE'))
@@ -169,14 +168,10 @@ class cm_controller extends action_controller
         if (isset($related_page['id'])) { $target['id'] = $row->{$related_page['id']}; }
         ?><td class="action_link"><a href="<?echo url_to($target);
 
-        if (isset($related_page['fk']))
-        {
-            ?>?fk=<?=$related_page['fk'];?>~<? echo $row->id;
-            if (isset($related_page['fk_title_field']))
-            {
-                ?>&amp;fk_t=<?=urlencode($row->{$related_page['fk_title_field']});
-            }
-        }
+        if (isset($related_page['fk']) || (isset($related_page['fk_title_field']))) { echo '?p=y'; }
+        if (isset($related_page['fk'])) { ?>&amp;fk=<?=$related_page['fk'];?>~<? echo $row->id; }
+        if (isset($related_page['fk_title_field'])) { ?>&amp;fk_t=<? echo urlencode($row->{$related_page['fk_title_field']}); }
+
         ?>"><?
 
         if (isset($related_page['title'])) { echo $related_page['title']; } else echo htmlentities(proper_nounize($related_page['controller']));
@@ -371,6 +366,7 @@ class cm_controller extends action_controller
         if (isset($this->page_title)) { $page_title = $this->page_title; }
 
         # the list title
+        if (isset($_GET['fk_t'])) {$fk_t= $_GET['fk_t']; $this->foreign_key_title = $this->foreign_key_title_prefix.$fk_t; } else {$this->foreign_key_title = '';}
         ?> <h2><?=$this->list_title;?><?=stripslashes($this->foreign_key_title);?></h2><?
 
         #setup the list fields
@@ -450,7 +446,7 @@ class cm_controller extends action_controller
             $sql_pk = $this->schema_table.".".$this->primary_key_field." as __pk_field";
             $results_query = str_replace( '__pk__', $sql_pk, $results_query );
 
-        #debug ( $results_query );
+        if ($this->debug_sql) { debug ( $results_query ); }
         $AR = new AR;
         $results_list = $AR->db->query($results_query." limit ". $this->start_limit.', '.$this->row_limit);
         #error check
@@ -557,8 +553,8 @@ class cm_controller extends action_controller
             *                   controller              : the target route controller, without _controller appended. E.g. Orders
             *                   action                  : the target route action. not required.
             *                   id                      : the target route id. the value of this field name in this record will be passed as the id. not required.
-            *                   fk                      : the foreign key name that the target controller is going to expect. the list page will append the primary key of this table. not required
-            *                   fk_title_field          : the name that will be passed to the target action as extra title text. not required
+            *                   fk                      : the foreign key name that the target controller is going to expect. the list page will append the primary key of this table. not required.
+            *                   fk_title_field          : the name that will be passed to the target action as extra title text. not required.
             */                           
                 if ($this->related_pages && sizeof($this->related_pages) > 0)
                 {
