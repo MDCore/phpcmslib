@@ -169,7 +169,10 @@ class cm_controller extends action_controller
         ?><td class="action_link"><a href="<?echo url_to($target);
 
         if (isset($related_page['fk']) || (isset($related_page['fk_title_field']))) { echo '?p=y'; }
-        if (isset($related_page['fk'])) { ?>&amp;fk=<?=$related_page['fk'];?>~<? echo $row->id; }
+        if (isset($related_page['fk'])) {
+            if (!isset($related_page['fk_field'])) { $fk_field = $this->primary_model->primary_key_field; } else { $fk_field = $related_page['fk_field']; }
+            ?>&amp;fk=<?=$related_page['fk'];?>~<? echo $row->$fk_field; 
+        }
         if (isset($related_page['fk_title_field'])) { ?>&amp;fk_t=<? echo urlencode($row->{$related_page['fk_title_field']}); }
 
         ?>"><?
@@ -553,7 +556,8 @@ class cm_controller extends action_controller
             *                   controller              : the target route controller, without _controller appended. E.g. Orders
             *                   action                  : the target route action. not required.
             *                   id                      : the target route id. the value of this field name in this record will be passed as the id. not required.
-            *                   fk                      : the foreign key name that the target controller is going to expect. the list page will append the primary key of this table. not required.
+            *                   fk                      : the foreign key name that the target controller is going to expect. the list page will, by default, append the primary key of this table, unless fk_field is set. not required.
+            *                   fk_field                : the field name to use for the value of the foreign_key field. not required.
             *                   fk_title_field          : the name that will be passed to the target action as extra title text. not required.
             */                           
                 if ($this->related_pages && sizeof($this->related_pages) > 0)
