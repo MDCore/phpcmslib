@@ -216,7 +216,7 @@ if (!function_exists('property_exists')) {
    return array_key_exists($property, get_class_vars($class));
   }
 }
-function dateAdd($interval,$number,$dateTime) {
+function date_add($interval,$number,$dateTime) {
        
     $dateTime = (strtotime($dateTime) != -1) ? strtotime($dateTime) : $dateTime;      
     $dateTimeArr=getdate($dateTime);
@@ -272,7 +272,8 @@ function dateAdd($interval,$number,$dateTime) {
         if ($min==0){$nosecmin += 1;}
         if ($sec==0){$nosecmin += 1;}
        
-        if ($nosecmin>2){     return(date("Y-m-d",$dateTime));} else {     return(date("Y-m-d G:i:s",$dateTime));}
+        #if ($nosecmin>2){     return(date("Y-m-d",$dateTime));} else { return(date("Y-m-d G:i:s",$dateTime));}
+        return $dateTime;
 }
 
 function url_to($path)
