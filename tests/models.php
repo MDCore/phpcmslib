@@ -28,7 +28,8 @@ class product extends db_conn
 }
 class category extends db_conn
 {
-    public $has_many = "products";
+    public $has_many = array("products" =>
+        array('ORDER BY' => 'products.name'));
 }
 
 class user extends db_conn

@@ -224,7 +224,11 @@ class AR implements SeekableIterator # basic AR class
             $fk = foreign_keyize($this->model);
             $fkfunc = "find_by_$fk";
 
-            $ro->$fkfunc($this->values[$this->primary_key_field]); // using areal world example: a category has_many products. this line translated means "return $product->find_by_category_id ($category->id )" */
+            #additional criteria checks
+                $additional_criteria = '';
+                if ($this->has_many($name)) { $additional_criteria = $this->has_many($name); }
+
+            $ro->$fkfunc($this->values[$this->primary_key_field], $additional_criteria); // using areal world example: a category has_many products. this line translated means "return $product->find_by_category_id ($category->id )" */
             return $ro;
         }
         elseif ($this->has_many_through($name))
@@ -745,7 +749,22 @@ class AR implements SeekableIterator # basic AR class
     function has_many($model_name)
     { 
         if (!isset($this->has_many)) {return false;}
-        return in_array($model_name, split(',',$this->has_many));
+        #first check if it is defined as an array
+        if (is_array($this->has_many))
+        {
+            if (in_array($model_name, array_keys($this->has_many)))
+            {
+                return $this->has_many[$model_name];
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return in_array($model_name, split(',',$this->has_many));
+        }
     }
     function belongs_to($model_name)
     { 

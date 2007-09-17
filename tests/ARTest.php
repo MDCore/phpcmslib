@@ -266,6 +266,16 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(1, $customer->record['id']);
     }
 
+    #bug: these additional criteria need to be upper case for SQL 
+    public function test_get_additional_criteria_from_relationships()
+    {
+        #has many
+            $category = new category;
+            $category->find(1);
+            $products = $category->products;
+            $this->assertContains('ORDER BY products.name', $products->last_sql_query);
+    }
+
     public function test_bad_attributes()
     {
         $customer = new customer;
@@ -589,6 +599,18 @@ class ARTest extends PHPUnit_Framework_TestCase {
      * @todo Implement testHas_one().
      */
     public function testHas_one() {
+        // Remove the following lines when you implement this test.
+        $this->markTestIncomplete(
+          'This test has not been implemented yet.'
+        );
+    }
+    public function testHas_many() {
+        // Remove the following lines when you implement this test.
+        $this->markTestIncomplete(
+          'This test has not been implemented yet.'
+        );
+    }
+    public function testBelongs_to() {
         // Remove the following lines when you implement this test.
         $this->markTestIncomplete(
           'This test has not been implemented yet.'
