@@ -19,7 +19,7 @@ class AR implements SeekableIterator # basic AR class
     public $db = null, $schema_definition;
     public $dsn;
 
-    /* AR related fields - need to be here now that __set forbids settings random properties */    
+    /* AR related fields - need to be here now that __set forbids setting random properties */    
     /*
         public $model, $primary_key_field, $schema_table, $display_field, $last_sql_query, $last_finder_sql_query;
         public $has_changelog;
@@ -273,7 +273,7 @@ class AR implements SeekableIterator # basic AR class
         #check for properties, or values, of the record and set those in the values array
         if (isset($this->schema_definition) && (in_array($name, array_keys($this->values))))
         {
-            if (1==2) { echo "setting dirty for $name to $value\r\n";}
+            #debug if (1==2) { echo "setting dirty for $name to $value\r\n";}
             $this->dirty = true;
             $this->values[$name] = $value;
         }
@@ -893,12 +893,10 @@ class AR implements SeekableIterator # basic AR class
     #methods required for iterator implementation
     function current()
     {
-        #echo "current";
         return $this;
     }
     function key()
     {
-        #echo "key";
         if ($this->valid())
         {
             return $this->offset;
@@ -906,7 +904,6 @@ class AR implements SeekableIterator # basic AR class
     }
     function seek($index)
     {
-        #echo "seeking to $index<br />";
         if ($this->valid())
         {
             $this->results->seek($index);
@@ -920,13 +917,11 @@ class AR implements SeekableIterator # basic AR class
     }
     function valid()
     {
-        #echo "valid";
         if ($this->count > 0 && !MDB2::isError($this->results) && $this->offset < $this->count) { return true; } else { return false; }
 
     }
     function rewind()
     {
-        #echo "rewind";
         if ($this->count > 0 && !MDB2::isError($this->results)) #not using valid() because valid checks offset. when @ end it could never rewind then!
         {
             $this->offset = 0;
@@ -935,10 +930,11 @@ class AR implements SeekableIterator # basic AR class
     }
     function next()
     {
-        #echo "next";
         $this->seek($this->offset+1);
     }
 
+#todo put this somewhere else!
+#this is used in functions.php
 static $sql_phrases = array(
     'SELECT'    => ', ',
     'FROM'      => ', ',
