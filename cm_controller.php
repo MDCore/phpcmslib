@@ -170,7 +170,7 @@ class cm_controller extends action_controller
 
         if (isset($related_page['fk']) || (isset($related_page['fk_title_field']))) { echo '?p=y'; }
         if (isset($related_page['fk'])) {
-            if (!isset($related_page['fk_field'])) { $fk_field = $this->primary_model->primary_key_field; } else { $fk_field = $related_page['fk_field']; }
+            if (!isset($related_page['fk_field'])) { $fk_field = $this->model_object->primary_key_field; } else { $fk_field = $related_page['fk_field']; }
             ?>&amp;fk=<?=$related_page['fk'];?>~<? echo $row->$fk_field; 
         }
         if (isset($related_page['fk_title_field'])) { ?>&amp;fk_t=<? echo urlencode($row->{$related_page['fk_title_field']}); }
