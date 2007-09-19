@@ -67,7 +67,10 @@ class cm_controller extends action_controller
             $sql_pk = $this->schema_table.".".$this->primary_key_field." as __pk_field";
             if (!isset($this->sql_query))
             {
-                $this->sql_query = "SELECT ".$this->schema_table.".*, $sql_pk FROM ".$this->schema_table;
+                $this->sql_query = array(
+                    'SELECT' => $this->schema_table.'.*, '.$sql_pk,
+                    'FROM'   => $this->schema_table
+                );
             }
             else
             {
