@@ -71,7 +71,17 @@ class ARTest extends PHPUnit_Framework_TestCase {
             {
                 $this->db->query($query['create']);
                 App::error_check($this->db);
-                $this->db->query($query['insert']);
+                if (is_array($query['insert']))
+                {
+                    foreach ($query['insert'] as $statement)
+                    {
+                        $this->db->query($statement);
+                    }
+                }
+                else
+                {
+                    $this->db->query($query['insert']);
+                }
                 App::error_check($this->db);
             }
     }

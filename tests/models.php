@@ -24,6 +24,7 @@ class customer_changelog extends db_conn
 
 class product extends db_conn
 {
+    public $sum_field = cost;
     public $has_one = "category";
 }
 class category extends db_conn
@@ -92,9 +93,14 @@ static $schema_sql = array(
               `id` int(11) NOT NULL auto_increment,
               `category_id` int(11) NOT NULL,
               `name` varchar(255) NOT NULL,
+              `cost` double NOT NULL,
               PRIMARY KEY  (`id`)
             ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-          'insert' => "INSERT INTO products (id, category_id, name) VALUES (1, 1, 'Cool Shoe')"),
+          'insert' => array(
+                "INSERT INTO products (id, category_id, name, cost) VALUES (1, 1, 'Cool Shoe', 200)",
+                "INSERT INTO products (id, category_id, name, cost) VALUES (2, 2, '2xCool Shoe', 400)"
+            )
+        ),
     "category" => array('create' => 
             "create table ARTest.categories (
               `id` int(11) NOT NULL auto_increment,
@@ -159,8 +165,13 @@ static $schema_sql = array(
 		'mdb2type' => 'text',
 		'length' => '255',
 		'default' => ''
-            ),
-        ),
+    ),
+	'cost' => Array(
+		'type' => 'float',
+		'mdb2type' => 'float',
+		'default' => ''
+        )
+    ),
     'category' => Array(
 	'id' => Array(
 		'type' => 'int',
