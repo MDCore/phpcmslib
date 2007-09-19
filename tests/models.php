@@ -24,7 +24,7 @@ class customer_changelog extends db_conn
 
 class product extends db_conn
 {
-    public $sum_field = cost;
+    public $sum_field = 'cost';
     public $has_one = "category";
 }
 class category extends db_conn
@@ -97,8 +97,8 @@ static $schema_sql = array(
               PRIMARY KEY  (`id`)
             ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
           'insert' => array(
-                "INSERT INTO products (id, category_id, name, cost) VALUES (1, 1, 'Cool Shoe', 200)",
-                "INSERT INTO products (id, category_id, name, cost) VALUES (2, 2, '2xCool Shoe', 400)"
+                "INSERT INTO ARTest.products (id, category_id, name, cost) VALUES (1, 1, 'Cool Shoe', 200)",
+                "INSERT INTO ARTest.products (id, category_id, name, cost) VALUES (2, 1, '2xCool Shoe', 400)"
             )
         ),
     "category" => array('create' => 

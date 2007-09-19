@@ -76,6 +76,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
                     foreach ($query['insert'] as $statement)
                     {
                         $this->db->query($statement);
+                        App::error_check($this->db);
                     }
                 }
                 else
@@ -689,6 +690,18 @@ class ARTest extends PHPUnit_Framework_TestCase {
     {
         $customer = new customer;
         $this->assertEquals('WHERE t=f', 'WHERE t=f');
+    }
+
+    function testSum()
+    {
+        $customer = new customer;
+        $this->assertFalse($customer->sum(), 'Model without sum_field is not returning false');
+
+        $product = new product;
+        $this->assertEquals(0, $product->sum(), 'Object with no records not returning 0');
+
+        $product->find('all');
+        $this->assertEquals(600, $product->sum());
     }
 
     public function testDisplay_name()

@@ -19,11 +19,12 @@ class AR implements SeekableIterator # basic AR class
     public $db = null, $schema_definition;
     public $dsn;
 
-    /* AR related fields - need to be here now that __set forbids setting random properties */    
+    /* AR related fields - now that __get forbids getting random properties, these can be here as settable but not gettable */    
     /*
-        public $model, $primary_key_field, $schema_table, $display_field, $last_sql_query, $last_finder_sql_query;
+        public $model, $primary_key_field, $schema_table, $display_field, ;
         public $has_changelog;
      */
+    public $last_sql_query, $last_finder_sql_query;
     private $offset = 0;
     private $results;
     private $values = array();
@@ -577,9 +578,44 @@ class AR implements SeekableIterator # basic AR class
         }
     }
 
+    function criteria_to_sql($criteria) #this method takes dynamic criteria and converts it to SQL 
+    {
+        if (is_numeric($criteria)) {$sql_criteria = $this->schema_table.'.'.$this->primary_key_field.'='.$criteria;} #if passed a numeric value assume it's a Primary Key
+        elseif (is_string($criteria)) 
+        {
+            if (strtolower($criteria)== 'all') 
+            {
+                $sql_criteria = '1=1';
+            }
+            else
+            {
+                $sql_criteria = $criteria;
+            }
+        }
+        elseif (is_array($criteria))
+        {
+            if (sizeof($criteria) > 0)
+            {
+                #I assume we are passing an array of ID's
+                $sql_criteria = $this->schema_table.'.'.$this->primary_key_field.' IN (';
+                foreach ($criteria as $id)
+                {
+                    $sql_criteria .= $id.',';
+                } 
+                $sql_criteria = substr($sql_criteria, 0, strlen($sql_criteria)-1);
+                $sql_criteria .= ')';
+            }
+            else
+            {
+                $sql_criteria = '1=2';
+            }
+        }
+        return $sql_criteria;
+    }
+
     function find_by_sql($sql)
     {
-        $this->last_sql_query = $sql; 
+        $this->last_sql_query = $sql;
         $this->last_finder_sql_query = $sql;
         $this->results = $this->db->query($sql);
         if ( $this->results )
@@ -852,41 +888,25 @@ class AR implements SeekableIterator # basic AR class
         return true;
     }
     
-    function criteria_to_sql($criteria) #this method takes dynamic criteria and converts it to SQL 
-    {
-        if (is_numeric($criteria)) {$sql_criteria = $this->schema_table.'.'.$this->primary_key_field.'='.$criteria;} #if passed a numeric value assume it's a Primary Key
-        elseif (is_string($criteria)) 
-        {
-            if (strtolower($criteria)== 'all') 
-            {
-                $sql_criteria = '1=1';
-            }
-            else
-            {
-                $sql_criteria = $criteria;
-            }
-        }
-        elseif (is_array($criteria))
-        {
-            if (sizeof($criteria) > 0)
-            {
-                #I assume we are passing an array of ID's
-                $sql_criteria = $this->schema_table.'.'.$this->primary_key_field.' IN (';
-                foreach ($criteria as $id)
-                {
-                    $sql_criteria .= $id.',';
-                } 
-                $sql_criteria = substr($sql_criteria, 0, strlen($sql_criteria)-1);
-                $sql_criteria .= ')';
-            }
-            else
-            {
-                $sql_criteria = '1=2';
-            }
-        }
-        return $sql_criteria;
-    }
 
+    function sum()
+    {
+        if (!isset($this->sum_field)) { return false; }
+        if ($this->count == 0) { return 0; }
+
+        $current_index = $this->key(); #get the current index of the MDB2 resultset, since we are going to be messing with it; I want to come back to the same place later
+        $this->rewind(); #go to the beginning of the resultset
+
+        $sum = 0;
+        foreach ($this as $record)
+        {
+            $sum += $this->{$this->sum_field};
+        }
+
+        $this->seek($current_index); #go back to the index stored earlier
+
+        return $sum;
+    }
     function display_name()
     {
         if ($this->count == 0) { return false; }
