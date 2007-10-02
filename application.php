@@ -8,6 +8,7 @@ class Application
     static $default_face = null, $controller = null, $route = null;
     static $allowed_faces = array('cm', 'site', 'extranet');
     static $render_contents = null;
+    static $skip_model_require = false;
 
     function init($path_to_root)
     {
@@ -47,8 +48,8 @@ class Application
 
         App::load_models(); 
 
-        if (App::$booting) {
-
+        if (App::$booting)
+        {
             if (App::$reloading) {echo "<li>Using face <strong>".App::$default_face."</strong></li>"; }
 
             App::find_these('layouts', App::$default_face.'/layouts');
@@ -69,7 +70,7 @@ class Application
     # if forced reload then print app variables and die
         if (App::$reloading)
         {
-            echo "<li>Session:<pre>";print_r($_SESSION);echo '</pre></li>';
+            echo "<li>Session:<pre>";print_r($_SESSION[APP_NAME]);echo '</pre></li>';
             echo "<li>App::\$env<pre>";print_r(App::$env);echo '</pre></li>';
             echo "<li>Application reloaded</li>";
             echo "</ol>";
@@ -85,7 +86,7 @@ class Application
         foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model)
         {
             if (App::$reloading) {echo "<li>loading <strong>$model_name</strong> ($model)</li>"; }
-            require_once($model);
+            if (!App::$skip_model_require) { require_once($model); }
         }
         if (App::$reloading) {echo "</ul></li>"; }
     }

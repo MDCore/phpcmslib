@@ -19,7 +19,7 @@ class schema_interregator
                     $model_object->db->loadModule('Reverse', null, true);
 
                 #using the magic of mdb2's Reverse module and the method tableInfo
-                $table_name = $model_object->schema_table;
+                    $table_name = $model_object->schema_table;
                 echo "writing schema of table <i>$table_name</i> for model <i>$model_name</i><br />";
                 $table_schema = $model_object->db->tableInfo($table_name, null);
                 $error_code = AR::error_check($table_schema, false);
@@ -60,6 +60,7 @@ class schema_interregator
     {
         $source = null;
         $source = '$schema_definition = Array(';
+        if (!$schema) { return false; } #todo raise an exception
         foreach ($schema as $table_name => $fields)
         {
             $source .= '\''.singularize($table_name).'\' => Array('."\r\n\t";
@@ -87,19 +88,26 @@ class schema_interregator
 
     function write_schema_source($source)
     {
+        if ($source == '') { return false; }
         global $path_to_root;
-        #$path_to_root = '.';
-        #print_r(pathinfo(realpath($path_to_root)));
+
         $filename = realpath($path_to_root).'/config/cache/schema_definition.php';
         #echo $filename;
 
-        touch($filename);
-        file_put_contents($filename, $source);
+        #touch($filename);
+        if (!file_put_contents($filename, $source))
+        {
+            trigger_error("<i>config/cache/schema_definition.php</i> could not be written to: please create this file manually and give the webserver write rights", E_USER_ERROR);
+        }
     }
 
     function build_schema_definition()
     {
         $schema = schema_interregator::pull_schema();
+        if ($schema == '')
+        {
+            trigger_error("The schema could not be pulled from the database. This is most likely because there are no models for the application", E_USER_ERROR);
+        }
         $source = schema_interregator::generate_schema_source($schema);
         schema_interregator::write_schema_source($source);
     }

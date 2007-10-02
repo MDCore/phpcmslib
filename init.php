@@ -24,6 +24,9 @@ if (!isset($path_to_root)) {$path_to_root = '.';}
 
 #  load the application config
     require($path_to_root.'/config/application.php');
+    
+# before application init callback
+    if (isset($before_application_start)) { $before_application_start(); }
 
 #application init
     App::init($path_to_root);
