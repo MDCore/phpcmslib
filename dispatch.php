@@ -44,7 +44,8 @@ class dispatch
             }
             else
             {
-                #do we require a face controller ? If so, create an error trigger here...
+                #a face controlle is required
+                trigger_error("face_controller not found for <strong>".App::$route['face']."</strong> face", E_USER_ERROR); 
             }
         #-------------------------------------------------------------------------------------------------
             #before_controller_load_filter
