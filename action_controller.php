@@ -231,7 +231,8 @@ class action_controller
         #echo '<pre>';print_r($this);echo '</pre>';
         if (!isset($this->layout))
         {
-            if (in_array($controller_name, $_SESSION[APP_NAME]['application']['layouts']))
+            #we are using the route's face controller and not app::$face here because this construct happens before the face and controller are set in stone
+            if (in_array($controller_name, $_SESSION[APP_NAME]['application'][App::$route['face']]['layouts']))
             {
                 $this->layout = $controller_name;
             }

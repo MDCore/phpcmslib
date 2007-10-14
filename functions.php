@@ -323,7 +323,9 @@ function route_from_path($path)
         'action' => '',
         'id' => ''
         );
+
     $result['face'] = App::$route['face'];
+    if (!$result['face']) { $result['face'] = App::$default_face; }
         
     if ($path)
     {

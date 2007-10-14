@@ -5,7 +5,7 @@ class Application
     static $models;
     static $schema_definition = null;
     static $env;
-    static $route = null, $controller = null;
+    static $route = null, $face = null, $controller = null;
     static $default_face = null, $allowed_faces = array('cm', 'site', 'extranet');
     static $render_contents = null;
     static $skip_model_require = false;
@@ -145,7 +145,7 @@ class Application
 
         $type_name = pluralize($type_name);
 
-        if (!$face) { $face = App::$route['face']; }
+        if (!$face) { $face = App::$face; }
         
         if (isset($_SESSION[APP_NAME]['application'][$face][$type_name]) && in_array($name.'.php', array_keys($_SESSION[APP_NAME]['application'][$face][$type_name])))
         {

@@ -35,7 +35,7 @@ class dispatch
            #echo '<pre>';print_r(App::$route);echo '</pre>';
         #load the controller
             #load the face_controller for this face first
-            if ($face_controller_path = App::require_this('controller', 'face_controller'))
+            if ($face_controller_path = App::require_this('controller', 'face_controller', App::$route['face']))
             {
                 #the face controller was found
                 require($face_controller_path);
@@ -52,7 +52,7 @@ class dispatch
             
         #-------------------------------------------------------------------------------------------------
 
-            if ($controller_path = App::require_this('controller', App::$route['controller']))
+            if ($controller_path = App::require_this('controller', App::$route['controller'], App::$route['face']))
             {
                 #controller found!
                 require($controller_path);
@@ -64,7 +64,9 @@ class dispatch
 
         #-------------------------------------------------------------------------------------------------
 
-            App::$controller = $controller;
+            #set the current controller and current face fields in App::
+                App::$controller = $controller;
+                App::$face = App::$route['face'];
 
             if (!App::$route['action']) { App::$route['action'] = App::$controller->default_action; }
             if (!App::$route['action']) { trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> has no default action and no action has been specified", E_USER_ERROR); }
