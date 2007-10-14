@@ -22,12 +22,15 @@ if (!isset($path_to_root)) {$path_to_root = '.';}
 #external libs
     require($path_to_root.'/vendor/phpmailer/class.phpmailer.php');
 
-#  load the application config
+#load the application config
     require($path_to_root.'/config/application.php');
     
-# before application init callback
+#before application init callback
     if (isset($before_application_start)) { $before_application_start(); }
 
 #application init
     App::init($path_to_root);
+
+#do the dispatching process
+    $dispatch = new dispatch; $dispatch->process();
 ?>

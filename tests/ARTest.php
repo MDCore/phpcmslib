@@ -319,7 +319,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $category = new category;
         $category->find(1);
         $this->assertEquals('product', get_class($category->products));
-        $this->assertEquals(1, $category->products->count);
+        $this->assertEquals(2, $category->products->count);
     }
     public function test_find_has_many_through()
     {

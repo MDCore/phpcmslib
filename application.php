@@ -5,8 +5,8 @@ class Application
     static $models;
     static $schema_definition = null;
     static $env;
-    static $default_face = null, $controller = null, $route = null;
-    static $allowed_faces = array('cm', 'site', 'extranet');
+    static $route = null, $controller = null;
+    static $default_face = null, $allowed_faces = array('cm', 'site', 'extranet');
     static $render_contents = null;
     static $skip_model_require = false;
 
@@ -18,15 +18,15 @@ class Application
         if ( isset($_GET['reload']) )
         {
             App::$booting = true; App::$reloading = true; $_GET['reload'] = '';
-?><style type="text/css"> li { font-family: "Courier New",monospace,verdana,arial; } </style><ol><?
+            ?><style type="text/css"> li { font-family: "Courier New",monospace,verdana,arial; } </style><ol><?
         }
 
-        global $environment; #pull in the environment rom the config
+        global $environment; #pull in the environment from the config
         
         # check for running from shell, for tests
         if (isset($_SERVER['SHELL']) && !is_null($_SERVER['SHELL']))
         {
-            #todo, fix this hack
+            #todo, fix this hack... should be test, maybe ?
             $environment = 'development';    
         }
         
@@ -48,12 +48,16 @@ class Application
 
         App::load_models(); 
 
+        #load the layouts, controllers and views for ALL faces
         if (App::$booting)
         {
-            if (App::$reloading) {echo "<li>Using face <strong>".App::$default_face."</strong></li>"; }
+            if (App::$reloading) { echo "<li>Using face <strong>".App::$default_face."</strong></li>"; }
 
-            App::find_these('layouts', App::$default_face.'/layouts');
-            App::find_these('controllers', App::$default_face.'/controllers');
+            foreach (App::$allowed_faces as $face)
+            {
+                App::find_these('layouts', $face);
+                App::find_these('controllers', $face);
+            }
 
     #run cron jobs, only on app start, not each page load!
             if (class_exists('cron_job'))
@@ -80,7 +84,7 @@ class Application
 
     function load_models()
     {
-        if (App::$booting) {App::find_these('models', 'models');}
+        if (App::$booting) {App::find_these('models');}
 
         if (App::$reloading) {echo "<li>Loading models<ul>"; }
         foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model)
@@ -91,10 +95,17 @@ class Application
         if (App::$reloading) {echo "</ul></li>"; }
     }
     
-    function find_these($name, $path)
+    function find_these($name, $face = null, $path = null)
     {
-        if (App::$reloading) {echo "<li>parsing $name folder</li>"; }
-        #
+        if (App::$reloading)
+        {
+            echo "<li>parsing $name folder";
+            if ($face) { echo " for $face"; }
+            echo "</li>";
+        }
+        #build the path if it has not been passed
+            if (!$path && $face) { $path = $face.'/'.$name; } elseif (!$path && !$face) { $path = $name; }
+
         #check if the dir exists
         if (!file_exists(App::$env->root.'/'.$path))
         {
@@ -116,17 +127,30 @@ class Application
                 }
             }
             closedir($handle);
-            $_SESSION[APP_NAME]['application'][$name] = $files;
+
+            if ($face)
+            {
+                $_SESSION[APP_NAME]['application'][$face][$name] = $files;
+            }
+            else
+            {
+                $_SESSION[APP_NAME]['application'][$name] = $files;
+            }
         }
     }
 
-    function require_this($type_name, $name)
+    function require_this($type_name, $name, $face = null)
     {
+        #this is not used to require models, only other resources
+
         $type_name = pluralize($type_name);
-        if (isset($_SESSION[APP_NAME]['application'][$type_name]) && in_array($name.'.php', array_keys($_SESSION[APP_NAME]['application'][$type_name])))
+
+        if (!$face) { $face = App::$route['face']; }
+        
+        if (isset($_SESSION[APP_NAME]['application'][$face][$type_name]) && in_array($name.'.php', array_keys($_SESSION[APP_NAME]['application'][$face][$type_name])))
         {
-            #echo '<pre>';print_r($_SESSION[APP_NAME]['application'][$type_name][$name.'.php']);echo '</pre>';
-            $file_to_require = $_SESSION[APP_NAME]['application'][$type_name][$name.'.php'];
+            #echo '<pre>';print_r($_SESSION[APP_NAME]['application'][$face][$type_name][$name.'.php']);echo '</pre>';
+            $file_to_require = $_SESSION[APP_NAME]['application'][$face][$type_name][$name.'.php'];
             return $file_to_require;
         }
         else

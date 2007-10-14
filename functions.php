@@ -281,7 +281,7 @@ function url_to($path)
     $url = App::$env->url;
 
     if (is_array($path)) { $target = $path; } else { $target = route_from_path($path); }
-    if (!isset($target['face'])) { $target['face'] = App::$default_face; }
+    if (!isset($target['face'])) { $target['face'] = App::$route['face']; }
     if (!isset($target['controller'])) { $target['controller'] = App::$controller->controller_name; }
     $target['controller'] = str_replace('_controller', '', $target['controller']);
 
@@ -323,12 +323,12 @@ function route_from_path($path)
         'action' => '',
         'id' => ''
         );
-    $result['face'] = App::$default_face;
+    $result['face'] = App::$route['face'];
         
     if ($path)
     {
         $path = split('/', $path);
-        if (!in_array($path[0], App::$allowed_faces) && App::$default_face) #ie the first param is not a face, or not an allowed face, but we have a default face set
+        if (!in_array($path[0], App::$allowed_faces) && App::$default_face) #i.e. the first param is not a face, or not an allowed face, but we have a default face set
         {
             $result['controller'] = $path[0].'_controller';
 

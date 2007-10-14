@@ -3,8 +3,6 @@ if (isset($config['profiling']) && $config['profiling'] == true) apd_set_pprof_t
 $path_to_root = '../../..';
 require ('./init.php');
 
-$dispatch = new dispatch; $dispatch->process();
-
 class dispatch
 {
     private function path_from_collection(&$collection)
@@ -28,12 +26,13 @@ class dispatch
     {
         if (!$collection) { $collection = &$_GET; }
         $path = $this->path_from_collection($collection);
-
-        #-------------------------------------------------------------------------------------------------
+        
         #build the route
             App::$route = route_from_path($path);
+
+        #-------------------------------------------------------------------------------------------------
             
-            #echo '<pre>';print_r(App::$route);echo '</pre>';
+           #echo '<pre>';print_r(App::$route);echo '</pre>';
         #load the controller
             #load the face_controller for this face first
             if ($face_controller_path = App::require_this('controller', 'face_controller'))
@@ -44,8 +43,8 @@ class dispatch
             }
             else
             {
-                #a face controlle is required
-                trigger_error("face_controller not found for <strong>".App::$route['face']."</strong> face", E_USER_ERROR); 
+                #a face controller is required
+                    trigger_error("face_controller not found for <strong>".App::$route['face']."</strong> face", E_USER_ERROR); 
             }
         #-------------------------------------------------------------------------------------------------
             #before_controller_load_filter
