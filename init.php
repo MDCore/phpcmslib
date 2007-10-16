@@ -10,6 +10,7 @@ require_once("functions.php");
     require_once("action_view_helpers.php");
     require_once("environment.php");
     require_once("application.php");
+    require_once("asset_helpers.php");
 
 /* cm classes */
     require_once("cm_controller.php");
@@ -32,5 +33,5 @@ if (!isset($path_to_root)) {$path_to_root = '.';}
     App::init($path_to_root);
 
 #do the dispatching process
-    $dispatch = new dispatch; $dispatch->process();
+    $dispatch = new $dispatcher; $dispatch->process();
 ?>

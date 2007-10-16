@@ -300,6 +300,12 @@ function url_to($path)
     #append the controller path
         $url .= $target['controller']; 
 
+    # warn if action is specified without target
+        if ((!isset($target['action']) | $target['action'] == '') && (isset($target['id']) && $target['id'] != ''))
+        {
+            trigger_error('id specified in route without action', E_USER_WARNING); 
+        }
+
     #no specified action?  let the controller decide
         if (isset($target['action']) && $target['action'] != '') 
         {
