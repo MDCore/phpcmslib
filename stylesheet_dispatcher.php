@@ -25,6 +25,7 @@ class stylesheet_dispatcher extends dispatcher
         }
 
         $stylesheet = $path_to_root.'/'.App::$face.'/assets/stylesheets/'.$stylesheet;
+        header('Content-type: text/css');
         require($stylesheet);
     }
 }

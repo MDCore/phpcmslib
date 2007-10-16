@@ -32,6 +32,4 @@ if (!isset($path_to_root)) {$path_to_root = '.';}
 #application init
     App::init($path_to_root);
 
-#do the dispatching process
-    $dispatch = new $dispatcher; $dispatch->process();
 ?>

@@ -27,6 +27,9 @@ $path_to_root = '../../..';
     $dispatcher_path = $path_to_root.'/vendor/pedantic/lib/'.$dispatcher.'.php';
     require_once($dispatcher_path);
 
-require ('./init.php');
-die();
+#initialize the application
+    require ('./init.php');
+
+#do the dispatching process
+    $dispatch = new $dispatcher; $dispatch->process();
 ?>

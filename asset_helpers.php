@@ -1,4 +1,10 @@
 <?
+
+function default_scripts()
+{
+    ?><script type="text/javascript" src="vendor/jquery/jquery-1.2.1.pack.js"></script><?
+}
+
 function image_path($asset_name, $face = null)
 {
     return asset_path('image', $asset_name, $face);
