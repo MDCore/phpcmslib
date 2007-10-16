@@ -14,7 +14,7 @@ require_once '../AR.php';
 require_once '../functions.php';
 
 #test models
-require_once 'models.php';
+require_once 'mocks/models.php';
 
 /**
  * Test class for AR.

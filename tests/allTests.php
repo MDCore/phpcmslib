@@ -5,9 +5,14 @@ if (!defined('PHPUnit_MAIN_METHOD')) {
  
 require_once 'PHPUnit/Framework.php';
 require_once 'PHPUnit/TextUI/TestRunner.php';
- 
+
+
+#homemade mocking stuffs
+require_once 'mocks/application.php';
+
 require_once 'ARTest.php';
 require_once 'functions_test.php';
+require_once 'asset_helpers_test.php';
 # include new tests suites here
  
 class allTests
@@ -23,6 +28,7 @@ class allTests
  
         $suite->addTestSuite('ARTest');
         $suite->addTestSuite('functions_test');
+        $suite->addTestSuite('asset_helpers_test');
         #add new test suites here
  
         return $suite;
