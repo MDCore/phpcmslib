@@ -87,10 +87,17 @@ class Application
         if (App::$booting) {App::find_these('models');}
 
         if (App::$reloading) {echo "<li>Loading models<ul>"; }
-        foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model)
+        if ($_SESSION[APP_NAME]['application']['models'])
         {
-            if (App::$reloading) {echo "<li>loading <strong>$model_name</strong> ($model)</li>"; }
-            if (!App::$skip_model_require) { require_once($model); }
+            foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model)
+            {
+                if (App::$reloading) {echo "<li>loading <strong>$model_name</strong> ($model)</li>"; }
+                if (!App::$skip_model_require) { require_once($model); }
+            }
+        }
+        else
+        {
+            if (App::$reloading) {echo "<li>No models found.</li>"; }
         }
         if (App::$reloading) {echo "</ul></li>"; }
     }

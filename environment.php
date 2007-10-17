@@ -7,10 +7,9 @@ class Environment
     function load($environment, $path_to_root)
     {
         #load this environment
-        if ($environment == "auto")
+        if ($environment == 'auto' | $environment == 'must_match')
         {
             #find_environments
-            #if (App::$reloading) {echo "<li>Loading Environments";}
             foreach (Environment::find_environments($path_to_root) as $env)
             {
                 if (App::$reloading) {echo "<ul><li>Testing environment <i>$env</i></li>";}
@@ -30,13 +29,18 @@ class Environment
                     }
                     if (App::$reloading) {echo "</ul>";}
                 }
-                if (App::$reloading) {echo "</ul>";}
             }
             if ($environment == "auto") # i.e. it's still auto
             {
                 $environment = "staging";
+                if (App::$reloading) {echo "<li>No environment matched. Using <strong>staging</strong> environment.</li>";}
             }
-            #if (App::$reloading) {echo "</li>";}
+            if ($environment == "must_match")
+            {
+                $error = '<h1>Application Load Failed</h1>The domain <i>'.$_SERVER['HTTP_HOST'].'</i> could not be matched to any environment.';
+                die($error);
+            }
+            if (App::$reloading) {echo "</ul>";}
         }
         require_once($path_to_root."/config/environments/".$environment.'.php'); $_SESSION[APP_NAME]['application']['environment'] = $environment;
         App::$env = new $environment;
