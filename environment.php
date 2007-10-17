@@ -29,6 +29,8 @@ class Environment
                     }
                     if (App::$reloading) {echo "</ul>";}
                 }
+                if (App::$reloading) {echo "</ul>";}
+
             }
             if ($environment == "auto") # i.e. it's still auto
             {
