@@ -303,6 +303,8 @@ class forms
             $element_description['type'] = 'hidden';
             $visible = false;
         }
+        # convert a type of "strign" to "input=text"
+        if (isset($element_description[1]) && $element_description[1] == 'string') {$element_description[1] = 'input'; $element_description['type'] = 'text';}
         # convert a type of "text" to "textarea"
         if (isset($element_description[1]) && $element_description[1] == 'text') {$element_description[1] = 'textarea';}
 
@@ -320,31 +322,39 @@ class forms
         if (isset($element_description['model'])) {$fk_model = $element_description['model'];} else {$fk_model = strtolower(tableize($element_description[0]));}
         if ( ($element_description[1] == 'select' || $element_description[1] == 'multi_select') && !isset($record->$fk_model) )
         {
-            if ( $primary_model_object->has_one($fk_model) ) #single select
-            {
-                if (class_exists($fk_model))
+            #check for has_one or belongs_to
+                if ($element_description[1] == 'select')
                 {
-                    $options_object = new $fk_model;
-                }
-                else
-                {
-                    echo "<strong>Fatal Error</strong>: <i>$fk_model</i> model does not exist."; #todo better error handling than this
-                    die();
-                }
-                $db_field_name = foreign_keyize(strtolower($element_description[0])); #todo. this should only foreign_keyize IF model is not set
-                #debug($fk_model);debug($db_field_name);
-                $field_name = $default_model."[$db_field_name]";
+                    if (class_exists($fk_model))
+                    {
+                        $options_object = new $fk_model;
+                    }
+                    else
+                    {
+                        trigger_error("<i>$fk_model</i> model class does not exist.", E_USER_ERROR); 
+                    }
 
-                if ($element_description['field']) {$field = $element_description['field'];} else {$field = null;}
-                if ($element_description['show_all_option']) {$show_all_option = $element_description['show_all_option'];} else {$show_all_option = null;}
-                if ($element_description['criteria']) {$criteria = $element_description['criteria'];} else {$criteria = '';}
-                if ($element_description['order by']) {$criteria .= 'ORDER BY '.$element_description['order by'];}
+                    if (!($primary_model_object->has_one($fk_model) || $primary_model_object->belongs_to($fk_model))) {
+                        trigger_error("Relationship to  <i>".$fk_model."</i> not found", E_USER_ERROR); 
+                    }
+                    
+                }
 
-               #if the options aren't showing up look in AR::as_array() 
-                $options = $options_object->as_select_options($record->$db_field_name, $field, $show_all_option, $criteria);
-                $element_description['options'] = $options;
-            }
-            elseif( $primary_model_object->has_many_through(pluralize($fk_model)) )
+            $db_field_name = foreign_keyize(strtolower($element_description[0])); #todo. this should only foreign_keyize IF model is not set
+            #debug($fk_model);debug($db_field_name);
+            $field_name = $default_model."[$db_field_name]";
+
+            if ($element_description['field']) {$field = $element_description['field'];} else {$field = null;}
+            if ($element_description['show_all_option']) {$show_all_option = $element_description['show_all_option'];} else {$show_all_option = null;}
+            if ($element_description['criteria']) {$criteria = $element_description['criteria'];} else {$criteria = '';}
+            if ($element_description['order by']) {$criteria .= 'ORDER BY '.$element_description['order by'];}
+
+           #if the options aren't showing up look in AR::as_array() 
+            $options = $options_object->as_select_options($record->$db_field_name, $field, $show_all_option, $criteria);
+            $element_description['options'] = $options;
+
+            #multi select ?
+            if( $primary_model_object->has_many_through(pluralize($fk_model)) )
             {   
                 #multi select
                 $fk_model_object = new $fk_model;

@@ -57,14 +57,14 @@ static $schema_sql = array(
               `name` varchar(255) NOT NULL,
               PRIMARY KEY  (`id`)
             ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-          'insert' => "INSERT INTO categories (id, name) VALUES (1, 'Shoes')"),
+          'insert' => "INSERT INTO ARTest.categories (id, name) VALUES (1, 'Shoes')"),
     "user" => array('create' => 
             "create table ARTest.users (
               `id` int(11) NOT NULL auto_increment,
               `name` varchar(255) NOT NULL,
               PRIMARY KEY  (`id`)
             ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-          'insert' => "INSERT INTO users (id, name) VALUES (1, 'Jim')"),
+          'insert' => "INSERT INTO ARTest.users (id, name) VALUES (1, 'Jim')"),
     "user_find" => array('create' => 
             "create table ARTest.user_finds (
               `id` int(11) NOT NULL auto_increment,
@@ -72,14 +72,22 @@ static $schema_sql = array(
               `user_id` int(11) NOT NULL,
               PRIMARY KEY  (`id`)
             ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-          'insert' => "INSERT INTO user_finds (id, find_id, user_id) VALUES (1, 1, 1)"),
+          'insert' => "INSERT INTO ARTest.user_finds (id, find_id, user_id) VALUES (1, 1, 1)"),
     "find" => array('create' => 
             "create table ARTest.finds (
               `id` int(11) NOT NULL auto_increment,
               `name` varchar(255) NOT NULL,
               PRIMARY KEY  (`id`)
           ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-          'insert' => "INSERT INTO finds (id, name) VALUES (1, 'Shoe')"),
+          'insert' => "INSERT INTO ARTest.finds (id, name) VALUES (1, 'Shoe')"),
+    "car" => array('create' => 
+            "create table ARTest.cars (
+              `id` int(11) NOT NULL auto_increment,
+              `customer_id` int(11) NOT NULL,
+              `name` varchar(255) NOT NULL,
+              PRIMARY KEY  (`id`)
+          ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
+          'insert' => "INSERT INTO ARTest.cars (id, customer_id, name) VALUES (1, 1, 'A Car')"),
       );
 
     function error_check($result, $die_on_error = true)

@@ -24,6 +24,8 @@ class AR implements SeekableIterator # basic AR class
         public $model, $primary_key_field, $schema_table, $display_field, ;
         public $has_changelog;
      */
+    public $has_one, $has_many, $has_many_through, $belongs_to;
+
     public $last_sql_query, $last_finder_sql_query;
     private $offset = 0;
     private $results;
@@ -63,17 +65,21 @@ class AR implements SeekableIterator # basic AR class
     {
         $this->connect_to_db();
         if ($this->db) {$this->db->setFetchMode(MDB2_FETCHMODE_OBJECT);}
-        
+
+        #debug echo "<b>before setting pk</b><br>\r\n";
+        if (!property_exists($this, 'primary_key_field')) {$this->primary_key_field = 'id';}
+        #debug echo "<b>after setting pk</b><br>\r\n\r\n";
+
         #get the model name
         $this->model = get_class($this);
+        #debug echo "<b>after setting_model</b><br>\r\n\r\n";
        
         #pull in the schema definition, and set the attributes to null
             $this->setup_attributes();
-
-        if (!isset($this->primary_key_field)) {$this->primary_key_field = 'id';}
+        #debug echo('<b>after setup_attribs</b><br>');
         
         #set the primary table, checking first if this model is a changelog
-        if (!isset($this->schema_table)) {
+        if (!property_exists($this, 'schema_table')) {
             $changelog_pos = strpos($this->model, '_changelog');
             if ($changelog_pos > 0)
             {
@@ -95,29 +101,33 @@ class AR implements SeekableIterator # basic AR class
                 $this->schema_table = tableize(pluralize($this->model));
             }
         }
+        #debug echo('<b>after setting primary table and stuffs</b><br>');
 
         #set that this model has a changelog
             if (property_exists($this->model, 'changelog')){ $this->has_changelog = true; unset($this->changelog); } else {$this->has_changelog = false; }
 
         #set the display field
-            if (!isset($this->display_field)) 
+            if (!property_exists($this, 'display_field')) 
             {
                 if (isset($this->schema_definition['title'])) { $this->display_field = 'title'; }
                 elseif (isset($this->schema_definition['name'])) { $this->display_field = 'name'; }
                 else { $this->display_field = 'id'; }
             }
+        #debug echo('<b>after setting display_field</b><br>');
 
         #split the validations - todo. maybe use getobjectvars? todo add all validations
             $validations = array('validates_presence_of');
             foreach ($validations as $validation)
             {
-                if (isset($this->$validation))
+                if (property_exists($this, $validation))
                 {
                     $this->$validation = split(',',$this->$validation);
                 }
             }
+        #debug echo('<b>after validation setup</b><br>');
 
         if ($collection) {$this->update_attributes($collection, $with_value_changes);} #updates attribs if object is created with a collection
+        #die('end of construction');
     }
 
     /* 
@@ -168,21 +178,32 @@ class AR implements SeekableIterator # basic AR class
     }
     private function __isset($name)
     {
+        #debug echo 'testing isset '.$name; echo "<br>\r\n\r\n";
+
         #attributes / properties of the record
-        if (array_key_exists($name, $this->values)) 
+        if ($this->values && array_key_exists($name, $this->values)) 
         {
             return true;
         }
         else
         {
-            return false;
+            /*
+                echo $name.' = ';
+            echo var_dump(isset($this->$name));
+            echo var_dump(property_exists($this, $name));
+            echo "<Br>\r\n";
+             */
+            return property_exists($this, $name);
+            #return false;
         }
 
     }
     private function __get($name)
     {
+        #debug echo 'getting '.$name; echo "<br>\r\n\r\n";
         #check for record_properties request
             if ($name == 'record') { return $this->values; }
+
         #check for changelog request
             if ($name == 'changelog' && $this->has_changelog)
             {
@@ -200,92 +221,91 @@ class AR implements SeekableIterator # basic AR class
                 $changelog = null;
                 return $this->changelog;
             }
+
+        #if it's for reals then return it, and short circuit all the testing
+            if (property_exists($this, $name)) { return $this->$name; }
+
         #attributes / properties of the record
-        if (array_key_exists($name, $this->values)) 
-        {
-            #echo "\r\nreturning $name with value ";var_dump($this->values[$name]);echo "\r\n";
-            return $this->values[$name]; 
-        }
-        #relationships magic
-        elseif ($this->has_one($name))
-        {
-            #debug('finding by '.$name);
-            if ($this->count == 0) { return false; }
-            $ro = new $name;
-            $fk = foreign_keyize($name);
-            if (!$this->$fk) { return false; }
-            $ro->find($this->$fk);
-            return $ro;
-        }
-        elseif ($this->belongs_to(singularize($name)) || $this->has_many($name))
-        {
-            #echo 'finding by '.$name;
-            if ($this->count == 0) { return false; }
-            $ro = singularize($name); $ro = new $ro;
-            $fk = foreign_keyize($this->model);
-            $fkfunc = "find_by_$fk";
-
-            #additional criteria checks
-                $additional_criteria = '';
-                if ($this->has_many($name)) { $additional_criteria = $this->has_many($name); }
-
-            $ro->$fkfunc($this->values[$this->primary_key_field], $additional_criteria); // using areal world example: a category has_many products. this line translated means "return $product->find_by_category_id ($category->id )" */
-            return $ro;
-        }
-        elseif ($this->has_many_through($name))
-        {
-            if ($this->count == 0) { return false; }
-
-            $ro = singularize($name); $ro = new $ro;
-            $link = singularize($this->has_many_through($name)); $link = new $link;
-            $ro->find_by_sql('
-                SELECT '.$ro->schema_table.'.* 
-                FROM '.$ro->schema_table. ' INNER JOIN '.$link->schema_table.'
-                WHERE '.$link->schema_table.'.'.foreign_keyize($this->model).' = \''.$this->values[$this->primary_key_field].'\''
-            );
-            return $ro;
-        }
-        elseif ($this->through_model($name))
-        {
-            if ($this->count == 0) { return false; }
-            $ro = singularize($name);
-            $ro = new $ro;
-            $fkfunc = "find_by_".foreign_keyize($this->model);
-            $ro->$fkfunc($this->values[$this->primary_key_field]);
-            return $ro;
-        }
-        #deprecated stuffs
-            elseif ($name == 'primary_table' && isset($this->schema_table))
+            if (array_key_exists($name, $this->values)) 
             {
-                trigger_error('<i>primary_table</i> is deprecated; use <i>schema_table</i>', E_USER_WARNING); 
-                return $this->schema_table;
+                #echo "\r\nreturning $name with value ";var_dump($this->values[$name]);echo "\r\n";
+                return $this->values[$name]; 
             }
-        else
-        {
-            throw new Exception("Property $name not defined");
-                return null;
-        }
+
+        #relationships magic
+            if ($this->belongs_to($name))
+            {
+                #if this object belongs to another one, it contains the foreign key
+                #debug('finding by '.$name);
+                if ($this->count == 0) { return false; }
+                $ro = new $name;
+                $fk = foreign_keyize($name);
+                if (!$this->$fk) { return false; }
+                $ro->find($this->$fk);
+                return $ro;
+            }
+
+            if ($this->has_one($name) || $this->has_many($name))
+            {
+                #if this object has_one other obect, the other object contains the foreign key
+                #echo 'finding by '.$name;
+                if ($this->count == 0) { return false; }
+                $ro = singularize($name); $ro = new $ro;
+                $fk = foreign_keyize($this->model);
+                $fkfunc = "find_by_$fk";
+
+                #additional criteria checks
+                    $additional_criteria = '';
+                    if ($this->has_many($name)) { $additional_criteria = $this->has_many($name); }
+
+                $ro->$fkfunc($this->values[$this->primary_key_field], $additional_criteria); // using areal world example: a category has_many products. this line translated means "return $product->find_by_category_id ($category->id )" */
+                return $ro;
+            }
+            if ($this->has_many_through($name))
+            {
+                if ($this->count == 0) { return false; }
+
+                $ro = singularize($name); $ro = new $ro;
+                $link = singularize($this->has_many_through($name)); $link = new $link;
+                $ro->find_by_sql('
+                    SELECT '.$ro->schema_table.'.* 
+                    FROM '.$ro->schema_table. ' INNER JOIN '.$link->schema_table.'
+                    WHERE '.$link->schema_table.'.'.foreign_keyize($this->model).' = \''.$this->values[$this->primary_key_field].'\''
+                );
+                return $ro;
+            }
+            if ($this->through_model($name))
+            {
+                if ($this->count == 0) { return false; }
+                $ro = singularize($name);
+                $ro = new $ro;
+                $fkfunc = "find_by_".foreign_keyize($this->model);
+                $ro->$fkfunc($this->values[$this->primary_key_field]);
+                return $ro;
+            }
+
+        throw new Exception("Property $name not defined");
+        return null;
     }
     private function __set($name, $value)
     {
-        
-        ##check for primary_key_field
-        if (isset($this->primary_key_field) && $name == $this->primary_key_field)
-        {
-            throw new Exception('Cannot modify primary key field');
-            return false;
-        }
-        #check for properties, or values, of the record and set those in the values array
-        if (isset($this->schema_definition) && (in_array($name, array_keys($this->values))))
-        {
-            #debug if (1==2) { echo "setting dirty for $name to $value\r\n";}
-            $this->dirty = true;
-            $this->values[$name] = $value;
-        }
-        else
-        {
+        #debug echo 'setting '.$name.' to <u>"'.$value.'"</u>'; echo "<br>\r\n";
+        // check for primary_key_field
+            if (property_exists($this, 'primary_key_field') && $name == $this->primary_key_field) {
+                throw new Exception('Cannot modify value of primary key field');
+                return false;
+            }
+        // check for properties, or values, of the record and set those in the values array
+            if (isset($this->schema_definition) && (in_array($name, array_keys($this->values)))) {
+                #debug if (1==2) { echo "setting dirty for $name to $value\r\n";}
+                $this->dirty = true;
+                $this->values[$name] = $value;
+            }
+        else {
+            #var_dump($name);
             #raise an error
             #throw new Exception("$name is an invalid property");
+            #debug echo "success setting $name to <u>'$value'</u><br>\r\n\r\n";
             $this->$name = $value;
         }
 
@@ -779,12 +799,13 @@ class AR implements SeekableIterator # basic AR class
     /* relationship checking methods */
     function has_one($model_name)
     { 
-        if (!isset($this->has_one)) {return false;}
+        if (!property_exists($this, 'has_one')) {return false;}
         return in_array($model_name, split(',',$this->has_one));
     }
+
     function has_many($model_name)
     { 
-        if (!isset($this->has_many)) {return false;}
+        if (!property_exists($this, 'has_many')) {return false;}
         #first check if it is defined as an array
         if (is_array($this->has_many))
         {
@@ -802,14 +823,17 @@ class AR implements SeekableIterator # basic AR class
             return in_array($model_name, split(',',$this->has_many));
         }
     }
+
     function belongs_to($model_name)
     { 
-        if (!isset($this->belong_to)) {return false;}
+        if (!property_exists($this, 'belongs_to')) {return false;}
         return in_array($model_name, split(',',$this->belongs_to));
     }
+
     function through_model($model_name) #todo use a better name
     {
-        if (!isset($this->has_many_through)) { return false; }
+        if (!property_exists($this, 'has_many_through')) { return false; }
+        if (!$this->has_many_through) { return false; }
         if (in_array($model_name, array_values($this->has_many_through)))
         {
             return true;
@@ -823,7 +847,8 @@ class AR implements SeekableIterator # basic AR class
     function has_many_through($model_name)
     {
 
-        if (!isset($this->has_many_through)) {return false;}
+        if (!property_exists($this, 'has_many_through')) { return false; }
+        if (!$this->has_many_through) { return false; }
         if (in_array($model_name, array_keys($this->has_many_through)))
         {
             return $this->has_many_through[$model_name];
@@ -840,7 +865,7 @@ class AR implements SeekableIterator # basic AR class
         #todo flesh out this method
         #this method returns an english string explaining what the requirements for this field are... well, it will one day when I get there :)
         #debug("validation requirements for $field_name on ".get_class($this));
-        if (isset($this->validates_presence_of)) { $required_fields = $this->validates_presence_of; } else { $required_fields = null; }
+        if (property_exists($this, 'validates_presence_of')) { $required_fields = $this->validates_presence_of; } else { $required_fields = null; }
         
         if (is_array($required_fields) && in_array($field_name, $required_fields))
         {
@@ -852,7 +877,7 @@ class AR implements SeekableIterator # basic AR class
     function is_valid()
     {
         $validation_result = array();
-        if (isset($this->validates_presence_of))
+        if (property_exists($this, 'validates_presence_of'))
         {
             foreach ($this->validates_presence_of as $required_field)
             {
@@ -891,7 +916,7 @@ class AR implements SeekableIterator # basic AR class
 
     function sum()
     {
-        if (!isset($this->sum_field)) { return false; }
+        if (!property_exists($this, 'sum_field')) { return false; }
         if ($this->count == 0) { return 0; }
 
         $current_index = $this->key(); #get the current index of the MDB2 resultset, since we are going to be messing with it; I want to come back to the same place later

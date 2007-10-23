@@ -5,8 +5,8 @@ class db_conn extends AR
     {
         $dsn = array(
             'phptype' => 'mysql',
-            'username' => 'root',
-            'password' => '',
+            'username' => 'dev',
+            'password' => 'dev',
             'hostspec' => 'localhost',
             'database' => 'ARTest'
         );
@@ -17,6 +17,7 @@ class customer extends db_conn
 {
     public $display_field = 'company_name';
     public $changelog;
+    public $has_one = 'car';
 }
 class customer_changelog extends db_conn
 {
@@ -25,7 +26,7 @@ class customer_changelog extends db_conn
 class product extends db_conn
 {
     public $sum_field = 'cost';
-    public $has_one = "category";
+    public $belongs_to = "category";
 }
 class category extends db_conn
 {
@@ -48,6 +49,10 @@ class find extends db_conn
     public $has_many_through = array(
         "users" => "user_finds"
     );
+}
+class car extends db_conn
+{
+    public $belongs_to = 'customer';
 }
 
 class model_without_schema_def extends AR

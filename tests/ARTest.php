@@ -39,8 +39,8 @@ class ARTest extends PHPUnit_Framework_TestCase {
     {
         $dsn = array(
             'phptype' => 'mysql',
-            'username' => 'root',
-            'password' => '',
+            'username' => 'dev',
+            'password' => 'dev',
             'hostspec' => 'localhost'
         );
         $this->db =& MDB2::Connect($dsn);
@@ -53,7 +53,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
     }
     public function __destruct()
     {
-        $this->db->query('DROP DATABASE IF EXISTS ARTest');
+         $this->db->query('DROP DATABASE IF EXISTS ARTest');
         App::error_check($this->db);
         unset($this->db);
     }
@@ -227,7 +227,6 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $customer->find_most_recent_by_id(1);
         $this->assertEquals(1, $customer->id);
 
-        $customer = new customer;
         $collection = array('name' => 'new name');
         $customer = new customer($collection);
         $customer->save();
@@ -283,6 +282,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
         #has many
             $category = new category;
             $category->find(1);
+            $this->assertEquals(1, $category->count);
             $products = $category->products;
             $this->assertContains('ORDER BY products.name', $products->last_sql_query);
     }
@@ -308,33 +308,55 @@ class ARTest extends PHPUnit_Framework_TestCase {
 
     public function test_has_one()
     {
-        $product = new product;
-        $this->assertFalse($product->category, 'relationship is being found despite there being no records');
+        $customer = new customer;
+        $this->assertFalse($customer->car, 'relationship is being found despite there being no records');
 
-        $product->find(1);
-        $this->assertEquals('category', get_class($product->category));
+        $customer->find(1);
+        $this->assertEquals('car', get_class($customer->car));
     }
-    public function test_find_belongs_to()
+    public function test_has_many()
     {
         $category = new category;
         $category->find(1);
         $this->assertEquals('product', get_class($category->products));
         $this->assertEquals(2, $category->products->count);
     }
-    public function test_find_has_many_through()
+    public function test_has_many_through()
     {
         $user = new user;
         $user->find(1);
         $this->assertEquals('find', get_class($user->finds));
         $this->assertEquals(1, $user->finds->count);
     }
-    public function test_find_HMT_link_table()
+    public function test_HMT_link_table()
     {
         $user = new user;
         $user->find(1);
         $this->assertEquals('user_find', get_class($user->user_finds));
         $this->assertEquals(1, $user->user_finds->count);
     }
+    public function test_belongs_to() {
+        $product = new product;
+        $this->assertEquals('category', $product->belongs_to);
+        $product->find(1);
+        $this->assertEquals('category', get_class($product->category));
+        $this->assertEquals(1, $product->category->count);
+
+    }
+
+    /**
+     * @todo Implement testHas_many_through().
+     */
+    public function testHas_many_through() {
+        // Remove the following lines when you implement this test.
+        $this->markTestIncomplete(
+          'This test has not been implemented yet.'
+        );
+    }
+
+    /**
+     * @todo Implement testRequirements().
+     */
 
 /*
  * test __set()
@@ -374,7 +396,12 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $result = $category->save();
         $this->assertEquals(2, $result, 'this save should be successful since this is a valid record: '.$category->validation_errors);
     }
+
     public function test_save_from_collection() {
+
+        $customer = new customer; $customer->find('all');
+        $this->assertEquals(1, $customer->count);
+
         $collection = array('name' => 'new name');
         $customer = new customer($collection);
         $this->assertEquals(2, $customer->save());
@@ -606,51 +633,6 @@ class ARTest extends PHPUnit_Framework_TestCase {
         );
     }
 
-    /**
-     * @todo Implement testHas_one().
-     */
-    public function testHas_one() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-    public function testHas_many() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-    public function testBelongs_to() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-
-    /**
-     * @todo Implement testThrough_model().
-     */
-    public function testThrough_model() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-
-    /**
-     * @todo Implement testHas_many_through().
-     */
-    public function testHas_many_through() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-
-    /**
-     * @todo Implement testRequirements().
-     */
     public function testRequirements() {
         // Remove the following lines when you implement this test.
         $this->markTestIncomplete(
