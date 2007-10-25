@@ -366,8 +366,8 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $customer = new customer;
         $customer->name = 'new_name';
         $this->assertEquals('new_name', $customer->name);
-        $customer->model = 'testset';
-        $this->assertEquals('testset', $customer->model);
+        $customer->model_name = 'testset';
+        $this->assertEquals('testset', $customer->model_name);
     }
     public function test___set_sets_dirty()
     {

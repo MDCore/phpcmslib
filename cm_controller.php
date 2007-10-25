@@ -21,23 +21,25 @@ class cm_controller extends action_controller
         parent::__construct();
 
         #the face_controller should be virtual;
-            if ($this->controller_name == 'face') {$this->virtual = true;}
-        if ($this->virtual) { return true; }
+        if ($this->controller_name == 'face') { 
+            $this->virtual = true;
+        }
+        if ($this->virtual) {
+            return true;
+        }
 
         # todo is also to document this all!
             #foreign key(s)
                 if (isset($_GET['fk'])) {
                     $fk = $_GET['fk'];
                     $fk = explode(',', $fk);
-                    foreach ($fk as $keyval)
-                    {
+                    foreach ($fk as $keyval) {
                         $key = substr($keyval, 0, strpos($keyval, '~'));
                         $value = substr($keyval, strpos($keyval, '~')+1);
                         $this->foreign_keys[$key] = $value;
                     }
                 }
-                else
-                {
+                else {
                     $this->foreign_keys = array();
                 }
        
@@ -402,14 +404,21 @@ class cm_controller extends action_controller
         
 
         #if (!isset($list_sql['WHERE']) || $list_sql['WHERE'] == '') { $list_sql['WHERE'] = '1=1'; }
-        foreach ($this->foreign_keys as $key => $value) {
-            $list_sql['WHERE'][] = " AND $key='$value'";
+        if (property_exists($this, 'foreign_keys')) {
+            if (isset($list_sql['WHERE']) && !is_array($list_sql['WHERE'])) {
+                #oops.. we have a specified WHERE but it's not an array. better make it one quick'
+                $list_sql['WHERE'] = array($list_sql['WHERE']);
+            }
+            foreach ($this->foreign_keys as $key => $value) {
+                $list_sql['WHERE'][] = " AND $key='$value'";
+            }
         }
         
-        $filter_sql = $this->filter_object->sql_criteria();
+        if (property_exists($this, 'filter_object')) {
+            $filter_sql = $this->filter_object->sql_criteria();
+        }
 
-        if (!($filter_sql == false))
-        {
+        if (!($filter_sql == false)) {
             #join from's
                 if ($filter_sql['FROM']) { foreach ($filter_sql['FROM'] as $filter_from) { $list_sql['FROM'] .= ' ' . $filter_from; }}
 
@@ -464,8 +473,10 @@ class cm_controller extends action_controller
         ?><div class="list_rows"><?=$num_rows; ?> <?
         if ($num_rows != 1) {echo humanize(pluralize($this->list_type));} else {echo humanize($this->list_type);}
         
-        echo $this->filter_object->match_text($num_rows);        
-        ?></div> <?
+        if (property_exists($this, 'filter_object')) {
+            echo $this->filter_object->match_text($num_rows);
+        }
+        ?></div><?
         ?><div class="list_wrapper"><?
             ?><table class="list"> <?=$this->list_header() ?><?=$this->list_body($results_list);?></table><?
             ?></div><div class="paging"><?=$this->list_paging($num_rows);?></div><?  

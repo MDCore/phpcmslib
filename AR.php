@@ -21,7 +21,7 @@ class AR implements SeekableIterator # basic AR class
 
     /* AR related fields - now that __get forbids getting random properties, these can be here as settable but not gettable */    
     /*
-        public $model, $primary_key_field, $schema_table, $display_field, ;
+        public $model_name, $primary_key_field, $schema_table, $display_field, ;
         public $has_changelog;
      */
     public $has_one, $has_many, $has_many_through, $belongs_to;
@@ -55,9 +55,9 @@ class AR implements SeekableIterator # basic AR class
      */
     function setup_attributes()
     {
-        if (!isset(App::$schema_definition[$this->model])) { return false; }
+        if (!isset(App::$schema_definition[$this->model_name])) { return false; }
 
-        $this->schema_definition = App::$schema_definition[$this->model];
+        $this->schema_definition = App::$schema_definition[$this->model_name];
         $this->clear_attributes();
     }
 
@@ -71,40 +71,40 @@ class AR implements SeekableIterator # basic AR class
         #debug echo "<b>after setting pk</b><br>\r\n\r\n";
 
         #get the model name
-        $this->model = get_class($this);
-        #debug echo "<b>after setting_model</b><br>\r\n\r\n";
+        $this->model_name = get_class($this);
+        #debug echo "<b>after setting_model_name</b><br>\r\n\r\n";
        
         #pull in the schema definition, and set the attributes to null
             $this->setup_attributes();
         #debug echo('<b>after setup_attribs</b><br>');
         
-        #set the primary table, checking first if this model is a changelog
+        #set the primary table, checking first if this model_name is a changelog
         if (!property_exists($this, 'schema_table')) {
-            $changelog_pos = strpos($this->model, '_changelog');
+            $changelog_pos = strpos($this->model_name, '_changelog');
             if ($changelog_pos > 0)
             {
                 #check if the parent model has a schema_table and use it instead of inferring the table name from the parent model name
-                    $parent_model = substr($this->model, 0, $changelog_pos);
-                    $parent_model = new $parent_model;
-                    if (isset($parent_model->schema_table))
+                    $parent_model_name = substr($this->model_name, 0, $changelog_pos);
+                    $parent_model_name = new $parent_model_name;
+                    if (isset($parent_model_name->schema_table))
                     {
-                        $this->schema_table = $parent_model->schema_table.'_changelog'; 
+                        $this->schema_table = $parent_model_name->schema_table.'_changelog'; 
                     } 
                     else
                     {
-                        $this->schema_table = tableize(pluralize(substr($this->model, 0, $changelog_pos))).'_changelog';
+                        $this->schema_table = tableize(pluralize(substr($this->model_name, 0, $changelog_pos))).'_changelog';
                     }
-                    unset($parent_model);
+                    unset($parent_model_name);
             }
             else
             {
-                $this->schema_table = tableize(pluralize($this->model));
+                $this->schema_table = tableize(pluralize($this->model_name));
             }
         }
         #debug echo('<b>after setting primary table and stuffs</b><br>');
 
         #set that this model has a changelog
-            if (property_exists($this->model, 'changelog')){ $this->has_changelog = true; unset($this->changelog); } else {$this->has_changelog = false; }
+            if (property_exists($this->model_name, 'changelog')){ $this->has_changelog = true; unset($this->changelog); } else {$this->has_changelog = false; }
 
         #set the display field
             if (!property_exists($this, 'display_field')) 
@@ -209,12 +209,12 @@ class AR implements SeekableIterator # basic AR class
             {
                 if ($this->count == 0)
                 {
-                    throw new Exception("no changelog for empty ".$this->model);
+                    throw new Exception("no changelog for empty ".$this->model_name);
                     return null;
                 }
-                $changelog_model_name = $this->model.'_changelog';
+                $changelog_model_name = $this->model_name.'_changelog';
                 $changelog = new $changelog_model_name();
-                $changelog_find_method = 'find_most_recent_by_'.$this->model.'_id';
+                $changelog_find_method = 'find_most_recent_by_'.$this->model_name.'_id';
                 $changelog->$changelog_find_method($this->values[$this->primary_key_field]);
 
                 $this->changelog = $changelog;
@@ -251,7 +251,7 @@ class AR implements SeekableIterator # basic AR class
                 #echo 'finding by '.$name;
                 if ($this->count == 0) { return false; }
                 $ro = singularize($name); $ro = new $ro;
-                $fk = foreign_keyize($this->model);
+                $fk = foreign_keyize($this->model_name);
                 $fkfunc = "find_by_$fk";
 
                 #additional criteria checks
@@ -270,7 +270,7 @@ class AR implements SeekableIterator # basic AR class
                 $ro->find_by_sql('
                     SELECT '.$ro->schema_table.'.* 
                     FROM '.$ro->schema_table. ' INNER JOIN '.$link->schema_table.'
-                    WHERE '.$link->schema_table.'.'.foreign_keyize($this->model).' = \''.$this->values[$this->primary_key_field].'\''
+                    WHERE '.$link->schema_table.'.'.foreign_keyize($this->model_name).' = \''.$this->values[$this->primary_key_field].'\''
                 );
                 return $ro;
             }
@@ -279,7 +279,7 @@ class AR implements SeekableIterator # basic AR class
                 if ($this->count == 0) { return false; }
                 $ro = singularize($name);
                 $ro = new $ro;
-                $fkfunc = "find_by_".foreign_keyize($this->model);
+                $fkfunc = "find_by_".foreign_keyize($this->model_name);
                 $ro->$fkfunc($this->values[$this->primary_key_field]);
                 return $ro;
             }
@@ -496,7 +496,7 @@ class AR implements SeekableIterator # basic AR class
         #mark deleted in changelog
             if ($this->has_changelog)
             {
-               $to_delete = new $this->model;
+               $to_delete = new $this->model_name;
                 $changelog_criteria['SELECT']      = "*";
                 $changelog_criteria['FROM']        = $this->schema_table;
                 $changelog_criteria['WHERE']       = $sql_criteria;
@@ -527,7 +527,7 @@ class AR implements SeekableIterator # basic AR class
         #remove the id
             unset($collection[$this->primary_key_field]);
         #"model" id
-            $collection[$this->model.'_id'] = $record_id;
+            $collection[$this->model_name.'_id'] = $record_id;
         #revision
             $collection['revision'] = $revision + 1;
         #created_on
@@ -536,7 +536,7 @@ class AR implements SeekableIterator # basic AR class
             $collection['action'] = $action;
 
         #instantiate the changelog object and save
-            $changelog_model_name = $this->model.'_changelog';
+            $changelog_model_name = $this->model_name.'_changelog';
             $changelog = new $changelog_model_name($collection);
             $changelog->save();
     }
@@ -544,7 +544,7 @@ class AR implements SeekableIterator # basic AR class
     function changelog_highest_revision($record_id)
     {
         #get the highest revision id
-        $sql = "SELECT MAX(revision) as rev_id, MAX(created_on) as created_on FROM ".$this->schema_table."_changelog WHERE ".$this->model.'_id'." = '".$record_id."'";
+        $sql = "SELECT MAX(revision) as rev_id, MAX(created_on) as created_on FROM ".$this->schema_table."_changelog WHERE ".$this->model_name.'_id'." = '".$record_id."'";
         #debug($sql);
         $rev_result = $this->db->query($sql);$this->error_check($rev_result);
         if ($rev_result)

@@ -1,16 +1,8 @@
 <?
 class schema_interregator
 {
-    function pull_schema()
+    function pull_schema_for_model($model_name, $echo_progress = false)
     {
-        $tables = null;
-
-
-        foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model)
-        {
-            $fields_in_table = null;
-
-            $model_name = str_replace('.php', '', $model_name);
             $model_object = new $model_name;
             if (!isset($model_object->virtual))
             {
@@ -20,7 +12,7 @@ class schema_interregator
 
                 #using the magic of mdb2's Reverse module and the method tableInfo
                     $table_name = $model_object->schema_table;
-                echo "writing schema of table <i>$table_name</i> for model <i>$model_name</i><br />";
+                if ($echo_progress) { echo "writing schema of table <i>$table_name</i> for model <i>$model_name</i><br />"; }
                 $table_schema = $model_object->db->tableInfo($table_name, null);
                 $error_code = AR::error_check($table_schema, false);
                 #check if there were any errors pulling the schema
@@ -48,9 +40,22 @@ class schema_interregator
                             'default' => $field['default'],
                             );
                     }
-                    $tables[$model_name] = $fields_in_table;
+                    return $fields_in_table;
                 }
             }
+    }
+
+    function pull_schema()
+    {
+        $tables = null;
+
+        foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model)
+        {
+            $fields_in_table = null;
+
+            $model_name = str_replace('.php', '', $model_name);
+            $fields_in_table = schema_interregator::pull_schema_for_model($model_name, true);
+            if ($fields_in_table) { $tables[$model_name] = $fields_in_table; }
         }
         #echo '<pre>';print_r($tables);echo '</pre>';
         return $tables;           
@@ -61,9 +66,9 @@ class schema_interregator
         $source = null;
         $source = '$schema_definition = Array(';
         if (!$schema) { return false; } #todo raise an exception
-        foreach ($schema as $table_name => $fields)
+        foreach ($schema as $model_name => $fields)
         {
-            $source .= '\''.singularize($table_name).'\' => Array('."\r\n\t";
+            $source .= '\''.$model_name.'\' => Array('."\r\n\t";
             foreach ($fields as $field_name => $field_meta_data)
             {
                 $source .= "'$field_name' => Array(\r\n";

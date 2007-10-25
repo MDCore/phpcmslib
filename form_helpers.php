@@ -142,11 +142,11 @@ class forms
         $result = '';
         #default attributes
             # id
-                if (!isset($attributes['id'])) { $attributes['id'] = 'name'; }
+                if (!isset($attributes['id'])) { $attributes['id'] = $name; }
             # type
                 if (!isset($attributes['type'])) { $attributes['type'] = 'text'; }
 
-                $result .= '<input id="'.$name.'" name="'.$name.'" value="'.stripslashes($value).'" ';
+                $result .= '<input name="'.$name.'" value="'.stripslashes($value).'" ';
 
         $result .= self::parse_attributes( $attributes );
 
@@ -255,6 +255,12 @@ class forms
         foreach ($this->foreign_keys as $key => $value) {
             if ($page->primary_model == $default_model) #only make hiddens for FK's when building a form for this page
             {
+
+                $prefix = pluralize($this->primary_model).'.';
+                if (substr($key, 0, strlen($prefix)) == $prefix) {
+                    $key = substr($key, strlen($prefix));
+                }
+
                 $key = "$default_model"."[$key]";
                 echo self::input($key, $value, array('type'=>'hidden'));
             }
