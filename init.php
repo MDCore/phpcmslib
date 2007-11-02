@@ -11,6 +11,7 @@ require_once("functions.php");
     require_once("environment.php");
     require_once("application.php");
     require_once("asset_helpers.php");
+    require_once("ajax_helpers.php");
 
 /* cm classes */
     require_once("cm_controller.php");
