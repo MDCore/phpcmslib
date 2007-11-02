@@ -156,7 +156,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
 
         $this->fail('An exception was not raised');
     }
-    public function test_find_without_criteria()
+    public function test_find_without_criteria_or_options()
     {
         $customer = new customer;
         try
@@ -169,6 +169,16 @@ class ARTest extends PHPUnit_Framework_TestCase {
         }
 
         $this->fail('An exception was not raised');
+    }
+
+    public function test_find_with_only_additional_options()
+    { 
+        $customer = new customer;
+        $this->assertTrue($customer->find(null, 
+            array('WHERE' => "name like '%cust%'")
+        ));
+
+        $this->assertEquals(1, $customer->count);
     }
 
     public function test_find_all()
