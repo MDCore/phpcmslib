@@ -665,11 +665,11 @@ class AR implements SeekableIterator # basic AR class
 
     function find($finder_criteria = null, $additional_sql_options = null) 
     {
-        if (!$finder_criteria)
-        {
-            throw new Exception('No criteria specified for finder');
+        if (!$finder_criteria && !$additional_sql_options) {
+            throw new Exception('No criteria or additional options specified for finder');
             return;
         }
+
         $sql['SELECT']      = "*";
         $sql['FROM']        = $this->schema_table;
         $sql['WHERE']       = $this->criteria_to_sql($finder_criteria);
