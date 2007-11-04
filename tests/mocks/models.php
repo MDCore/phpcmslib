@@ -10,7 +10,8 @@ class db_conn extends AR
             'hostspec' => 'localhost',
             'database' => 'ARTest'
         );
-        $this->db =& MDB2::Connect($dsn);
+        parent::connect_to_db($dsn);
+        #$this->db =& MDB2::factory($dsn);
     }
 }
 class customer extends db_conn
