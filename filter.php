@@ -133,10 +133,6 @@ class filter
         }
         
         return $sql;
-        if ( $return )
-        {
-            $return = "( ".substr( $return, 5 ). " )";
-        }
     }
 
     function filter_select($filter)
