@@ -34,6 +34,7 @@ class AR implements SeekableIterator # basic AR class
     /* 
      * this method is here so that is is overridable
      */
+    #function connect_to_db($dsn = null) {}
     function connect_to_db($dsn = null)
     {
         if (!$dsn && isset(App::$env)) {$dsn = App::$env->dsn;}
@@ -41,13 +42,15 @@ class AR implements SeekableIterator # basic AR class
         {
             #debug("connecting to ".$dsn['database']);
             $this->dsn = $dsn;
-            $this->db =& MDB2::factory($dsn);
+            $this->db =& MDB2::singleton($dsn);
             $this->error_check($this->db);
         }
         else
         {
             #raise an exception here ?
         }
+
+        if ($this->db) {$this->db->setFetchMode(MDB2_FETCHMODE_OBJECT);}
     }
 
     /*
@@ -61,10 +64,14 @@ class AR implements SeekableIterator # basic AR class
         $this->clear_attributes();
     }
 
+    function __destruct()
+    {
+        unset($this->db);
+        unset($this->values);
+    }
     function __construct($collection = null, $with_value_changes = true)
     {
-        $this->connect_to_db();
-        if ($this->db) {$this->db->setFetchMode(MDB2_FETCHMODE_OBJECT);}
+        if (!$this->db) { $this->connect_to_db(); }
 
         #debug echo "<b>before setting pk</b><br>\r\n";
         if (!property_exists($this, 'primary_key_field')) {$this->primary_key_field = 'id';}
@@ -347,12 +354,15 @@ class AR implements SeekableIterator # basic AR class
         #build the field => value array, with empty values
             $collection = array_combine(array_keys($this->schema_definition), array_fill(0, sizeof($this->schema_definition), null));
             #debug(get_class($this));debug($save_type);print_r($collection);die();
-            
+
         #remove the PK from attributes
             if (in_array($this->primary_key_field, array_keys($collection))) { unset ($collection[$this->primary_key_field]); }
 
         #populate the values in the fields array
-            foreach (array_keys($collection) as $attribute) { $collection[$attribute] = $this->values[$attribute]; } #removed addslashes
+            /* 2007-11-03 addslashes was once here, then in the past removed and now added here again for char escaping. pretty weird */
+            foreach (array_keys($collection) as $attribute) { $collection[$attribute] = addslashes($this->values[$attribute]); }
+
+        #sanitize things before saving
 
         #set the updated_on and/or created_on time
             $now = strftime(SQL_INSERT_DATE_TIME_FORMAT, time());

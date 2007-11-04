@@ -368,27 +368,60 @@ class ARTest extends PHPUnit_Framework_TestCase {
      * @todo Implement testRequirements().
      */
 
+
+/* test bulk customers add */
+    public function test_stress_large_no_of_object_creations()
+    {
+        return false; #todo move to stress_tests
+        for ($i = 0; $i < 5000; $i++)
+        {
+            $customer = new customer; $customer = null;
+            if ($i % 1000 == 0 && $i != 0) { echo $i."\r\n"; }
+        }
+        $this->assertTrue(true);
+    }
+
+    public function test_stress_bulk_record_add_small() {
+
+    #todo, move large tests into stress tests
+        $sql = "SELECT * FROM large_test_data.customers ORDER BY RAND() LIMIT 1000";
+        $AR = new db_conn;$AR = $AR->db->query($sql);
+        while ($row = $AR->fetchRow())
+        {
+            $count++;
+            $data = array(
+                'name' => $row->name.' '.$row->surname,
+                'company_name' => $row->email_address,
+                'address' => $row->email_address,
+            );
+
+            $customer = new customer;
+            $customer->update_attributes($data);
+            $customer->save();
+            if ($count % 100 == 0 && $count != 0) { echo $count."\r\n"; }
+        }
+        $customer = new customer; $customer->find('all');
+        $this->assertEquals(1001, $customer->count);
+    }
+
 /*
  * test __set()
  */
-    public function test___set_modifies_values()
-    {
+    public function test___set_modifies_values() {
         $customer = new customer;
         $customer->name = 'new_name';
         $this->assertEquals('new_name', $customer->name);
         $customer->model_name = 'testset';
         $this->assertEquals('testset', $customer->model_name);
     }
-    public function test___set_sets_dirty()
-    {
+    public function test___set_sets_dirty() {
         $customer = new customer;
         $customer->name = 'new_name';
         $this->assertTrue($customer->dirty);
     }
 
     /* validation tests */
-    public function test_is_valid()
-    {
+    public function test_is_valid() {
         /* test:
          *      validates_presence_of
          *      custom validate method
@@ -398,8 +431,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
     /* 
      * save tests
      */
-    public function test_save_with_direct_value_updates()
-    {
+    public function test_save_with_direct_value_updates() {
         $category = new category;
         $category->name = 'a new category';
         $this->assertTrue($category->is_valid());
@@ -417,8 +449,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(2, $customer->save());
 
     }
-    public function test_save_cannot_set_id()
-    {
+    public function test_save_cannot_set_id() {
         $collection = array('id' => 80, 'name' => 'new name');
         $customer = new customer($collection);
         $customer_id = $customer->save();
@@ -435,6 +466,15 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->markTestIncomplete(
           'This test has not been implemented yet.'
         );
+    }
+
+    public function testSave_bad_data() {
+        $collection = array('name' => "new name's");
+        $customer = new customer($collection);
+        $this->assertEquals(2, $customer->save());
+        $customer = new customer();
+        $customer->find(2);
+        $this->assertEquals("new name's", $customer->name);
     }
 
     /*
@@ -461,8 +501,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
             $customer = null;
             $test_model = null;
     }
-    public function test_should_not_update_if_not_linked_to_a_record()
-    {
+    public function test_should_not_update_if_not_linked_to_a_record() {
         $customer = new customer;
         $this->assertFalse($customer->update(), 'Successful update on unlinked record');
     }
@@ -470,8 +509,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
     /*
      * delete tests
     */
-    public function test_delete_without_criteria()
-    {
+    public function test_delete_without_criteria() {
         $customer = new customer;
         $customer->find(1);
         $this->AssertTrue($customer->delete());
@@ -480,13 +518,11 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $test = new customer;
         $this->assertFalse($test->find(1));
     }
-    public function test_delete_with_criteria()
-    {
+    public function test_delete_with_criteria() {
         $customer = new customer;$customer->find(1);
         $this->AssertTrue($customer->delete('WHERE id=1'));
     }
-    public function test_delete_on_empty()
-    {
+    public function test_delete_on_empty() {
         $customer = new customer;
         $this->AssertFalse($customer->delete());
     }
@@ -494,14 +530,12 @@ class ARTest extends PHPUnit_Framework_TestCase {
     /*
      * changelog tests
      */
-    public function test_changelog_highest_revision()
-    {
+    public function test_changelog_highest_revision() {
         $customer = new customer;
         $result = $customer->changelog_highest_revision(1);
         $this->assertEquals(1, $result[0], 'changelog_highest_revision not returning results');
     }
-    public function test_changelog_relationship()
-    {
+    public function test_changelog_relationship() {
         $customer = new customer; $customer->find(1);
         $this->assertEquals('customer_changelog', get_class($customer->changelog));
 
@@ -517,8 +551,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->fail('An exception was not raised when trying to catch to find a changelog on a changelog-less model');
     }
 
-    public function test_changelog_insert()
-    {
+    public function test_changelog_insert() {
         $customer =  new customer();
         $customer->find(1);
         $collection = array('name' => 'new name');
@@ -534,8 +567,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(2, $cc->revision, 'direct test failed');
 
     }
-    public function test_changelog_delete()
-    {
+    public function test_changelog_delete() {
         $customer = new customer();
         $customer->find(1);
         $customer->delete();
@@ -562,8 +594,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
     /* 
      * misc
      */
-    public function test_AR_disallows_changing_id()
-    {
+    public function test_AR_disallows_changing_id() {
         $customer = new customer;$customer->find(1);
         try
         {
@@ -594,8 +625,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
     /**
      * testClear_attributes().
      */
-    public function testClear_attributes()
-    {
+    public function testClear_attributes() {
         $customer = new customer;
         $customer->find(1);
         $customer->clear_attributes();
@@ -610,8 +640,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $c2 = null;
     }
 
-    public function test_as_collection()
-    {
+    public function test_as_collection() {
         $customer = new customer;
         $customer->find('all');
         $expected = array(1 => array('company_name' =>'company 1'));

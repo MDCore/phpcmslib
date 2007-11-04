@@ -146,15 +146,43 @@ class action_controller
 
     }
 
-    function render_view($view_name = null)
+    function render_view($route_param = null)
     {
-        if (!$view_name) { $view_name = App::$route['action']; }
+        $route = array(
+            'face' => $this->face,
+            'controller' => $this->controller_name
+        );
+        if (is_array($route_param)) {
+            /* it is an array so overwrite all the array options of the route with the ones in the passed route. e.g.
+             *     if I'm passing array('controller' => 'customers') set the route's controller to customers instead of the default
+             */
+            foreach ($route_param as $route_part => $value) {
+                $route[$route_part] = $route_param[$route_part];
+            }
+        }
+        elseif (!is_null($route_param)) {
+            /* if a string is passed it is aview to be rendered in the current controller */
+            $route['view'] = $route_param;
+        }
+        else {
+            /*  I'm only seting the view here and not in the route initialization because either you use the default route or you pass
+             *  in a partial route _including_ a view. if you pass in a partial route without a view it's likely to be a 
+             *  mistake: you are expecting the app::routes' action to be used. 
+             *  Obviously if there is an important, useful, logical case to be made against this then we change this.
+             */
+            $route['view'] = App::$route['action'];
+        }
+
+        if (!isset($route['view'])) { 
+            trigger_error('no view to render',  E_USER_ERROR); die();
+        }
+
         global $path_to_root;
         
         # set up the view_parameters
             if ($this->view_parameters) {foreach ($this->view_parameters as $variable => $value) { $$variable = $value; } }
 
-        $view_url = $path_to_root."/".$this->face."/views/".$this->controller_name."/$view_name.php";
+        $view_url = $path_to_root.'/'.$route['face'].'/views/'.$route['controller'].'/'.$route['view'].'.php';
         #debug($view_url);
         require ($view_url);
 
@@ -169,10 +197,7 @@ class action_controller
         # set up the view_parameters
             if ($this->view_parameters) {foreach ($this->view_parameters as $variable => $value) { $$variable = $value; } }
 
-        if (!$collection)
-        {
-            $this->render_view('_'.$partial_name);
-        }
+        if (!$collection) { $this->render_view('_'.$partial_name); }
         else
         {
             $counter = 0;
