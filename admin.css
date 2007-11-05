@@ -24,10 +24,15 @@
     width: 98%;
     margin-bottom: 10px;
 }
+form.frm_filter, form.frm_filter table
+{
+    margin: 0; padding: 0;
+}
 div.list_rows
 {
     /*font-style: oblique;*/
     /*font-size: 7pt;*/
+    margin-top: 0; padding-top: 0;
 }
 table.list
 {

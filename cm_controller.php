@@ -13,6 +13,7 @@ class cm_controller extends action_controller
         public $allow_edit = true, $allow_add = true, $allow_delete = true;
         public $allow_filters = true, $allow_sort = true;
         public $row_limit = 30;
+        public $show_record_selector = false;
 
     public $list_sort_field = null, $list_sort_type = null;
 
@@ -134,14 +135,6 @@ class cm_controller extends action_controller
             {
             case 'list':
                 if (method_exists('_list', $this)) { $this->_list(); } else { $this->cm_list(); }
-                #require the additional scripts #todo remove this.. possibly redundant with controllers / actions
-                    if (isset($this->additional_scripts))
-                    {
-                        foreach ($this->additional_scripts as $script)
-                        {
-                            require($path_to_root.'/cm/'.$script);
-                        }
-                    }
                 break;
             case 'edit':
                 $this->cm_edit();break;
@@ -211,7 +204,7 @@ class cm_controller extends action_controller
 
         if ($successful | $no_primary_to_save)
         {
-            unset($_POST['MAX_FILE_SIZE']); #currently used to add a comment each time
+            unset($_POST['MAX_FILE_SIZE']); #currently used to add a comment each time ??xxx 2007-11-04 what's this
             foreach ( $_POST as $meta_model => $collection )
             {
                 if ( $meta_model != $this->primary_model ) # make sure we are working with meta models
@@ -478,8 +471,13 @@ class cm_controller extends action_controller
         }
         ?></div><?
         ?><div class="list_wrapper"><?
-            ?><table class="list"> <?=$this->list_header() ?><?=$this->list_body($results_list);?></table><?
+            ?><table class="list"><?=$this->list_header() ?><?=$this->list_body($results_list);?></table><?
             ?></div><div class="paging"><?=$this->list_paging($num_rows);?></div><?  
+
+        if ($this->show_record_selector) {
+            ?><div id="record_selector_buttons_container"><input disabled="disabled" type="button" id="bt_select_record" value="Select record" onclick="window.parent.select_record_callback(currently_selected_row.val());" /><input type="button" id="bt_cancel_record_selector" value="cancel" onclick="window.parent.cancel_record_callback();" /></div><?
+        }
+
         ?><div><?
         if ($this->show_delete) { ?><input type="submit" value="Delete selected" onclick="return confirm('Are you sure you want to delete these <?=humanize(pluralize($this->list_type))?> ?');">&nbsp;<? } 
         if (isset($this->return_page )) {$return_page = $this->return_page ;} else { $return_page = pluralize($this->list_type); }  #XXX
@@ -497,7 +495,8 @@ class cm_controller extends action_controller
     public function list_header()
     {
         ?><thead><tr><?
-        if ($this->show_delete) {?><td><input type="checkbox" id="delete_all" name="delete_all" onclick="select_all_rows();" value="on" /></td><?}
+        if ($this->show_record_selector) { ?><th class="record_selector_column">&nbsp;</th><? }
+        if ($this->show_delete) { ?><th><input type="checkbox" id="delete_all" name="delete_all" onclick="select_all_rows();" value="on" /></th><? }
         if (!($this->show_delete) && $this->allow_edit) { ?><th>&nbsp;</th><? }
         if (!isset($this->show_delete) || !($this->show_delete) && $this->allow_view) { ?><th>&nbsp;</th><? }
         if ($this->related_pages && sizeof($this->related_pages) > 0)
@@ -541,7 +540,8 @@ class cm_controller extends action_controller
         while ($row = $results_list->fetchRow())
         {
             ?><tr class="odd"> <?
-            if ($this->show_delete) {?><td><input type="checkbox" class="delete_row" name="delete[]" value="<?=$row->__pk_field;?>" /></td><?}
+            if ($this->show_record_selector) { ?><td class="record_selector_column"><input type="radio" class="record_selector_row" id="record_selector_<?=$row->__pk_field;?>" name="record_selector[]" value="<?=$row->__pk_field;?>"  onclick="cm_select_record(this, <?=$row->__pk_field;?>);" /></td><? }
+            if ($this->show_delete) { ?><td><input type="checkbox" class="delete_row" name="delete[]" value="<?=$row->__pk_field;?>" /></td><? }
 
             if (!$this->show_delete && $this->allow_edit)
             {
@@ -559,7 +559,7 @@ class cm_controller extends action_controller
                 ?><td class="action_link"><a href="<?=href_to(array('action' => 'view')).page_parameters('/^view/');?>&amp;view_id=<?=$row->__pk_field;?>"><?=$view_title;?></a></td><?
             }
 
-            #related pages
+            #related pages documentation
             /* a related page draws an extra action link in the list next to say, edit or delete like so:
             *     [ edit ] [ delete ] [ related ]
             *
@@ -654,7 +654,7 @@ class cm_controller extends action_controller
 
         ?><span class="button" id="bt_show_filters" <? if (isset($this->filter_object->has_filter_values) && $this->filter_object->has_filter_values) { echo 'action="h"'; }
 ?> onclick="
-$('#filters').slideToggle('slow');
+$('#filters').slideToggle('fast');
 if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $(this).html('Hide filters'); }
         "><? if ( !isset($this->filter_object->has_filter_values) || !$this->filter_object->has_filter_values) {
             ?>Show filters</span><div id="filters" style="display: none"><? } else { ?> Hide filters</span><div id="filters" style="display: block"><? } ?>
