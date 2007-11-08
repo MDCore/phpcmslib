@@ -12,6 +12,7 @@ require_once 'mocks/application.php';
 
 require_once 'ARTest.php';
 require_once 'functions_test.php';
+require_once 'string_helpers_test.php';
 require_once 'asset_helpers_test.php';
 # include new tests suites here
  
@@ -28,6 +29,7 @@ class allTests
  
         $suite->addTestSuite('ARTest');
         $suite->addTestSuite('functions_test');
+        $suite->addTestSuite('string_helpers_test');
         $suite->addTestSuite('asset_helpers_test');
         #add new test suites here
  

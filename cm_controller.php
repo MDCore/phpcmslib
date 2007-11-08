@@ -14,6 +14,7 @@ class cm_controller extends action_controller
         public $allow_filters = true, $allow_sort = true;
         public $row_limit = 30;
         public $show_record_selector = false;
+        public $field_length_range = array(30, 55);
 
     public $list_sort_field = null, $list_sort_type = null;
 
@@ -535,26 +536,22 @@ class cm_controller extends action_controller
             
     }
 
-    public function list_body($results_list)
-    {
-        while ($row = $results_list->fetchRow())
-        {
+    public function list_body($results_list) {
+        while ($row = $results_list->fetchRow()) {
             ?><tr class="odd"> <?
             if ($this->show_record_selector) { ?><td class="record_selector_column"><input type="radio" class="record_selector_row" id="record_selector_<?=$row->__pk_field;?>" name="record_selector[]" value="<?=$row->__pk_field;?>"  onclick="cm_select_record(this, <?=$row->__pk_field;?>);" /></td><? }
             if ($this->show_delete) { ?><td><input type="checkbox" class="delete_row" name="delete[]" value="<?=$row->__pk_field;?>" /></td><? }
 
-            if (!$this->show_delete && $this->allow_edit)
-            {
+            if (!$this->show_delete && $this->allow_edit) {
             # get or set the edit_link_title
-                if (isset($this->edit_link_title)) {$edit_link_title = $this->edit_link_title;} else {$edit_link_title = 'Edit';}#.humanize($this->list_type)
+                if (isset($this->edit_link_title)) { $edit_link_title = $this->edit_link_title; } else { $edit_link_title = 'Edit';}#.humanize($this->list_type)
 
                     ?><td class="action_link"><a href="<?=href_to(array('action' => 'edit')).page_parameters('/^edit/');?>&amp;edit_id=<?=$row->__pk_field;?>"><?=$edit_link_title;?></a></td><?
             }
 
-            if (!$this->show_delete && $this->allow_view)
-            {
+            if (!$this->show_delete && $this->allow_view) {
             # get or set the view_title
-                if (isset($this->view_title)) {$view_title = $this->view_title;} else {$view_title = 'View';} #.humanize($this->list_type)
+                if (isset($this->view_title)) { $view_title = $this->view_title; } else { $view_title = 'View';} #.humanize($this->list_type)
 
                 ?><td class="action_link"><a href="<?=href_to(array('action' => 'view')).page_parameters('/^view/');?>&amp;view_id=<?=$row->__pk_field;?>"><?=$view_title;?></a></td><?
             }
@@ -574,36 +571,29 @@ class cm_controller extends action_controller
             *                   fk_field                : the field name to use for the value of the foreign_key field. not required.
             *                   fk_title_field          : the name that will be passed to the target action as extra title text. not required.
             */                           
-                if ($this->related_pages && sizeof($this->related_pages) > 0)
-                {
+                if ($this->related_pages && sizeof($this->related_pages) > 0) {
                     foreach ($this->related_pages as $related_page ) { echo $this->related_page_anchor($related_page, $row); } 
                 }
 
 
-            foreach (array_keys($this->list_fields) as $field)
-            {
-                ?><td><?
-                if (substr($field, -2) == '()')
-                {
+            foreach (array_keys($this->list_fields) as $field) { ?><td><?
+                if (substr($field, -2) == '()') {
                     $method = substr($field, 0, strlen($field)-2);
                     echo $this->model_object->$method($row);
                 }
                 // ok... TODO fix this.. now that this uses mdb2. where is my schema introspection on appstart ?
-                elseif ((stristr($this->list_fields[$field], ' date') != false) or strtolower($this->list_fields[$field]) == 'date')
-                {
+                elseif ((stristr($this->list_fields[$field], ' date') != false) or strtolower($this->list_fields[$field]) == 'date') {
                     echo strftime(DATE_FORMAT, strtotime((string)$row->$field));
                 }
-                elseif (stristr($this->list_fields[$field], 'time') != false)
-                {
+                elseif (stristr($this->list_fields[$field], 'time') != false) {
                     // write out a nicely formatted time
                     echo strftime(TIME_FORMAT, strtotime((string)$row->$field));
                 }
-                elseif (strlen($row->$field)> 32)
-                {
-                        echo substr($row->$field, 0, 30).'...'; #todo make this hack break on words etc and not use a magic no
+                elseif (!is_null($this->field_length_range)) {
+                    echo split_on_word(stripslashes($row->$field), $this->field_length_range, true);
+                        #echo substr(stripslashes($row->$field), 0, $this->field_length_range[1]-1).'&#0133;'; #todo make this hack break on words etc and not use a magic no
                 }
-                else
-                {
+                else {
                     echo stripslashes($row->$field);
                 }?></td><?
             } ?>

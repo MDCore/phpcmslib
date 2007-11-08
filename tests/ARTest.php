@@ -27,6 +27,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
      * @access public
      * @static
      */
+    public $delete_db = true;
 
     public static function main() {
         require_once 'PHPUnit/TextUI/TestRunner.php';
@@ -35,8 +36,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $result = PHPUnit_TextUI_TestRunner::run($suite);
     }
 
-    public function __construct()
-    {
+    public function __construct() {
         $dsn = array(
             'phptype' => 'mysql',
             'username' => 'dev',
@@ -51,10 +51,11 @@ class ARTest extends PHPUnit_Framework_TestCase {
         App::error_check($this->db);
         
     }
-    public function __destruct()
-    {
-         $this->db->query('DROP DATABASE IF EXISTS ARTest');
-        App::error_check($this->db);
+    public function __destruct() {
+        if ($this->delete_db) {
+            $this->db->query('DROP DATABASE IF EXISTS ARTest');
+            App::error_check($this->db);
+        }
         unset($this->db);
     }
     /**
@@ -71,18 +72,27 @@ class ARTest extends PHPUnit_Framework_TestCase {
             {
                 $this->db->query($query['create']);
                 App::error_check($this->db);
-                if (is_array($query['insert']))
-                {
-                    foreach ($query['insert'] as $statement)
-                    {
-                        $this->db->query($statement);
-                        App::error_check($this->db);
+                #hack for customers
+                    if ($class_name == 'customer') {
+                        $customers_sql = "INSERT INTO ARTest.customers (name, address, company_name)
+                            SELECT concat(name,' ',surname) as name, email_address as address, surname as company_nam
+                            FROM large_test_data.customers
+                            LIMIT 5000";
+                            $result = $this->db->query($customers_sql);
+                            App::error_check($result);
+
                     }
-                }
-                else
-                {
-                    $this->db->query($query['insert']);
-                }
+                    else {
+                        if (is_array($query['insert'])) {
+                            foreach ($query['insert'] as $statement) {
+                                $result = $this->db->query($statement);
+                                App::error_check($result);
+                            }
+                        }
+                        else {
+                            $this->db->query($query['insert']);
+                        }
+                    }
                 App::error_check($this->db);
             }
     }
@@ -95,6 +105,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
      */
     protected function tearDown()
     {
+        if (!$this->delete_db) { return false; }
         #delete all the tables
         foreach (App::$schema_sql as $class_name => $query)
         {
@@ -174,61 +185,66 @@ class ARTest extends PHPUnit_Framework_TestCase {
     public function test_find_with_only_additional_options()
     { 
         $customer = new customer;
-        $this->assertTrue($customer->find(null, 
-            array('WHERE' => "name like '%cust%'")
-        ));
+        $customer->find(null, 
+            array('WHERE' => "name like '%Mary Williams%'")
+        );
 
-        $this->assertEquals(1, $customer->count);
+        $this->assertEquals(2, $customer->count);
     }
 
     public function test_find_all()
     {
         $customer = new customer;
-        $this->assertTrue($customer->find('all'));
-        $this->assertEquals(1, $customer->count);
+        $customer->find('all');
+        $this->assertEquals(5000, $customer->count);
     }
     public function test_single_finder()
     {
         $customer = new customer;
-        $this->assertTrue($customer->find_by_id(1));
-        $this->assertEquals('cust 1',$customer->name);
+        $customer->find_by_id(1);
+        $this->assertEquals('Mary Williams',$customer->name);
         
         $test = new customer;
-        $this->assertTrue($test->find_by_name('cust 1'));
+        $test->find_by_name('Mary Williams');
         $this->assertEquals(1, $test->id);
+        $this->assertEquals(2,$test->count);
+
+        $test = new customer;
+        $test->find_by_name('Stanton Woodruff');
+        $this->assertEquals(2559, $test->id);
 
     }
 
     public function test_single_finder_bad_data()
     {
         $customer = new customer;
-        $this->assertFalse($customer->find_by_id(999));
+        $customer->find_by_id(50000);
         $this->assertEquals(0, $customer->count);
     }
     public function test_single_finder_with_attributes()
     {
         $customer = new customer;
-        $this->assertTrue($customer->find('all', array('ORDER BY' => 'id DESC')));
-        $this->assertEquals('SELECT * FROM customers WHERE 1=1 ORDER BY id DESC', $customer->last_sql_query);
+        $customer->find('all', array('ORDER BY' => 'id DESC'));
+        $this->assertEquals('SELECT * FROM ARTest.customers WHERE 1=1 ORDER BY id DESC', $customer->last_sql_query);
     }
     public function test_single_finder_with_attributes2()
     {
         $customer = new customer;
-        $this->assertTrue($customer->find_by_name('cust 1', array('ORDER BY' => 'id DESC')));
-        $this->assertEquals("SELECT * FROM customers WHERE (name = 'cust 1') ORDER BY id DESC", $customer->last_sql_query);
+        $customer->find_by_name('Mary Williams', array('ORDER BY' => 'id DESC'));
+        $this->assertEquals("SELECT * FROM ARTest.customers WHERE (name = 'Mary Williams') ORDER BY id DESC", $customer->last_sql_query);
     }
     public function test_single_finder_with_attributes3()
     {
         $customer = new customer;
-        $this->assertTrue($customer->find_by_name('cust 1', array('WHERE' => 'AND name != \'cats\'')));
-        $this->assertEquals("SELECT * FROM customers WHERE (name = 'cust 1') AND name != 'cats'", $customer->last_sql_query);
+        $customer->find_by_name('cust 1', array('WHERE' => 'AND name != \'cats\''));
+        $this->assertEquals("SELECT * FROM ARTest.customers WHERE (name = 'cust 1') AND name != 'cats'", $customer->last_sql_query);
     }
 
     public function test_single_finder_with_attributes4()
     {
         $customer = new customer;
-        $this->assertTrue($customer->find_by_name('cust 1', array('WHERE' => array("AND name != 'cats'", "AND name != 'lol'"))));
-        $this->assertEquals("SELECT * FROM customers WHERE (name = 'cust 1') AND name != 'cats' AND name != 'lol'", $customer->last_sql_query);
+        $customer->find_by_name('cust 1', array('WHERE' => array("AND name != 'cats'", "AND name != 'lol'")));
+        $this->assertEquals("SELECT * FROM ARTest.customers WHERE (name = 'cust 1') AND name != 'cats' AND name != 'lol'", $customer->last_sql_query);
     }
 
     public function test_special_finders()
@@ -242,29 +258,32 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $customer->save();
 
         $ct = new customer;
-        $ct->find_most_recent_by_id_and_name(2, 'new name');
-        $this->assertEquals(2, $customer->id);
+        $ct->find_most_recent_by_id_and_name(5001, 'new name');
+        $this->assertEquals(5001, $customer->id);
+        $this->assertEquals('new name', $customer->name);
     }
 
-    public function test_multiple_finder()
-    {
+    public function test_finder_is_an_object() {
         $customer = new customer;
-        $this->assertTrue($customer->find_by_id_and_name(1, 'cust 1'));
-        $this->assertTrue($customer->id == 1);
-        $this->assertTrue($customer->name == 'cust 1');
+        $this->assertEquals(get_class($customer), get_class($customer->find_by_id_and_name(2559, 'Stanton Woodruff', array('ORDER BY' => array('id DESC')))));
     }
-    public function test_multiple_finder2()
-    {
+    public function test_multiple_finder() {
         $customer = new customer;
-        $this->assertTrue($customer->find_by_id_and_name(1, 'cust 1', array('ORDER BY' => array('id DESC'))));
-        $this->assertTrue($customer->id == 1);
-        $this->assertTrue($customer->name == 'cust 1');
+        $customer->find_by_id_and_name(2559, 'Stanton Woodruff');
+        $this->assertTrue($customer->id == 2559);
+        $this->assertTrue($customer->name == 'Stanton Woodruff');
+        $this->assertTrue(1 == $customer->count);
     }
-    public function test_multiple_finder_bad_data()
-    {
+    public function test_multiple_finder2() {
         $customer = new customer;
-        $this->assertFalse($customer->find_by_id_and_name(999, 'bob'));
-        $this->assertEquals(0, $customer->count);
+        $customer->find_by_id_and_name(2559, 'Stanton Woodruff', array('ORDER BY' => array('id DESC')));
+        $this->assertTrue($customer->id == 2559);
+        $this->assertTrue($customer->name == 'Stanton Woodruff');
+        $this->assertTrue(1 == $customer->count);
+    }
+    public function test_multiple_finder_bad_data() {
+        $customer = new customer;
+        $this->assertEquals(0, $customer->find_by_id_and_name(99999, 'bob')->count);
     }
 
 /*
@@ -383,8 +402,9 @@ class ARTest extends PHPUnit_Framework_TestCase {
 
     public function test_stress_bulk_record_add_small() {
 
-    #todo, move large tests into stress tests
-        $sql = "SELECT * FROM large_test_data.customers ORDER BY RAND() LIMIT 1000";
+    #todo, move large tests into stress tests, make it a fat number
+        return false;
+        $sql = "SELECT * FROM large_test_data.customers ORDER BY RAND() LIMIT 100000";
         $AR = new db_conn;$AR = $AR->db->query($sql);
         while ($row = $AR->fetchRow())
         {
@@ -442,11 +462,11 @@ class ARTest extends PHPUnit_Framework_TestCase {
     public function test_save_from_collection() {
 
         $customer = new customer; $customer->find('all');
-        $this->assertEquals(1, $customer->count);
+        $this->assertEquals(5000, $customer->count);
 
         $collection = array('name' => 'new name');
         $customer = new customer($collection);
-        $this->assertEquals(2, $customer->save());
+        $this->assertEquals(5001, $customer->save());
 
     }
     public function test_save_cannot_set_id() {
@@ -454,9 +474,9 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $customer = new customer($collection);
         $customer_id = $customer->save();
         $this->assertNotEquals(80, $customer_id, 'customer id was set');
-        $this->assertEquals(2, $customer_id);
+        $this->assertEquals(5001, $customer_id);
 
-        $test = new customer; $test->find(2);
+        $test = new customer; $test->find(5001);
         $this->assertEquals('new name', $test->name);
        
     }
@@ -471,9 +491,9 @@ class ARTest extends PHPUnit_Framework_TestCase {
     public function testSave_bad_data() {
         $collection = array('name' => "new name's");
         $customer = new customer($collection);
-        $this->assertEquals(2, $customer->save());
+        $this->assertEquals(5001, $customer->save());
         $customer = new customer();
-        $customer->find(2);
+        $customer->find(5001);
         $this->assertEquals("new name's", $customer->name);
     }
 
@@ -483,7 +503,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
     public function test_update_checks_for_target_record_first()
     {
         $customer = new customer;
-        $customer->find(999);
+        $customer->find(99999);
         $this->assertFalse($customer->update());
     }
     public function test_update_saves_to_database() {
@@ -516,7 +536,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $customer = null;
 
         $test = new customer;
-        $this->assertFalse($test->find(1));
+        $this->assertEquals(0, $test->find(1)->count);
     }
     public function test_delete_with_criteria() {
         $customer = new customer;$customer->find(1);
@@ -638,28 +658,78 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertFalse($c2->dirty, 'this method must set dirty to false');
         $this->assertNotEquals('new name', $customer->name);
         $c2 = null;
+
+        /* not a test per se... but this code generates an error when it shouldn't. not sure how to test for that */
+            $customer = new customer;
+            $customer->schema_definition = null;
+            $customer->clear_attributes();
     }
 
     public function test_as_collection() {
         $customer = new customer;
-        $customer->find('all');
-        $expected = array(1 => array('company_name' =>'company 1'));
-        $this->assertEquals($expected, $customer->as_collection());
+        $customer->find(1);
 
-        $expected = array(1 => array('name' => 'cust 1'));
-        $this->assertEquals($expected, $customer->as_collection('name'));
+        #single, using display field
+            $expected = array(1 => array('company_name' =>'Williams'));
+            $result = $customer->as_collection();
+            $this->assertEquals($expected, $result);
 
-        $expected = array(1 => array('name' => 'cust 1', 'company_name' => 'company 1'));
-        $this->assertEquals($expected, $customer->as_collection(array('name', 'company_name')));
+        #single, using custom field
+            $expected = array(1 => array('name' => 'Mary Williams'));
+            $this->assertEquals($expected, $customer->as_collection('name'));
+
+        #single, using custom fields
+            $expected = array(
+                1 => array(
+                    'name' => 'Mary Williams',
+                    'company_name' => 'Williams'
+                    )
+                );
+            $this->assertEquals($expected, $customer->as_collection(array('name', 'company_name')));
+        #multiple, using display_field
+            #todo
+
+        #custom method #todo
+        
+        #make sure it doesn't do anything when empty
+            try
+            {
+                $user = new user;
+                $user->as_collection();
+            }
+            catch(Exception $e)
+            {
+                return;
+            }
+            $this->fail('An exception was not raised');
     }
     /**
      * @todo Implement testAs_array().
      */
     public function testAs_array() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+
+        $customer = new customer;
+        $expected = array(1 => 'Mary Williams');
+        $this->assertEquals($expected, $customer->find(1)->as_array('name'));
+
+        $expected = array(1 => 1);
+        $customer->display_field = 'id';
+        $this->assertEquals($expected, $customer->as_array());
+
+    }
+    public function testAs_array_empty_AR() {
+        try {
+            $customer = new customer;
+            $customer->as_array();
+        }
+        catch(Exception $e)
+        {
+            return;
+        }
+        $this->fail('An exception was not raised');
+
+        #$expected = array();
+        #$this->assertEquals($expected, $customer->as_array());
     }
 
     /**
@@ -731,13 +801,16 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertFalse($customer->display_name());
 
         $customer->find(1);
-        $this->assertEquals('company 1', $customer->display_name());
+        $this->assertEquals('Williams', $customer->display_name());
 
         $user = new user; $user->find(1);
         $this->assertEquals('Jim', $user->display_name());
 
         $user_find = new user_find; $user_find->find(1);
         $this->assertEquals(1, $user_find->display_name());
+
+        $customer->find(1); $customer->display_field = 'id';
+        $this->assertEquals(1, $customer->display_name());
     }
 }
 

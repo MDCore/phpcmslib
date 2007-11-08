@@ -34,7 +34,6 @@ class AR implements SeekableIterator # basic AR class
     /* 
      * this method is here so that is is overridable
      */
-    #function connect_to_db($dsn = null) {}
     function connect_to_db($dsn = null)
     {
         if (!$dsn && isset(App::$env)) {$dsn = App::$env->dsn;}
@@ -43,6 +42,7 @@ class AR implements SeekableIterator # basic AR class
             #debug("connecting to ".$dsn['database']);
             $this->dsn = $dsn;
             $this->db =& MDB2::singleton($dsn);
+            #print_r($this->db);
             $this->error_check($this->db);
         }
         else
@@ -50,7 +50,7 @@ class AR implements SeekableIterator # basic AR class
             #raise an exception here ?
         }
 
-        if ($this->db) {$this->db->setFetchMode(MDB2_FETCHMODE_OBJECT);}
+        if ($this->db) { $this->db->setFetchMode(MDB2_FETCHMODE_OBJECT); }
     }
 
     /*
@@ -114,8 +114,7 @@ class AR implements SeekableIterator # basic AR class
             if (property_exists($this->model_name, 'changelog')){ $this->has_changelog = true; unset($this->changelog); } else {$this->has_changelog = false; }
 
         #set the display field
-            if (!property_exists($this, 'display_field')) 
-            {
+            if (!property_exists($this, 'display_field')) {
                 if (isset($this->schema_definition['title'])) { $this->display_field = 'title'; }
                 elseif (isset($this->schema_definition['name'])) { $this->display_field = 'name'; }
                 else { $this->display_field = 'id'; }
@@ -124,10 +123,8 @@ class AR implements SeekableIterator # basic AR class
 
         #split the validations - todo. maybe use getobjectvars? todo add all validations
             $validations = array('validates_presence_of');
-            foreach ($validations as $validation)
-            {
-                if (property_exists($this, $validation))
-                {
+            foreach ($validations as $validation) {
+                if (property_exists($this, $validation)) {
                     $this->$validation = split(',',$this->$validation);
                 }
             }
@@ -275,9 +272,9 @@ class AR implements SeekableIterator # basic AR class
                 $ro = singularize($name); $ro = new $ro;
                 $link = singularize($this->has_many_through($name)); $link = new $link;
                 $ro->find_by_sql('
-                    SELECT '.$ro->schema_table.'.* 
-                    FROM '.$ro->schema_table. ' INNER JOIN '.$link->schema_table.'
-                    WHERE '.$link->schema_table.'.'.foreign_keyize($this->model_name).' = \''.$this->values[$this->primary_key_field].'\''
+                    SELECT '.$ro->dsn['database'].'.'.$ro->schema_table.'.* 
+                    FROM '.$ro->dsn['database'].'.'.$ro->schema_table. ' INNER JOIN '.$link->dsn['database'].'.'.$link->schema_table.'
+                    WHERE '.$link->dsn['database'].'.'.$link->schema_table.'.'.foreign_keyize($this->model_name).' = \''.$this->values[$this->primary_key_field].'\''
                 );
                 return $ro;
             }
@@ -643,45 +640,40 @@ class AR implements SeekableIterator # basic AR class
         return $sql_criteria;
     }
 
-    function find_by_sql($sql)
-    {
+    function find_by_sql($sql) {
         $this->last_sql_query = $sql;
         $this->last_finder_sql_query = $sql;
         $this->results = $this->db->query($sql);
-        if ( $this->results )
-        {
+        if ( $this->results ) {
             $this->error_check($this->results);
 
             $this->count = $this->results->numRows();
-            if ($this->count == 0)
-            {
+            if ($this->count == 0) {
                 $this->clear_attributes();
-                return false;
+                #return false;
             }
-            else
-            {
+            else {
                 $this->offset = 0;
                 $this->update_attributes();
-                return true;
+                #return true;
             }
         }
-        else
-        {
+        else {
             $this->count = 0;
             $this->clear_attributes();
-            return false;
+            #return false;
         }
+        return $this;
     }
 
-    function find($finder_criteria = null, $additional_sql_options = null) 
-    {
+    function find($finder_criteria = null, $additional_sql_options = null) {
         if (!$finder_criteria && !$additional_sql_options) {
             throw new Exception('No criteria or additional options specified for finder');
             return;
         }
 
         $sql['SELECT']      = "*";
-        $sql['FROM']        = $this->schema_table;
+        $sql['FROM']        = $this->dsn['database'].'.'.$this->schema_table;
         $sql['WHERE']       = $this->criteria_to_sql($finder_criteria);
 
         if ($additional_sql_options) { $sql = SQL_merge($sql, $additional_sql_options); }
@@ -733,17 +725,22 @@ class AR implements SeekableIterator # basic AR class
         }
     }
 
-    public function clear_attributes()
-    {
-        foreach ($this->schema_definition as $attribute => $meta_data)
-        {
-            $this->values[$attribute] = null;
+    public function clear_attributes() {
+        if (property_exists($this, 'schema_definition') && is_array($this->schema_definition)) {
+            foreach ($this->schema_definition as $attribute => $meta_data) {
+                $this->values[$attribute] = null;
+            }
         }
         $this->dirty = false;
     }
 
-    function as_collection($fields = null, $key_field = null)
-    {
+    /* todo: simply this method. It's a bit complicated to do something simple: then again, as_array now covers that */
+    function as_collection($fields = null, $key_field = null, $compress_single_field = false) {
+        if ($this->last_finder_sql_query == '') {
+            throw new Exception('as_collection only works on a collection of records.');
+            return false;
+        }
+
         if (!$key_field) { $key_field = $this->primary_key_field; }
         if (!$fields) {$fields = $this->display_field;}
         if (!is_array($fields)) { $fields = array($fields); } #always make an array out of the fields
@@ -754,46 +751,40 @@ class AR implements SeekableIterator # basic AR class
         while($record = $this->results->fetchRow())
         {
             $row = array();
-            foreach($fields as $field) { $row[$field] = $record->$field; } #create an array of all the requested fields
-            $result[$record->$key_field] = $row;
+             #create an array of all the requested fields
+            foreach($fields as $field) {
+                /* todo: test this functionality */
+                if (substr($field, -2) == '()') {
+                    $method = substr($field, 0, strlen($field)-2);
+                    $row[$field] = $this->$method($record);
+                }
+                else {
+                    $row[$field] = $record->$field;
+                }
+            }
+            if ($compress_single_field && sizeof($fields == 1)) {
+                $result[$record->$key_field] = $row[$fields[0]];
+            }
+            else {
+                $result[$record->$key_field] = $row;
+            }
         }
         $this->results->seek($current_index); #go back to the index stored earlier
         return $result;
     }
-    function as_array($field = null, $criteria = null)
-    {
-        if (!$field) {$field = $this->display_field;}
-        $result = Array();
-       #todo lose the criteria and the custom sql. use finders and iterators 
-        $sql = "SELECT *, ".$this->schema_table.'.' .$this->primary_key_field." as __pk_field FROM ".$this->schema_table;
-        if ($criteria) {$sql .= ' '.$criteria;}
-        #debug($sql);
-        $options = $this->db->query($sql);
-        if (!MDB2::isError($options))
-        {
-            while ($row = $options->fetchRow())
-            {
-                if (substr($field, -2) == '()')
-                {
-                    $method = substr($field, 0, strlen($field)-2);
-                    $result[$row->__pk_field] = $this->$method($row);
-                }
-                else
-                {
-                    $result[$row->__pk_field] = $row->$field;
-                }
-            }
-        }
-        return $result;
+    
+    /* as array is a simplified version of as_collection) */
+    function as_array($field = null) {
+        return $this->as_collection($field, $this->primary_key_field, true);
     }
-    function as_select_options($selected = null, $field = null, $show_all_option = false, $criteria = null)
-    {
+
+    function as_select_options($selected = null, $field = null, $show_all_option = false) {
         $result = '';
 
         if ($show_all_option === 'all' || $show_all_option === true || $show_all_option == 'true') { $result .= '<option value="">-- Any --</option>'; }
         if ($show_all_option === 'none') { $result .= '<option value="">-- none --</option>'; }
         if ($show_all_option === 'select_one') { $result .= '<option value="">-- Select One --</option>'; }
-        $options = $this->as_array($field, $criteria);
+        $options = $this->as_array($field);
         foreach ($options as $id => $value)
         {
             $result .= '<option value="'.$id.'"';
@@ -1020,11 +1011,13 @@ static $sql_phrases = array(
 /* AR HELPERS starts here */
 function compare_records($record1, $record2, $include_boilerplate = false)
 {
+    if (!is_array($record1)) { $record1 = $record1->values; }
+    if (!is_array($record2)) { $record2 = $record2->values; }
     $changed_attributes = null;
     #todo check that these are the same type of object
-    foreach($record1->attributes as $attribute)
+    foreach($record1 as $attribute => $attribute_value)
     {
-        if ($record1->$attribute != $record2->$attribute)
+        if ($record1[$attribute] != $record2[$attribute])
         {
             switch ($attribute)
             {

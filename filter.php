@@ -149,7 +149,8 @@ class filter
         $options = new $foreign_model_name;
         $get_var = 'filter_'. $name;
         if ($_GET[$get_var] != '') {$value = $_GET[$get_var];} else {$value = null;}
-        $options = $options->as_select_options($value, $filter['field'], true, $filter['criteria']);
+        if ($filter['criteria'] == '') { $filter['criteria'] = 'all'; }
+        $options = $options->find($filter['criteria'])->as_select_options($value, $filter['field'], true);
         ?><label for="filter_<?=$name?>"><?=humanize($alias)?></label><select id="filter_<?=$name?>" name="<?=$get_var;?>"><?=$options;?></select><?
     }
 

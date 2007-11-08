@@ -355,8 +355,8 @@ class forms
             if ($element_description['criteria']) {$criteria = $element_description['criteria'];} else {$criteria = '';}
             if ($element_description['order by']) {$criteria .= 'ORDER BY '.$element_description['order by'];}
 
-           #if the options aren't showing up look in AR::as_array() 
-            $options = $options_object->as_select_options($record->$db_field_name, $field, $show_all_option, $criteria);
+            if ($criteria == '') { $criteria = 'all'; }
+            $options = $options_object->find($criteria)->as_select_options($record->$db_field_name, $field, $show_all_option);
             $element_description['options'] = $options;
 
             #multi select ?

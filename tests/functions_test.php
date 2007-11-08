@@ -4,7 +4,6 @@ if (!defined('PHPUnit_MAIN_METHOD')) { define('PHPUnit_MAIN_METHOD', 'functions_
 }
 
 require_once 'PHPUnit/Framework.php';
-require_once 'MDB2.php';
 
 require_once '../functions.php';
 
@@ -294,7 +293,7 @@ class functions_test extends PHPUnit_Framework_TestCase {
             );
         $expected = '<input type="hidden" name="cat[legs][leg1]" value="brown" /><input type="hidden" name="cat[legs][leg2]" value="white" /><input type="hidden" name="cat[legs][leg3]" value="black" /><input type="hidden" name="cat[legs][leg4]" value="white" /><input type="hidden" name="cat[tail]" value="1" /><input type="hidden" name="cat[eyes]" value="2" />';
         $result = as_hiddens($input);
-        $this->assertequals($expected, $result);
+        $this->assertEquals($expected, $result);
     }
     public function testAsHiddens3()
     {
@@ -306,7 +305,7 @@ class functions_test extends PHPUnit_Framework_TestCase {
                 );
         $expected = '<input type="hidden" name="leg1" value="brown" /><input type="hidden" name="leg2" value="white" /><input type="hidden" name="leg3" value="black" /><input type="hidden" name="leg4" value="white" />';
         $result = as_hiddens($input);
-        $this->assertequals($expected, $result);
+        $this->assertEquals($expected, $result);
     }
 
 }

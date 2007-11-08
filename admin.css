@@ -96,6 +96,7 @@ table.list td
     border-top-width: 0;
     padding: 0 5px;
     margin: 0;
+    vertical-align: top;
 }
 
 table.list td:hover {

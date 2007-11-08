@@ -11,7 +11,7 @@ class schema_interregator
                     $model_object->db->loadModule('Reverse', null, true);
 
                 #using the magic of mdb2's Reverse module and the method tableInfo
-                    $table_name = $model_object->schema_table;
+                $table_name = $model_object->dsn['database'].'.'.$model_object->schema_table;
                 if ($echo_progress) { echo "writing schema of table <i>$table_name</i> for model <i>$model_name</i><br />"; }
                 $table_schema = $model_object->db->tableInfo($table_name, null);
                 $error_code = AR::error_check($table_schema, false);
@@ -21,7 +21,7 @@ class schema_interregator
                     switch ($error_code)
                     {
                         case -18:
-                            $message = "$table_name not found"; break;
+                            $message = "$table_name table not found"; break;
                         default:
                             $message = '('.$error_code.') '.$table_schema->getMessage();
                     }
