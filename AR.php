@@ -88,23 +88,19 @@ class AR implements SeekableIterator # basic AR class
         #set the primary table, checking first if this model_name is a changelog
         if (!property_exists($this, 'schema_table')) {
             $changelog_pos = strpos($this->model_name, '_changelog');
-            if ($changelog_pos > 0)
-            {
+            if ($changelog_pos > 0) {
                 #check if the parent model has a schema_table and use it instead of inferring the table name from the parent model name
                     $parent_model_name = substr($this->model_name, 0, $changelog_pos);
                     $parent_model_name = new $parent_model_name;
-                    if (isset($parent_model_name->schema_table))
-                    {
+                    if (isset($parent_model_name->schema_table)) {
                         $this->schema_table = $parent_model_name->schema_table.'_changelog'; 
                     } 
-                    else
-                    {
+                    else {
                         $this->schema_table = tableize(pluralize(substr($this->model_name, 0, $changelog_pos))).'_changelog';
                     }
                     unset($parent_model_name);
             }
-            else
-            {
+            else {
                 $this->schema_table = tableize(pluralize($this->model_name));
             }
         }
@@ -400,7 +396,7 @@ class AR implements SeekableIterator # basic AR class
     private function save_core($collection)
     {
         $fields = implode(',', array_keys($collection)); $values = "'".implode("','", array_values($collection))."'";
-        $sql = 'INSERT INTO '.$this->schema_table." ($fields) VALUES ($values)";
+        $sql = 'INSERT INTO '.$this->dsn['database'].'.'.$this->schema_table." ($fields) VALUES ($values)";
         $this->last_sql_query = $sql;
         #debug ( $sql );die();
         $save = $this->db->query($sql);$this->error_check($save);
@@ -419,7 +415,7 @@ class AR implements SeekableIterator # basic AR class
        }
 
        $update_sql = implode_with_keys(',', $collection, "");
-       $sql = 'UPDATE '.$this->schema_table." SET $update_sql WHERE ".$this->primary_key_field."=".$this->values[$this->primary_key_field];
+       $sql = 'UPDATE '.$this->dsn['database'].'.'.$this->schema_table." SET $update_sql WHERE ".$this->primary_key_field."=".$this->values[$this->primary_key_field];
        #debug($sql);
         $this->last_sql_query = $sql;
        $update = $this->db->query($sql);$this->error_check($update);
@@ -493,7 +489,7 @@ class AR implements SeekableIterator # basic AR class
         elseif ($this->count > 0)
         {
             #i.e. delete just this record
-            $sql_criteria = ' WHERE '.$this->schema_table.'.'.$this->primary_key_field.' = '.$this->values[$this->primary_key_field];
+            $sql_criteria = ' WHERE '.$this->dsn['database'].'.'.$this->schema_table.'.'.$this->primary_key_field.' = '.$this->values[$this->primary_key_field];
         }
         else
         {
@@ -505,7 +501,7 @@ class AR implements SeekableIterator # basic AR class
             {
                $to_delete = new $this->model_name;
                 $changelog_criteria['SELECT']      = "*";
-                $changelog_criteria['FROM']        = $this->schema_table;
+                $changelog_criteria['FROM']        = $this->dsn['database'].'.'.$this->schema_table;
                 $changelog_criteria['WHERE']       = $sql_criteria;
                $to_delete->find_by_sql(SQL_implode($changelog_criteria));
                foreach($to_delete as $record)
@@ -514,7 +510,7 @@ class AR implements SeekableIterator # basic AR class
                }
             }
 
-        $sql = "DELETE FROM ".$this->schema_table.' '.$sql_criteria;
+        $sql = "DELETE FROM ".$this->dsn['database'].'.'.$this->schema_table.' '.$sql_criteria;
         #debug($sql);
         return $this->delete_by_sql($sql);
     }
@@ -551,7 +547,7 @@ class AR implements SeekableIterator # basic AR class
     function changelog_highest_revision($record_id)
     {
         #get the highest revision id
-        $sql = "SELECT MAX(revision) as rev_id, MAX(created_on) as created_on FROM ".$this->schema_table."_changelog WHERE ".$this->model_name.'_id'." = '".$record_id."'";
+        $sql = "SELECT MAX(revision) as rev_id, MAX(created_on) as created_on FROM ".$this->dsn['database'].'.'.$this->schema_table."_changelog WHERE ".$this->model_name.'_id'." = '".$record_id."'";
         #debug($sql);
         $rev_result = $this->db->query($sql);$this->error_check($rev_result);
         if ($rev_result)
@@ -605,28 +601,21 @@ class AR implements SeekableIterator # basic AR class
         }
     }
 
-    function criteria_to_sql($criteria) #this method takes dynamic criteria and converts it to SQL 
-    {
-        if (is_numeric($criteria)) {$sql_criteria = $this->schema_table.'.'.$this->primary_key_field.'='.$criteria;} #if passed a numeric value assume it's a Primary Key
-        elseif (is_string($criteria)) 
-        {
-            if (strtolower($criteria)== 'all') 
-            {
+    function criteria_to_sql($criteria) { #this method takes dynamic criteria and converts it to SQL 
+        if (is_numeric($criteria)) {$sql_criteria = $this->dsn['database'].'.'.$this->schema_table.'.'.$this->primary_key_field.'='.$criteria;} #if passed a numeric value assume it's a Primary Key
+        elseif (is_string($criteria)) {
+            if (strtolower($criteria)== 'all') {
                 $sql_criteria = '1=1';
             }
-            else
-            {
+            else {
                 $sql_criteria = $criteria;
             }
         }
-        elseif (is_array($criteria))
-        {
-            if (sizeof($criteria) > 0)
-            {
+        elseif (is_array($criteria)) {
+            if (sizeof($criteria) > 0) {
                 #I assume we are passing an array of ID's
-                $sql_criteria = $this->schema_table.'.'.$this->primary_key_field.' IN (';
-                foreach ($criteria as $id)
-                {
+                $sql_criteria = $this->dsn['database'].'.'.$this->schema_table.'.'.$this->primary_key_field.' IN (';
+                foreach ($criteria as $id) {
                     $sql_criteria .= $id.',';
                 } 
                 $sql_criteria = substr($sql_criteria, 0, strlen($sql_criteria)-1);
