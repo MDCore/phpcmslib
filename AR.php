@@ -287,8 +287,7 @@ class AR implements SeekableIterator # basic AR class
         throw new Exception("Property $name not defined");
         return null;
     }
-    private function __set($name, $value)
-    {
+    private function __set($name, $value) {
         #debug echo 'setting '.$name.' to <u>"'.$value.'"</u>'; echo "<br>\r\n";
         // check for primary_key_field
             if (property_exists($this, 'primary_key_field') && $name == $this->primary_key_field) {
@@ -314,20 +313,21 @@ class AR implements SeekableIterator # basic AR class
     /*
      *    create a new record. analogous to ROR new method. A shortcut for clear_attributes
      */
-    function create()
-    {
+    function create() {
         $this->clear_attributes();
     }
-    function update()
-    {
+    function update() {
         return $this->save('update');
     }
-    function save($save_type = "save")
-    {
+    function save($save_type = "save") {
         if (!$this->dirty && $this->count == 0)
         { 
             $this->validation_errors = 'Cannot save: Record not dirty and no records found';
             return false;
+        }
+        #check for a save type of the default, save, but found record. maybe we want to update rather
+        if ($save_type == 'save' && $this->count > 0) {
+            $save_type = 'update';
         }
 
         #execute before validation actions
