@@ -136,8 +136,7 @@ class forms
     return $result;
     }
 
-    function input($name, $value = null, $attributes = null)
-    {
+    function input($name, $value = null, $attributes = null) {
         #attributes includes id, readonly etc.. whatever is in there get's set
         $result = '';
         #default attributes
@@ -476,6 +475,5 @@ class forms
         <br /><strong>Note:</strong> All fields marked with <strong>*</strong> are required.
 <?
     }
-
 }
 ?>
