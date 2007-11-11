@@ -103,6 +103,11 @@ class action_controller
             $current_rendered_status = $this->action_rendered_inline;
 
             App::$route = $url_as_array;
+            #deal with $_GET
+            if (isset($url_as_array['GET'])) {
+                $current_GET = $_GET;
+                $_GET = $url_as_array['GET'];
+            }
             $this->layout = $layout;
             $this->action_rendered_inline = false;
 
@@ -122,6 +127,7 @@ class action_controller
             App::$route = $current_route; #reset the route
             $this->layout = $current_layout;
             $this->action_rendered_inline = $current_rendered_status;
+            if (isset($current_GET)) { $_GET = $current_GET; }
 
         return $result;
     }

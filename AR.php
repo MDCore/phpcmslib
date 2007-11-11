@@ -665,7 +665,10 @@ class AR implements SeekableIterator # basic AR class
         $sql['FROM']        = $this->dsn['database'].'.'.$this->schema_table;
         $sql['WHERE']       = $this->criteria_to_sql($finder_criteria);
 
-        if ($additional_sql_options) { $sql = SQL_merge($sql, $additional_sql_options); }
+        if ($additional_sql_options) {
+           
+            $sql = SQL_merge($sql, $additional_sql_options);
+        }
 
         $result = $this->find_by_sql(SQL_implode($sql));
         return $result;

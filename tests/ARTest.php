@@ -286,6 +286,14 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(0, $customer->find_by_id_and_name(99999, 'bob')->count);
     }
 
+    public function test_finder_all_with_criteria() {
+        $customer = new customer;
+        $expected = 'SELECT * FROM ARTest.customers WHERE 1=1 AND id=2559';
+        $customer->find('all', array('WHERE' => ' AND id=2559'));
+        $result = $customer->last_sql_query;
+        $this->assertEquals($expected, $result);
+    }
+
 /*
  * test __isset()
  */

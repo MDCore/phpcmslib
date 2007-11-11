@@ -139,6 +139,21 @@ class functions_test extends PHPUnit_Framework_TestCase {
 
         $this->assertEquals($expected, SQL_implode($input));
     }
+    /* I want this to work, but I understand why it doesn't. It doesn't because assuming where clauses 
+     * need joining by AND is presumptive.
+     * I could  change AR::sql_phrases['WHERE'] to ' AND ' but I think it might be counterproductive and 
+     * prevent more advanced WHERE critera. That assertion needs testing though */
+    public function testSQLImplode8() {
+        $input = array(
+            'WHERE' => array('1=1', "ub='abc'")
+        );
+        $expected =  "WHERE 1=1 AND ub='abc'";
+
+        #$this->assertNotEquals($expected, SQL_implode($input));
+        $this->markTestIncomplete(
+          'This test has not been implemented yet.'
+        );
+    }
 
     public function testSQLExplode1()
     {
