@@ -9,8 +9,7 @@
 if (!defined('SQL_INSERT_DATE_FORMAT')) { define('SQL_INSERT_DATE_FORMAT', '%Y-%m-%d'); }
 if (!defined('SQL_INSERT_DATE_TIME_FORMAT')) { define('SQL_INSERT_DATE_TIME_FORMAT', '%Y-%m-%d %R'); }
 
-class AR implements SeekableIterator # basic AR class
-{
+class AR implements SeekableIterator { # basic AR class
     public $dirty = false;
     public $new = true;
     public $count = 0;
@@ -34,8 +33,7 @@ class AR implements SeekableIterator # basic AR class
     /* 
      * this method is here so that is is overridable
      */
-    function connect_to_db($dsn = null)
-    {
+    function connect_to_db($dsn = null) {
         if (!$dsn && isset(App::$env)) {$dsn = App::$env->dsn;}
         if ($dsn)
         {
@@ -56,16 +54,14 @@ class AR implements SeekableIterator # basic AR class
     /*
      *  this method pulls in the schema definition and creates the attributes in the object, setting them to null
      */
-    function setup_attributes()
-    {
+    function setup_attributes() {
         if (!isset(App::$schema_definition[$this->model_name])) { return false; }
 
         $this->schema_definition = App::$schema_definition[$this->model_name];
         $this->clear_attributes();
     }
 
-    function __destruct()
-    {
+    function __destruct() {
         unset($this->db);
         unset($this->values);
     }
@@ -134,8 +130,7 @@ class AR implements SeekableIterator # basic AR class
      * this method handles dynamic finders, also known as magic methods.
      * an example would be: customer->find_by_firstname_and_lastname('john', 'smith');
      */
-    private function __call($method_name, $params)
-    {
+    private function __call($method_name, $params) {
         #overload finders
         $finder_criteria_pos = null; $finder_type = null;
         if (substr($method_name, 0, 8) == 'find_by_') { $finder_criteria_pos = 8; }
@@ -176,8 +171,7 @@ class AR implements SeekableIterator # basic AR class
         }
             
     }
-    private function __isset($name)
-    {
+    private function __isset($name) {
         #debug echo 'testing isset '.$name; echo "<br>\r\n\r\n";
 
         #attributes / properties of the record
@@ -198,8 +192,7 @@ class AR implements SeekableIterator # basic AR class
         }
 
     }
-    private function __get($name)
-    {
+    private function __get($name) {
         #debug echo 'getting '.$name; echo "<br>\r\n\r\n";
         #check for record_properties request
             if ($name == 'record') { return $this->values; }
@@ -393,8 +386,7 @@ class AR implements SeekableIterator # basic AR class
         return $record_id;
     }
     
-    private function save_core($collection)
-    {
+    private function save_core($collection) {
         $fields = implode(',', array_keys($collection)); $values = "'".implode("','", array_values($collection))."'";
         $sql = 'INSERT INTO '.$this->dsn['database'].'.'.$this->schema_table." ($fields) VALUES ($values)";
         $this->last_sql_query = $sql;
@@ -406,8 +398,7 @@ class AR implements SeekableIterator # basic AR class
             $this->values[$this->primary_key_field] = $record_id;
         return $record_id;
     }
-    private function update_core($collection)
-    {
+    private function update_core($collection) {
        //$values = array_map("enquote", $values);
        foreach ($collection as $field => $value)
        {
@@ -422,8 +413,7 @@ class AR implements SeekableIterator # basic AR class
        return $this->values[$this->primary_key_field];
     }
     
-    function save_multiple($collection)
-    {
+    function save_multiple($collection) {
         /*
          * an example collection passed would be
          * customer_id => 25
@@ -467,8 +457,7 @@ class AR implements SeekableIterator # basic AR class
          */
     }
 
-    function delete_by_sql($sql)
-    {
+    function delete_by_sql($sql) {
         $this->last_sql_query = $sql; 
         $this->results = $this->db->query($sql);
         if ( $this->results )
@@ -480,8 +469,7 @@ class AR implements SeekableIterator # basic AR class
         }
         return false;
     }
-    function delete($criteria = null)
-    {
+    function delete($criteria = null) {
         if ($criteria)
         {
             $sql_criteria = $this->criteria_to_sql($criteria);
@@ -519,8 +507,7 @@ class AR implements SeekableIterator # basic AR class
     /* inserts entries inthe the changelog on save or update.
      * marks the action as saved or updated if the changelog table has an action field
      */
-    function changelog_entry($action)
-    {
+    function changelog_entry($action) {
         #setup some values
             $record_id = $this->values[$this->primary_key_field];
             $collection = $this->values;
@@ -790,14 +777,12 @@ class AR implements SeekableIterator # basic AR class
     }
 
     /* relationship checking methods */
-    function has_one($model_name)
-    { 
+    function has_one($model_name) { 
         if (!property_exists($this, 'has_one')) {return false;}
         return in_array($model_name, split(',',$this->has_one));
     }
 
-    function has_many($model_name)
-    { 
+    function has_many($model_name) { 
         if (!property_exists($this, 'has_many')) {return false;}
         #first check if it is defined as an array
         if (is_array($this->has_many))
@@ -817,8 +802,7 @@ class AR implements SeekableIterator # basic AR class
         }
     }
 
-    function belongs_to($model_name)
-    { 
+    function belongs_to($model_name) { 
         if (!property_exists($this, 'belongs_to')) {return false;}
         return in_array($model_name, split(',',$this->belongs_to));
     }
@@ -837,8 +821,7 @@ class AR implements SeekableIterator # basic AR class
         }
 
     }
-    function has_many_through($model_name)
-    {
+    function has_many_through($model_name) {
 
         if (!property_exists($this, 'has_many_through')) { return false; }
         if (!$this->has_many_through) { return false; }
@@ -853,8 +836,7 @@ class AR implements SeekableIterator # basic AR class
     
     }
 
-    function requirements($field_name)
-    {
+    function requirements($field_name) {
         #todo flesh out this method
         #this method returns an english string explaining what the requirements for this field are... well, it will one day when I get there :)
         #debug("validation requirements for $field_name on ".get_class($this));
@@ -867,8 +849,7 @@ class AR implements SeekableIterator # basic AR class
     }
 
     #todo flesh this out with other validation methods. Put in validations class?
-    function is_valid()
-    {
+    function is_valid() {
         $validation_result = array();
         if (property_exists($this, 'validates_presence_of'))
         {
@@ -907,8 +888,7 @@ class AR implements SeekableIterator # basic AR class
     }
     
 
-    function sum()
-    {
+    function sum() {
         if (!property_exists($this, 'sum_field')) { return false; }
         if ($this->count == 0) { return 0; }
 
@@ -925,14 +905,12 @@ class AR implements SeekableIterator # basic AR class
 
         return $sum;
     }
-    function display_name()
-    {
+    function display_name() {
         if ($this->count == 0) { return false; }
         return $this->values[$this->display_field];
     }
 
-    function error_check($result, $die_on_error = true)
-    {
+    function error_check($result, $die_on_error = true) {
         if (PEAR::isError($result) || MDB2::isError($result)) {
             if ($die_on_error)
             {
@@ -948,19 +926,16 @@ class AR implements SeekableIterator # basic AR class
     }
     
     #methods required for iterator implementation
-    function current()
-    {
+    function current() {
         return $this;
     }
-    function key()
-    {
+    function key() {
         if ($this->valid())
         {
             return $this->offset;
         }
     }
-    function seek($index)
-    {
+    function seek($index) {
         if ($this->valid())
         {
             $this->results->seek($index);
@@ -972,21 +947,18 @@ class AR implements SeekableIterator # basic AR class
         }
         return false;
     }
-    function valid()
-    {
+    function valid() {
         if ($this->count > 0 && !MDB2::isError($this->results) && $this->offset < $this->count) { return true; } else { return false; }
 
     }
-    function rewind()
-    {
+    function rewind() {
         if ($this->count > 0 && !MDB2::isError($this->results)) #not using valid() because valid checks offset. when @ end it could never rewind then!
         {
             $this->offset = 0;
             $this->seek(0);
         }
     }
-    function next()
-    {
+    function next() {
         $this->seek($this->offset+1);
     }
 
@@ -1001,8 +973,7 @@ static $sql_phrases = array(
 );
 }
 /* AR HELPERS starts here */
-function compare_records($record1, $record2, $include_boilerplate = false)
-{
+function compare_records($record1, $record2, $include_boilerplate = false) {
     if (!is_array($record1)) { $record1 = $record1->values; }
     if (!is_array($record2)) { $record2 = $record2->values; }
     $changed_attributes = null;
