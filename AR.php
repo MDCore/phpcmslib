@@ -226,8 +226,7 @@ class AR implements SeekableIterator { # basic AR class
             }
 
         #relationships magic
-            if ($this->belongs_to($name))
-            {
+            if ($this->belongs_to($name)) {
                 #if this object belongs to another one, it contains the foreign key
                 #debug('finding by '.$name);
                 if ($this->count == 0) { return false; }
