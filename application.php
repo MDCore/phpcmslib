@@ -1,6 +1,5 @@
 <?
-class Application
-{
+class Application {
     static $booting;static $reloading;
     static $models;
     static $schema_definition = null;
@@ -10,13 +9,11 @@ class Application
     static $render_contents = null;
     static $skip_model_require = false;
 
-    function init($path_to_root)
-    {
+    function init($path_to_root) {
 
     # check for application load or reload
         if (!isset($_SESSION[APP_NAME]['application'])) {App::$booting = true;}
-        if ( isset($_GET['reload']) )
-        {
+        if ( isset($_GET['reload']) ) {
             App::$booting = true; App::$reloading = true; $_GET['reload'] = '';
             ?><style type="text/css"> li { font-family: "Courier New",monospace,verdana,arial; } </style><ol><?
         }
@@ -24,8 +21,7 @@ class Application
         global $environment; #pull in the environment from the config
         
         # check for running from shell, for tests
-        if (isset($_SERVER['SHELL']) && !is_null($_SERVER['SHELL']))
-        {
+        if (isset($_SERVER['SHELL']) && !is_null($_SERVER['SHELL'])) {
             #todo, fix this hack... should be test, maybe ?
             $environment = 'development';    
         }
@@ -34,8 +30,7 @@ class Application
             global $default_face; if ($default_face) { App::$default_face = $default_face; }
             global $allowed_faces; if ($allowed_faces) { App::$allowed_faces = explode(',', $allowed_faces); }
 
-        if (!App::$booting)
-        {
+        if (!App::$booting) {
             $environment = $_SESSION[APP_NAME]['application']['environment'];
         }
 
@@ -49,19 +44,16 @@ class Application
         App::load_models(); 
 
         #load the layouts, controllers and views for ALL faces
-        if (App::$booting)
-        {
+        if (App::$booting) {
             if (App::$reloading) { echo "<li>Using face <strong>".App::$default_face."</strong></li>"; }
 
-            foreach (App::$allowed_faces as $face)
-            {
+            foreach (App::$allowed_faces as $face) {
                 App::find_these('layouts', $face);
                 App::find_these('controllers', $face);
             }
 
     #run cron jobs, only on app start, not each page load!
-            if (class_exists('cron_job'))
-            {
+            if (class_exists('cron_job')) {
                 require($path_to_root.'/cron_jobs/auto_mailer.php');
                 if (App::$env->run_cron_jobs)
                 {
@@ -72,8 +64,7 @@ class Application
         }
 
     # if forced reload then print app variables and die
-        if (App::$reloading)
-        {
+        if (App::$reloading) {
             echo "<li>Session:<pre>";print_r($_SESSION[APP_NAME]);echo '</pre></li>';
             echo "<li>App::\$env<pre>";print_r(App::$env);echo '</pre></li>';
             echo "<li>Application reloaded</li>";
@@ -82,8 +73,7 @@ class Application
         }
     }
 
-    function load_models()
-    {
+    function load_models() {
         if (App::$booting) {App::find_these('models');}
 
         if (App::$reloading) {echo "<li>Loading models<ul>"; }
@@ -102,8 +92,7 @@ class Application
         if (App::$reloading) {echo "</ul></li>"; }
     }
     
-    function find_these($name, $face = null, $path = null)
-    {
+    function find_these($name, $face = null, $path = null) {
         if (App::$reloading)
         {
             echo "<li>parsing $name folder";
@@ -146,8 +135,7 @@ class Application
         }
     }
 
-    function require_this($type_name, $name, $face = null)
-    {
+    function require_this($type_name, $name, $face = null) {
         #this is not used to require models, only other resources
 
         $type_name = pluralize($type_name);
@@ -166,8 +154,7 @@ class Application
         }
     }
 
-    function error_check($result, $die_on_error = true)
-    {
+    function error_check($result, $die_on_error = true) {
         if (PEAR::isError($result) || MDB2::isError($result)) {
             if ($die_on_error)
             {

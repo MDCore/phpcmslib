@@ -83,14 +83,11 @@ class action_controller
         }
     }
 
-    public function render()
-    {
-        if (isset($this->layout)  && $this->layout)
-        {
+    public function render() {
+        if (isset($this->layout) && $this->layout) {
             $this->render_layout();
         }
-        else
-        {
+        else {
             $this->render_content(); #no layout to call render_content for itself.. so this effectively means "render without a layout"
         }
     }
@@ -132,28 +129,25 @@ class action_controller
         return $result;
     }
 
-    function render_content()
-    {
-        if (isset($this->action_rendered_inline) && $this->action_rendered_inline)
-        {
+    function render_content() {
+        if (isset($this->action_rendered_inline) && $this->action_rendered_inline) {
             echo $this->render_contents; #dump the action rendered content
         }
-        else #render the view file
-        {
+        else { #render the view file
             $this->render_view();
         }
+
+        $this->has_rendered = true;
     }
 
-    function render_layout()
-    {
+    function render_layout() {
         if ($this->view_parameters) {foreach ($this->view_parameters as $variable => $value) { $$variable = $value; } }
 
         if ($layout_path = App::require_this('layout', $this->layout)) { require ($layout_path); }
 
     }
 
-    function render_view($route_param = null)
-    {
+    function render_view($route_param = null) {
         $route = array(
             'face' => $this->face,
             'controller' => $this->controller_name
@@ -192,25 +186,21 @@ class action_controller
         #debug($view_url);
         require ($view_url);
 
-        $this->has_rendered = true;
         return true;
     }
 
-    function render_partial($partial_name, $collection = null)
-    {
+    function render_partial($partial_name, $collection = null) {
         $this->layout = null;
 
         # set up the view_parameters
             if ($this->view_parameters) {foreach ($this->view_parameters as $variable => $value) { $$variable = $value; } }
 
         if (!$collection) { $this->render_view('_'.$partial_name); }
-        else
-        {
+        else {
             $counter = 0;
             $item_name = array_keys($collection);
             $item_name = $item_name[0];
-            foreach($collection[$item_name] as $collection_item)
-            {
+            foreach($collection[$item_name] as $collection_item) {
                 $counter++;
                 $this->view_parameters['counter'] = $counter;
                 $this->view_parameters[$item_name] = $collection_item;
@@ -220,11 +210,9 @@ class action_controller
         #$this->render_inline();
     }
 
-    function execute_action($action_name = null, $ignore_ajax_request_settings = false)
-    {
+    function execute_action($action_name = null, $ignore_ajax_request_settings = false) {
         if (!$action_name) { $action_name = App::$route['action']; }
-        if (method_exists($this, $action_name) || method_exists($this, '__call'))
-        {
+        if (method_exists($this, $action_name) || method_exists($this, '__call')) {
             # check for ajax requests, and automatically set render_inline and layout = null
             if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' && !$ignore_ajax_request_settings)
             {
@@ -232,17 +220,14 @@ class action_controller
                 $this->layout = null; $this->render_inline();
             }
             #debug('execute_action');
-            if (isset(App::$route['id']) && App::$route['id'])
-            {
+            if (isset(App::$route['id']) && App::$route['id']) {
                 $this->$action_name(App::$route['id']);
             }
-            else
-            {
+            else {
                 $this->$action_name();
             }
         }
-        else
-        {
+        else {
             #raise an exception!
         }
 
@@ -253,8 +238,7 @@ class action_controller
      */
     function render_inline() { $this->action_rendered_inline = true; }
 
-    function __construct()
-    {
+    function __construct() {
         $controller_name = get_class($this);$controller_name = str_replace('_controller', '', $controller_name);
         $this->controller_name = $controller_name;
 

@@ -641,7 +641,7 @@ class AR implements SeekableIterator { # basic AR class
         return $this;
     }
 
-    function find($finder_criteria = null, $additional_sql_options = null) {
+    function find($finder_criteria = null, $additional_sql_options = null) { //xxxfind
         if (!$finder_criteria && !$additional_sql_options) {
             throw new Exception('No criteria or additional options specified for finder');
             return;
