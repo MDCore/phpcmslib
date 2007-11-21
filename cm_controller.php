@@ -186,46 +186,44 @@ class cm_controller extends action_controller
 # Action Presets
 #------------------------------#
 
-    public function cm_update()
-    {
+    public function cm_update() {
         $edit_id = $_GET['edit_id'];
 
         #print_r($_GET);print_r($_POST);print_r($_FILES);
-        if (isset($_POST[$this->primary_model]))
-        {
+        if (isset($_POST[$this->primary_model])) {
             $primary_model_object = new $this->primary_model;
-            $primary_model_object->find($edit_id);
-            $primary_model_object->update_attributes($_POST[$this->primary_model]);
-            $successful = $primary_model_object->update();
+            $update_record_id = $primary_model_object
+                ->find($edit_id)
+                ->update_attributes($_POST[$this->primary_model])
+                ->update();
+            /*print_r($primary_model_object); print_r($update_record_id);die();*/
+            /* sanity checking; it better be updating and not saving! */
+                if ($update_record_id != $edit_id) {
+                    trigger_error("Update of {$this->primary_model} failed. $update_record_id != $edit_id.", E_USER_ERROR);die();
+                }
         }
-        else
-        {
+        else {
             $no_primary_to_save = true;
         }
 
-        if ($successful | $no_primary_to_save)
-        {
+        if ($update_record_id | $no_primary_to_save) {
             unset($_POST['MAX_FILE_SIZE']); #currently used to add a comment each time ??xxx 2007-11-04 what's this
-            foreach ( $_POST as $meta_model => $collection )
-            {
-                if ( $meta_model != $this->primary_model ) # make sure we are working with meta models
-                {
+            foreach ( $_POST as $meta_model => $collection ) {
+                if ( $meta_model != $this->primary_model ) { # make sure we are working with meta models
                     $fk_field = foreign_keyize($this->primary_model);
                     $collection[$fk_field] = $edit_id; #add the foreign key straight into the collection
 
-                    if (!isset($collection['_add_record']))
-                    {
-                        if ($primary_model_object->through_model($meta_model))
-                        {
+                    if (!isset($collection['_add_record'])) {
+                        if ($primary_model_object->through_model($meta_model)) {
                             $meta_model_object = new $meta_model;
                             $meta_model_object->delete("WHERE $fk_field = $edit_id"); #delete the records, to re-add them
                             $meta_model_object->save_multiple($collection);
                         }
-                        else
-                        {
+                        else {
                             $meta_model_object = new $meta_model; 
-                            $meta_model_object->find(" WHERE $fk_field = $edit_id");
-                            $meta_model_object->update_attributes($collection);
+                            $meta_model_object
+                                ->find(" WHERE $fk_field = $edit_id")
+                                ->update_attributes($collection);
                             if (!$meta_model_object->is_valid())
                             {
                                 redirect_with_parameters(url_to(array('action' => 'edit')), "edit_id=".$edit_id."&flash=".$meta_model_object->validation_errors);die();

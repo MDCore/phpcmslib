@@ -615,6 +615,7 @@ class AR implements SeekableIterator { # basic AR class
         return $sql_criteria;
     }
 
+    /* returns $this */
     function find_by_sql($sql) {
         $this->last_sql_query = $sql;
         $this->last_finder_sql_query = $sql;
@@ -641,6 +642,7 @@ class AR implements SeekableIterator { # basic AR class
         return $this;
     }
 
+    /* returns $this, by way of find_by_sql */
     function find($finder_criteria = null, $additional_sql_options = null) { //xxxfind
         if (!$finder_criteria && !$additional_sql_options) {
             throw new Exception('No criteria or additional options specified for finder');
@@ -660,47 +662,39 @@ class AR implements SeekableIterator { # basic AR class
         return $result;
     }
 
-    public function update_attributes($collection = null, $with_value_changes = false)
-    {
-        if ( !$collection ) # if no row is passed then set the current row in results
-        {
-            if ($this->results && !MDB2::isError($this->results))
-            {
+    /* returns $this */
+    public function update_attributes($collection = null, $with_value_changes = false) {
+        if ( !$collection ) { # if no row is passed then set the current row in results
+            if ($this->results && !MDB2::isError($this->results)) {
                 $collection = $this->results->fetchRow();
                 $with_value_changes = false;
                 $this->dirty = false;
                 $this->new = false;
             }
         }
-        else
-        {
+        else {
             #this object's data is dirty because it is coming from a collection
                 $this->dirty = true;
                 $with_value_changes = true;
         }
 
-        if ( $collection )  # it's possible no collection was set with the DB lookup: checking again.
-        {
+        if ( $collection ) {  # it's possible no collection was set with the DB lookup: checking again.
         #set row variables to properties
-            foreach ($collection as $field => $value)
-            {   
-                if ($with_value_changes)
-                {
+            foreach ($collection as $field => $value) {   
+                if ($with_value_changes) {
                     #apply value changes to this field and value
                         $value_change_result = $this->write_value_changes($field, $value);
                         if ($value_change_result && $field) { $this->values[$field] = $value; }
                 }
-                else
-                {
+                else {
                     $this->values[$field] = $value;
                 }
             }
-            return true;
         }
-        else
-        {
-            $this->clear_attributes(); return false;
+        else {
+            $this->clear_attributes();
         }
+        return $this;
     }
 
     public function clear_attributes() {
