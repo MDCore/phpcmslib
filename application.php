@@ -117,11 +117,11 @@ class Application {
                 $layout = $file_name;
                 $file = App::$env->root.'/'.$path.'/'.$file_name;
                 
-                if (is_file($file))
-                {
+                if (is_file($file)) {
                     $files[$file_name] = $file;
                 }
             }
+            ksort($files); // oh my WORD... what a hack. we need model load prioritization TODO
             closedir($handle);
 
             if ($face)
