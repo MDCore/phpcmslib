@@ -153,8 +153,7 @@ class forms
     return $result;
     }
 
-    function textarea($name, $value = null, $attributes = null)
-    {
+    function textarea($name, $value = null, $attributes = null) {
         #attributes includes id, readonly etc.. whatever is in there get's set
         $result = '';
         #default attributes
@@ -169,14 +168,17 @@ class forms
     return $result;
     }
 
-    function partial($name)
-    {
+    function partial($name) {
+        if (!is_array($name)) {
+            $name = array('action' => "_$name.php");
+        }
+
         global $path_to_root;
-        require($path_to_root.'/cm/_'.$name.'.php');
+        require($path_to_root.url_to($name, false, true));
+        die('proper path dagnabbit!!!!');
     }
 
-    function parse_attributes( $attributes )
-    {
+    function parse_attributes( $attributes ) {
         $result = '';
         if ($attributes) {
             foreach ($attributes as $option => $option_value)
@@ -187,8 +189,7 @@ class forms
         }
     }
 
-    function form_element($title, $validation_requirements, $element_id, $element, $note = null)
-    {
+    function form_element($title, $validation_requirements, $element_id, $element, $note = null) {
         $result = '';
         $result .= '<p class="form_element" id="fe_'.forms::name_to_id($element_id).'">';
         $result .= '<label>'.$title.':';
@@ -199,8 +200,7 @@ class forms
         return $result;
     }
 
-    function form($default_model, $record = null)
-    {
+    function form($default_model, $record = null) {
         ?><div class="form list_form"><?
         
         $page = App::$controller;
@@ -232,7 +232,6 @@ class forms
 
                 if ( $draw_element ) 
                 {
-
                     #is it a partial or a form element ?
                     if ( array_key_exists( 'partial', $arg ) )
                     {

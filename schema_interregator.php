@@ -117,4 +117,4 @@ class schema_interregator
         schema_interregator::write_schema_source($source);
     }
 }
-    ?>
+?>

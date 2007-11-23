@@ -5,8 +5,7 @@ require_once('form_helpers.php');
 define('MENU_PAGE_PARAMETERS_TO_SKIP', '/_id$/,/^sort/,/^filter_/,/^fk$/');
 
 #this method does a redirect with standard parameters stripped
-function redirect_with_parameters($url, $additional_parameters = '', $return_url = false)
-{
+function redirect_with_parameters($url, $additional_parameters = '', $return_url = false) {
     $url .= page_parameters('/^p$/,/^edit/,/^delete$/').'&'.$additional_parameters;
     if (!$return_url)
     {
@@ -18,8 +17,7 @@ function redirect_with_parameters($url, $additional_parameters = '', $return_url
     }
 }
 
-function SQL_implode($sql_array, $prepend_phrases = true)
-{
+function SQL_implode($sql_array, $prepend_phrases = true) {
     $result = ''; 
     foreach(AR::$sql_phrases as $phrase => $join_text)
     {
@@ -61,8 +59,7 @@ function SQL_implode($sql_array, $prepend_phrases = true)
     }
     return trim($result);
 }
-function SQL_explode($sql)
-{
+function SQL_explode($sql) {
     #todo - add subquery checks. I'll do this when I need a subquery split, thanks. and use a recursive function!
     $result = array();
     
@@ -97,8 +94,7 @@ function SQL_explode($sql)
     return array_reverse($result);
 
 }
-function SQL_merge($array_1, $array_2)
-{
+function SQL_merge($array_1, $array_2) {
     $result = array();
     foreach(AR::$sql_phrases as $phrase => $join_text)
     {
@@ -128,16 +124,14 @@ function SQL_merge($array_1, $array_2)
     return $result;
 }
 
-function implode_with_keys($glue, $array, $valwrap='')
-{
+function implode_with_keys($glue, $array, $valwrap='') {
    foreach($array AS $key => $value) {
        $ret[] = $key."=".$valwrap.$value.$valwrap;
    }
    return implode($glue, $ret);
 }
 
-function split_aliased_string($str)
-{
+function split_aliased_string($str) {
     /* todo: is this method necessary now that sql queries are being broken up into arrays ?
      */
     if (strlen($str) == 0) { return Array(); }
@@ -153,8 +147,7 @@ function split_aliased_string($str)
     return $new_fields;
 }
 
-function page_parameters($except = '', $always_return_something = true, $method = 'querystring')
-{
+function page_parameters($except = '', $always_return_something = true, $method = 'querystring') {
     # methods are querystring or hidden
     if ($except != '') { $except = split(',',$except); } else { $except = array(); }
 
@@ -197,8 +190,7 @@ function page_parameters($except = '', $always_return_something = true, $method 
 return $return;
 }
 
-function debug ( $str )
-{ 
+function debug ( $str ) { 
     /*if (is_bool($str))
     {
         if ($str == true) { $str = "{true}"; }
@@ -276,9 +268,8 @@ function date_add($interval,$number,$dateTime) {
         return $dateTime;
 }
 
-function url_to($path)
-{
-    $url = App::$env->url;
+function url_to($path, $include_base = true, $explicit_path = false) {
+    //$url = App::$env->url;
 
     if (is_array($path)) { $target = $path; } else { $target = route_from_path($path); }
     if (!isset($target['face'])) { $target['face'] = App::$route['face']; }
@@ -289,20 +280,24 @@ function url_to($path)
     
     #route's are the same so just send bank emptystring
         $app_route_controller = str_replace('_controller', '', App::$route['controller']);
-        if ($target['face'] == App::$route['face'] && $target['controller'] == $app_route_controller && $target['action'] == App::$route['action'] && $target['id'] == App::$route['id']) { return ''; }
+        if (!$explicit_path) {
+            if ($target['face'] == App::$route['face'] && $target['controller'] == $app_route_controller && $target['action'] == App::$route['action'] && $target['id'] == App::$route['id']) { return ''; }
+        }
 
     #base URL
-        $url = App::$env->url.'/';
+        if ($include_base) {
+            $url = App::$env->url;
+        }
+        $url .= '/';
 
     #if the default face is the same as the target face leave the face out
-        if ($target['face'] != App::$default_face) { $url .= $target['face'].'/'; }
+        if ($target['face'] != App::$default_face || $explicit_path) { $url .= $target['face'].'/'; }
         
     #append the controller path
         $url .= $target['controller']; 
 
     # warn if action is specified without target
-        if ((!isset($target['action']) | $target['action'] == '') && (isset($target['id']) && $target['id'] != ''))
-        {
+        if ((!isset($target['action']) | $target['action'] == '') && (isset($target['id']) && $target['id'] != '')) {
             trigger_error('id specified in route without action', E_USER_WARNING); 
         }
 
@@ -333,8 +328,7 @@ function route_from_path($path)
     $result['face'] = App::$route['face'];
     if (!$result['face']) { $result['face'] = App::$default_face; }
         
-    if ($path)
-    {
+    if ($path) {
         $path = split('/', $path);
         if (!in_array($path[0], App::$allowed_faces) && App::$default_face) #i.e. the first param is not a face, or not an allowed face, but we have a default face set
         {
@@ -343,8 +337,7 @@ function route_from_path($path)
             if (isset($path[1])) { $result['action'] = $path[1]; }
             if (isset($path[2])) { $result['id'] = $path[2]; }
         }
-        else
-        {
+        else {
             $result['face'] = $path[0];
             #verify the face
             if (!in_array($result['face'], App::$allowed_faces)) { trigger_error('Face <i>'.$result['face'].'</i> not found', E_USER_ERROR); }
@@ -359,8 +352,7 @@ function route_from_path($path)
     return $result;
 }
 
-    function as_hiddens($collection, $prefixes = null)
-    {
+    function as_hiddens($collection, $prefixes = null) {
         $these_prefixes = $prefixes;
         $result = '';
         foreach ($collection as $name => $value)
