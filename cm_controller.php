@@ -1,6 +1,5 @@
 <?
-class cm_controller extends action_controller
-{
+class cm_controller extends action_controller {
     public $before_controller_load_filter = 'is_logged_in';
     public $before_controller_execute_filter = 'check_for_print';
 
@@ -69,37 +68,31 @@ class cm_controller extends action_controller
             
         # setup the SQL query for the list page
             $sql_pk = $this->schema_table.".".$this->primary_key_field." as __pk_field";
-            if (!isset($this->sql_query))
-            {
+            if (!isset($this->sql_query)) {
                 $this->sql_query = array(
                     'SELECT' => $this->schema_table.'.*, '.$sql_pk,
                     'FROM'   => $this->schema_table
                 );
             }
-            else
-            {
+            else {
                 #oh... um.. right then... well... ok.
             }
 
-        if ( isset( $this->view_page ) )
-        {
+        if ( isset( $this->view_page ) ) {
             $this->allow_view = true;
         }
-        else
-        {
+        else {
             $this->view_page = tableize(pluralize($this->list_type)).'_view.php';
         }
 
-        if ($this->allow_filters)
-        {
+        if ($this->allow_filters) {
             if ($this->filters) {
                 #setup the filter names
                 $this->filter_object->init($this->primary_model, $this->filters);
                 
                 $this->has_filters = true;
             }
-            else
-            {
+            else {
                 $this->has_filters = false;
             }
         }
@@ -108,8 +101,7 @@ class cm_controller extends action_controller
             if (!isset($this->foreign_key_title_prefix)) {$this->foreign_key_title_prefix = ' in ';}
 
         #changes for print mode
-            if (defined('PRINTING_MODE'))
-            {
+            if (defined('PRINTING_MODE')) {
                 $this->allow_filters = false;
                 $this->allow_add = false;
                 $this->allow_edit = false;
@@ -121,13 +113,11 @@ class cm_controller extends action_controller
             }
     }
 
-    function __call($method_name, $params)
-    {
+    function __call($method_name, $params) {
         $this->cm_page($method_name);
     }
 
-    function cm_page($page) 
-    {
+    function cm_page($page) {
         global $path_to_root;
 
         $this->action = $page;
@@ -390,7 +380,7 @@ class cm_controller extends action_controller
             }
         if ($this->show_delete) { ?><form id="list_delete" method="post" action="<?=href_to(array('action' =>'delete')).page_parameters('', false)?>"><? }
 
-    #---------query, sql_query, sql query ---------------------------------------#
+    #--------- query, sql_query, sql query, sqlquery, xxxsql ---------------------------------------#
         
         if (!is_array($this->sql_query)) {$list_sql = SQL_explode($this->sql_query);} else { $list_sql = $this->sql_query; }
         
@@ -419,30 +409,25 @@ class cm_controller extends action_controller
         }
 
         #sorting
-        if (isset($_GET['sort']))
-        {
+        if (isset($_GET['sort'])) {
             $sort = $_GET['sort'];
             #asc or desc
-            if (substr($sort, -3) == 'asc')
-            {
+            if (substr($sort, -3) == 'asc') {
                 $sort_type = 'ASC';
             }
-            else
-            {
+            else {
                 $sort_type = 'DESC';
             }
             $sort = substr($sort, 0, strlen($sort) - strlen($sort_type)-1);
             $this->list_sort_field = $sort;
             $this->list_sort_type = $sort_type;
         }
-        if (!$this->list_sort_field && in_array('sort_order', $this->list_fields)) 
-        {
+        if (!$this->list_sort_field && in_array('sort_order', $this->list_fields)) {
             #default #todo put this into some defaults script
             #todo add to magic_stuff documentation
             $this->list_sort_field = "sort_order ASC";
         }
-        if ($this->list_sort_field)
-        {
+        if ($this->list_sort_field) {
             $list_sql['ORDER BY'][] = $this->list_sort_field.' '.$this->list_sort_type;
         }
         
