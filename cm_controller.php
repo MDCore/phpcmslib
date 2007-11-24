@@ -17,8 +17,7 @@ class cm_controller extends action_controller {
 
     public $list_sort_field = null, $list_sort_type = null;
 
-    function __construct()
-    {
+    function __construct() {
         parent::__construct();
 
         #the face_controller should be virtual;
@@ -29,30 +28,30 @@ class cm_controller extends action_controller {
             return true;
         }
 
-        # todo is also to document this all!
-            #foreign key(s)
-                if (isset($_GET['fk'])) {
-                    $fk = $_GET['fk'];
-                    $fk = explode(',', $fk);
-                    foreach ($fk as $keyval) {
-                        $key = substr($keyval, 0, strpos($keyval, '~'));
-                        $value = substr($keyval, strpos($keyval, '~')+1);
-                        $this->foreign_keys[$key] = $value;
-                    }
+        # todo document this all
+        #foreign key(s)
+            if (isset($_GET['fk'])) {
+                $fk = $_GET['fk'];
+                $fk = explode(',', $fk);
+                foreach ($fk as $keyval) {
+                    $key = substr($keyval, 0, strpos($keyval, '~'));
+                    $value = substr($keyval, strpos($keyval, '~')+1);
+                    $this->foreign_keys[$key] = $value;
                 }
-                else {
-                    $this->foreign_keys = array();
-                }
-       
-            if (!isset($this->list_type))       { $this->list_type =  singularize($this->controller_name); }
-            if (!isset($this->primary_model))   { $this->primary_model = $this->list_type; }
-            if (!isset($this->list_title))      { $this->list_title = proper_nounize(pluralize($this->list_type)); } $this->list_title = proper_nounize($this->list_title);
-            if (!isset($this->email_subject))   { $this->email_subject = $this->list_title; }
+            }
+            else {
+                $this->foreign_keys = array();
+            }
 
-            #edit page title
-                $this->edit_page_title = "Editing a";
-                switch(strtolower(substr($this->list_type, 0, 1))) {case 'a': case 'e': case 'i': case 'o': case 'u': $this->edit_page_title .= 'n';}
-                $this->edit_page_title .= ' '.humanize($this->list_type);
+        if (!isset($this->list_type))       { $this->list_type =  singularize($this->controller_name); }
+        if (!isset($this->primary_model))   { $this->primary_model = $this->list_type; }
+        if (!isset($this->list_title))      { $this->list_title = proper_nounize(pluralize($this->list_type)); } $this->list_title = proper_nounize($this->list_title);
+        if (!isset($this->email_subject))   { $this->email_subject = $this->list_title; }
+
+        #edit page title
+            $this->edit_page_title = "Editing a";
+            switch(strtolower(substr($this->list_type, 0, 1))) {case 'a': case 'e': case 'i': case 'o': case 'u': $this->edit_page_title .= 'n';}
+            $this->edit_page_title .= ' '.humanize($this->list_type);
              
             $this->draw_form_buttons = true;
 
@@ -100,32 +99,27 @@ class cm_controller extends action_controller {
         #some fk stuff
             if (!isset($this->foreign_key_title_prefix)) {$this->foreign_key_title_prefix = ' in ';}
 
-        #changes for print mode
-            if (defined('PRINTING_MODE')) {
-                $this->allow_filters = false;
-                $this->allow_add = false;
-                $this->allow_edit = false;
-                $this->allow_view = false;
-                $this->allow_delete = false;
-                $this->draw_form_buttons = false;
-                $this->row_limit = 1000000;
-                $this->allow_sort = false;
-            }
     }
 
     function __call($method_name, $params) {
-        $this->cm_page($method_name);
-    }
-
-    function cm_page($page) {
         global $path_to_root;
 
         $this->action = $page;
-        #automatic cm pages router
-            switch ($page)
-            {
+        /* 
+         * automatic cm pages router
+         * TODO: clean this up. calling with $this->$cm_page might be better ?
+         */
+            switch ($page) {
             case 'list':
-                if (method_exists('_list', $this)) { $this->_list(); } else { $this->cm_list(); }
+                /*
+                 *  list is a reserved word, so overriding cm_list involves a method named _list #todo recipe this
+                 */
+                if (method_exists('_list', $this)) {
+                    $this->_list();
+                }
+                else {
+                    $this->cm_list();
+                }
                 break;
             case 'edit':
                 $this->cm_edit();break;
@@ -144,8 +138,7 @@ class cm_controller extends action_controller {
             }
     }
     
-    function related_page_anchor($related_page, $row)
-    {
+    function related_page_anchor($related_page, $row) {
         if (!isset($related_page['controller'])) {$related_page['controller'] = $related_page[0];}
         #if (!isset($related_page['fk'])) {$related_page['fk'] = foreign_keyize($this->list_type);}
         #if (!isset($related_page['fk_title_field'])) {$related_page['fk_title_field'] = $this->model_object->display_field;}
@@ -353,32 +346,56 @@ class cm_controller extends action_controller {
 
     public function cm_list()
     {
-        if (isset($this->page_title)) { $page_title = $this->page_title; }
+        /* settings tweaks if in print mode */
+            if (defined('PRINTING_MODE')) {
+                $this->allow_filters = false;
+                $this->allow_add = false;
+                $this->allow_edit = false;
+                $this->allow_view = false;
+                $this->allow_delete = false;
+                $this->back_link = false;
+                unset($this->category_actions);
+                unset($this->related_pages);
+                /* only for view/add/edit really $this->draw_form_buttons = false; */
+                $this->row_limit = 1000000;
+                $this->allow_sort = false;
+                $this->field_length_range = array(1000, 10000); /* print all the text in long fields */
+            }
 
-        # the list title
-        if (isset($_GET['fk_t'])) {$fk_t= $_GET['fk_t']; $this->foreign_key_title = $this->foreign_key_title_prefix.$fk_t; } else {$this->foreign_key_title = '';}
-        ?> <h2><?=$this->list_title;?><?=stripslashes($this->foreign_key_title);?></h2><?
-
-        #setup the list fields
+        /* setup the list fields */
             $this->list_fields = split_aliased_string($this->list_fields);
 
-        #setup paging
-            if (isset($_GET['start'])) 
-            {
+        /* setup the paging */
+            if (isset($_GET['start'])) {
                 $this->start_limit = $_GET['start'];
             }
-            else
-            {
+            else {
                 $this->start_limit = 0;
             }
             $this->paging_back = $this->start_limit - $this->row_limit;
             $this->paging_next = $this->start_limit + $this->row_limit;
 
-            if ($this->allow_filters && $this->has_filters)
-            {
+        /* draw the list title */
+            if (isset($this->page_title)) { $page_title = $this->page_title; }
+            /* the foreign key description portion of the title */
+            if (isset($_GET['fk_t'])) {
+                $fk_t= $_GET['fk_t'];
+                $this->foreign_key_title = $this->foreign_key_title_prefix.$fk_t;
+            }
+            else {
+                $this->foreign_key_title = '';
+            }
+
+            ?><h2><?=$this->list_title;?><?=stripslashes($this->foreign_key_title);?></h2><?
+
+        /* draw the filters */
+            if ($this->allow_filters && $this->has_filters) {
                 echo $this->draw_filters($this->filter_object->filters);
             }
-        if ($this->show_delete) { ?><form id="list_delete" method="post" action="<?=href_to(array('action' =>'delete')).page_parameters('', false)?>"><? }
+
+        if ($this->show_delete) {
+            ?><form id="list_delete" method="post" action="<?=href_to(array('action' =>'delete')).page_parameters('', false)?>"><? 
+        }
 
     #--------- query, sql_query, sql query, sqlquery, xxxsql ---------------------------------------#
         
@@ -465,12 +482,18 @@ class cm_controller extends action_controller {
         ?><div><?
         if ($this->show_delete) { ?><input type="submit" value="Delete selected" onclick="return confirm('Are you sure you want to delete these <?=humanize(pluralize($this->list_type))?> ?');">&nbsp;<? } 
         if (isset($this->return_page )) {$return_page = $this->return_page ;} else { $return_page = pluralize($this->list_type); }  #XXX
-        ?> </div>
-        <? if ($this->allow_add || $this->allow_delete) {
-            ?><div class="action_links"><? #todo document action_links
-                if ($this->back_link) { ?><a href="<?=href_to($this->back_link).page_parameters('/^fk/', false);?>"/>Back to <?=humanize($this->back_link);?></a><br /><? }
-            if ($this->allow_add) { ?><a href="<?=href_to(array('action' =>'add')).page_parameters('', false);?>" />Add a new <?=humanize($this->list_type);?></a><br /><? }
-            if ($this->allow_delete) { ?><a href="<?=page_parameters('');?>&amp;delete=y"/>Delete <?=humanize(pluralize($this->list_type));?></a><br /><? }
+        ?> </div><?
+        
+        if ($this->allow_add || $this->allow_delete || $this->back_link || isset($this->category_actions)) {
+            ?><div class="category_actions"><? #todo document category_actions
+            if (isset($this->category_actions)) { 
+                foreach ($this->category_actions as $value => $url) {
+                    ?><a href="<?=$url;?>"><?=$value;?></a><br /><?
+                }
+            }
+            if  ($this->back_link) { ?><a href="<?=href_to($this->back_link).page_parameters('/^fk/', false);?>">Back to <?=humanize($this->back_link);?></a><br /><? }
+            if ($this->allow_add) { ?><a href="<?=href_to(array('action' =>'add')).page_parameters('', false);?>">Add a new <?=humanize($this->list_type);?></a><br /><? }
+            if ($this->allow_delete) { ?><a href="<?=page_parameters('');?>&amp;delete=y">Delete <?=humanize(pluralize($this->list_type));?></a><br /><? }
             ?></div><?
         }
         $this->render_inline();
@@ -574,7 +597,6 @@ class cm_controller extends action_controller {
                 }
                 elseif (!is_null($this->field_length_range)) {
                     echo split_on_word(stripslashes($row->$field), $this->field_length_range, true);
-                        #echo substr(stripslashes($row->$field), 0, $this->field_length_range[1]-1).'&#0133;'; #todo make this hack break on words etc and not use a magic no
                 }
                 else {
                     echo stripslashes($row->$field);
@@ -727,8 +749,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
 # default filter actions
 #------------------------------#
 
-    public function check_for_print()
-    {
+    public function check_for_print() {
         if (isset($_GET['print']) && $_GET['print'] == 'y') {
             $this->layout = 'print';
             define('PRINTING_MODE', true); #hackety hack hack ? 
@@ -736,8 +757,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
         
     }
 
-    public function is_logged_in()
-    {
+    public function is_logged_in() {
         if ( !isset($_SESSION[APP_NAME]['user_id']) || $_SESSION[APP_NAME]['user_id'] == '' )
         {
             if (isset($_POST['email']))

@@ -69,8 +69,8 @@ class dispatcher
 
         #-------------------------------------------------------------------------------------------------
 
-            #before_controller_execute_filter
-                $face_controller->handle_controller_filter('before_controller_execute');
+            #before_controller_execute_filter /* execute this filter, on the app controller */
+                $face_controller->handle_controller_filter('before_controller_execute', App::$controller);
 
         #-------------------------------------------------------------------------------------------------
             #execute the action, caching the output
@@ -85,8 +85,8 @@ class dispatcher
                 App::$controller->render();
         #-------------------------------------------------------------------------------------------------
 
-        #after_controller_filter
-            $face_controller->handle_controller_filter('after_controller');
+        #after_controller_filter /* execute this filter, on the app controller */
+            $face_controller->handle_controller_filter('after_controller', App::$controller);
     }
 }
 ?>

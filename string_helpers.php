@@ -58,25 +58,20 @@ function tableize($str) {
 }
 function singularize($str) {
 
-    if (strtolower(substr($str, -3)) == 'ses')
-    {
+    if (strtolower(substr($str, -3)) == 'ses') {
         return substr($str,0, strlen($str)-2);
     }
-    if (strtolower(substr($str, -3)) == 'ing')
-    {
+    if (strtolower(substr($str, -3)) == 'ing') {
         return $str;
     }
-    if (strtolower(substr($str, -3)) == 'ies')
-    {
+    if (strtolower(substr($str, -3)) == 'ies') {
         return substr($str, 0, strlen($str)-3).'y';
     }
 
-    if (strtolower(substr($str, -2)) == 'sses')
-    {
+    if (strtolower(substr($str, -2)) == 'sses') {
         return substr($str, 0, strlen($str)-2);
     }
-    if (strtolower(substr($str, -1)) == 's')
-    {
+    if (strtolower(substr($str, -1)) == 's') {
         return substr($str, 0, strlen($str)-1);
     }
 
@@ -88,23 +83,18 @@ function singularize($str) {
 }
 function pluralize($str) {
     #yes, I know this is lame. I will find a decent pluralization script someday
-    #johnpipi from trax has decent implementation
 
-    if (strtolower(substr($str, -6)) == 'status')
-    {
+    if (strtolower(substr($str, -6)) == 'status') {
         return $str.'es';
     }
-    if (strtolower(substr($str, -3)) == 'ing')
-    {
+    if (strtolower(substr($str, -3)) == 'ing') {
         return $str;
     }
-    if (strtolower(substr($str, -1)) == 'y')
-    {
+    if (strtolower(substr($str, -1)) == 'y') {
         return substr($str, 0, strlen($str)-1).'ies';
     }
 
-    if (strtolower(substr($str, -2)) == 'ss')
-    {
+    if (strtolower(substr($str, -2)) == 'ss') {
         return $str.'es';
     }
     #exceptions
@@ -116,14 +106,17 @@ function proper_case($str) {
     $str[0] = strtoupper($str[0]);return $str;
 }
 
-function enquote($value) #AR::update uses this as a map function
-{
+function enquote($value) { #AR::update uses this as a map function #todo check if this still does
     return "'$value'";
 } 
-function split_on_word($string, $range, $add_ellipses = false) {
-    /* Let me explain by way of example why I substract 1 from min and max. A string like "cats"
-     * is length 4 but its array is 0-3. So if I want a min of 1 then my min must actually be 0, to compensate for the zero-based array.
+/*
+ *
  */
+function split_on_word($string, $range, $add_ellipses = false) {
+    /*
+     * Let me explain by way of example why I substract 1 from min and max. A string like "cats"
+     * is length 4 but its array is 0-3. So if I want a min of 1 then my min must actually be 0, to compensate for the zero-based array.
+     */
     $min = $range[0]-1; $max = $range[1]-1;
     
     /* if the string is less than the max then our work here is done */
@@ -132,8 +125,8 @@ function split_on_word($string, $range, $add_ellipses = false) {
         }
 
     /*
-     * now we go down our split candidates in descending order, looking for a good position to split.
-     * since we're going down in descending order, the lower ones take precedence.
+     * Now we go down our split candidates in descending order, looking for a good position to split.
+     * Since we're going down in descending order, the earlier strings in the array take precedence.
      * */
     $split_candidates = array(' ', ', ', ';', '. ');
 
@@ -145,6 +138,7 @@ function split_on_word($string, $range, $add_ellipses = false) {
          * character (or phrase) then we get a max length string, instead of a possibly much shorter one.
          */
         $string_candidate = substr($string, $min, ($max - $min + strlen($candidate)));
+
         /* we want the longest possible string; so we search backwards in the string */
         $potential_split_position = strrpos($string_candidate, $candidate);
         if ($potential_split_position > $split_position) {
@@ -164,12 +158,10 @@ function value_else_na($value) {
     return value_else_none($value, 'n/a');
 }
 function value_else_none($value, $none_value = 'none') {
-    if ($value && $value != '')
-    {
+    if ($value && $value != '') {
         return $value;
     }
-    else
-    {
+    else {
         return $none_value;
     }
 }

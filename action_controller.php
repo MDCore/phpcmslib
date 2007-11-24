@@ -1,14 +1,21 @@
 <?
-class action_controller
-{
+/*
+ * #TODO check if this is still true documentation
+ * This is the order of execution for the application's controller flow:
+ * - before_controller_load_filter (before the controller in that face is loaded)
+ * - before_controller_execute_filter (before the controller in that face is called)
+ * - before_controller_execute_filter (before the action / action in that controller is executed)
+ * - before_filter (in controller)
+ * - after_filter ( in controller)
+ * - after_controller_filter (after controller executes its actions / renders the action)
+ */
+class action_controller {
     public $has_rendered = false;
     public $layout = null;
     public $face = "site";
     public $virtual = false;
-    public $rendered_content = null;
+    public $rendered_content = null; /* todo should this be private */
 
-    public $before_action_filter = null, $after_action_filter = null;
-    public $before_controller_load_filter = null, $before_controller_execute_filter = null, $after_controller_filter = null;
     /*
      * these filters work like so:
      * > $filter = array('method_name_1, method_name_2', 'only' => 'action_1, action_2, action3', 'except' => 'action_4');
@@ -21,9 +28,10 @@ class action_controller
      * except will not execute that method for the specified actions / controllers, but will for all others.
      * only and except are mutually exclusive. Using both will cause an error.
      */
+    public $before_action_filter = null, $after_action_filter = null;
+    public $before_controller_load_filter = null, $before_controller_execute_filter = null, $after_controller_filter = null;
 
-    public function handle_controller_filter($filter, $controller = null)
-    {
+    public function handle_controller_filter($filter, $controller = null) {
         /*
          * face controllers execute controller-level filters on their child controllers by default.
          *  That is why the filters are defined in the face controller but executed on the current controller.
@@ -82,7 +90,6 @@ class action_controller
             }
         }
     }
-
     public function render() {
         if (isset($this->layout) && $this->layout) {
             $this->render_layout();
@@ -91,7 +98,6 @@ class action_controller
             $this->render_content(); #no layout to call render_content for itself.. so this effectively means "render without a layout"
         }
     }
-
     public function render_as_string($url_as_array, $layout = null)
     {
         #save some settings
@@ -128,7 +134,6 @@ class action_controller
 
         return $result;
     }
-
     function render_content() {
         if (isset($this->action_rendered_inline) && $this->action_rendered_inline) {
             echo $this->render_contents; #dump the action rendered content
@@ -139,14 +144,12 @@ class action_controller
 
         $this->has_rendered = true;
     }
-
     function render_layout() {
         if ($this->view_parameters) {foreach ($this->view_parameters as $variable => $value) { $$variable = $value; } }
 
         if ($layout_path = App::require_this('layout', $this->layout)) { require ($layout_path); }
 
     }
-
     function render_view($route_param = null) {
         $route = array(
             'face' => $this->face,
@@ -188,7 +191,6 @@ class action_controller
 
         return true;
     }
-
     function render_partial($partial_name, $collection = null) {
         $this->layout = null;
 
@@ -209,11 +211,11 @@ class action_controller
         }
         #$this->render_inline();
     }
-
     function execute_action($action_name = null, $ignore_ajax_request_settings = false) {
         if (!$action_name) { $action_name = App::$route['action']; }
         if (method_exists($this, $action_name) || method_exists($this, '__call')) {
             # check for ajax requests, and automatically set render_inline and layout = null
+            /* todo check that this still works. It seems to have mysteriously stopped working recently */
             if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' && !$ignore_ajax_request_settings)
             {
                 $this->request_type = 'ajax';
@@ -234,34 +236,28 @@ class action_controller
     }
 
     /*
-     *  this method essentialy means: don't try and load a view file, I'm rendering all the content inside this method
+     * this method essentialy means: don't try and load a view file, I'm rendering all the content inside this method
      */
-    function render_inline() { $this->action_rendered_inline = true; }
-
+    function render_inline() {
+        $this->action_rendered_inline = true;
+    }
     function __construct() {
         $controller_name = get_class($this);$controller_name = str_replace('_controller', '', $controller_name);
         $this->controller_name = $controller_name;
 
-        #the layout
-        #echo '<pre>';print_r($this);echo '</pre>';
-        if (!isset($this->layout))
-        {
-            #we are using the route's face controller and not app::$face here because this construct happens before the face and controller are set in stone
-            if (in_array($controller_name, $_SESSION[APP_NAME]['application'][App::$route['face']]['layouts']))
-            {
-                $this->layout = $controller_name;
+        /* choose the layout */
+            #echo '<pre>';print_r($this);echo '</pre>';
+            if (!isset($this->layout)) {
+                /* 
+                 * We are referring to the route's face controller and not app::$face here
+                 * because this construct() call happens before the face and controller 
+                 * are set in stone, so to speak
+                 */
+                if (in_array($controller_name, $_SESSION[APP_NAME]['application'][App::$route['face']]['layouts'])) {
+                    $this->layout = $controller_name;
+                }
             }
-        }
     }
 
 }
-/*
-This is the order of execution for the application's controller flow:
-- before_controller_load_filter (before the controller in that face is loaded. in face_controller)
-- before_controller_execute_filter (before the controller in that face is called. in face_controller)
-- before_controller_execute_filter (before the action / action in that controller is executed. in face_controller)
-- before_filter (in controller)
-- after_filter ( in controller)
-- after_controller_filter (after controller executes its actions / renders the action. face controller)
-*/
 ?>
