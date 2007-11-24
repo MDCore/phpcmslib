@@ -104,12 +104,12 @@ class cm_controller extends action_controller {
     function __call($method_name, $params) {
         global $path_to_root;
 
-        $this->action = $page;
+        $this->action = $method_name;
         /* 
          * automatic cm pages router
          * TODO: clean this up. calling with $this->$cm_page might be better ?
          */
-            switch ($page) {
+            switch ($method_name) {
             case 'list':
                 /*
                  *  list is a reserved word, so overriding cm_list involves a method named _list #todo recipe this
@@ -758,16 +758,13 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
     }
 
     public function is_logged_in() {
-        if ( !isset($_SESSION[APP_NAME]['user_id']) || $_SESSION[APP_NAME]['user_id'] == '' )
-        {
-            if (isset($_POST['email']))
-            {
+        if ( !isset($_SESSION[APP_NAME]['user_id']) || $_SESSION[APP_NAME]['user_id'] == '' ) {
+            if (isset($_POST['email'])) {
                 $email = $_POST['email'];
                 $password = $_POST['password'];
                 $user = new user;
                 $user_id = $user->is_valid_user( $email, $password );
-                if ( $user_id )
-                {
+                if ( $user_id ) {
                     $_SESSION[APP_NAME]['display_name'] = $user->first_name.' '.$user->last_name;
                     $_SESSION[APP_NAME]['username'] = $email;
                     $_SESSION[APP_NAME]['user_id'] = $user_id;
@@ -777,16 +774,14 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
                     #successful login! redirect to default. 
                         header('location: '.url_to(array('face' => 'cm')));
                 }
-                else
-                {
+                else {
                     $flash = "This email address and password combination was not found";$_GET['flash'] = $flash;
                     App::$route['controller'] = 'default_controller';
                     App::$route['action'] = 'login';
                     global $view_parameters; $view_parameters['hide_menu'] = true;
                 }
             }
-            else
-            {
+            else {
                 $_GET['flash'] = null;
                 App::$route['controller'] = 'default_controller';
                 App::$route['action'] = 'login';
