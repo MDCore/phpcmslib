@@ -35,7 +35,7 @@ table.list {
     width: 100%;
 }
 table.list thead tr {
-    background: #e7e5dc top left repeat-x url(../images/layout/tblHeader2.jpg);
+    background: #e7e5dc;
     border: 1px solid #cfcfcf;
 }
 table.list tbody tr:hover {
@@ -166,15 +166,6 @@ p.form_element textarea.large {
 .detail-even {
     background-color:#FFFFFA;
 }
-
-#email_page {
-    display: none;
-
-}
-#inner_email_page * /* compress the email page. looks nicer */ {
-    margin: 0; padding: 0;
-}
-
 #tabmenu {
 		color: #000;
 		border-bottom: 0px solid black;
@@ -219,4 +210,15 @@ p.form_element textarea.large {
     position: absolute;
     right: 15px;
     top: 15px;
+}
+/* record selector mode for cm_list */
+.cm_selected_record_row {
+    background-color: #e7d37c;
+}
+.record_selector_column {
+    width: 15px;
+    text-align: center;
+}
+#record_selector_buttons_container input {
+    margin-left: 15px;
 }
