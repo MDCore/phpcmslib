@@ -222,9 +222,11 @@ class cm_controller extends action_controller {
             }
             $this->handle_new_files($edit_id, true);
 
-            redirect_with_parameters(url_to(array('action' => 'list')), "flash=".proper_nounize($this->list_type). " updated");
+            if ($redirect_on_success) {
+                redirect_with_parameters(url_to(array('action' => 'list')), "flash=".proper_nounize($this->list_type). " updated");
+            }
         }
-        elseif ($redirect_on_success) {
+        else {
             redirect_with_parameters(url_to(array('action' => 'edit')), "edit_id=".$edit_id."&flash=".$primary_model_object->validation_errors);
         }
     }
