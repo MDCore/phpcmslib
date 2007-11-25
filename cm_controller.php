@@ -169,7 +169,7 @@ class cm_controller extends action_controller {
 # Action Presets
 #------------------------------#
 
-    public function cm_update() {
+    public function cm_update($redirect_on_success = true) {
         $edit_id = $_GET['edit_id'];
 
         #print_r($_GET);print_r($_POST);print_r($_FILES);
@@ -207,8 +207,7 @@ class cm_controller extends action_controller {
                             $meta_model_object
                                 ->find(" WHERE $fk_field = $edit_id")
                                 ->update_attributes($collection);
-                            if (!$meta_model_object->is_valid())
-                            {
+                            if (!$meta_model_object->is_valid()) {
                                 redirect_with_parameters(url_to(array('action' => 'edit')), "edit_id=".$edit_id."&flash=".$meta_model_object->validation_errors);die();
                             }
                             $meta_model_object->update();
@@ -225,13 +224,12 @@ class cm_controller extends action_controller {
 
             redirect_with_parameters(url_to(array('action' => 'list')), "flash=".proper_nounize($this->list_type). " updated");
         }
-        else
-        {
+        elseif ($redirect_on_success) {
             redirect_with_parameters(url_to(array('action' => 'edit')), "edit_id=".$edit_id."&flash=".$primary_model_object->validation_errors);
         }
     }
 
-    public function cm_save()
+    public function cm_save($redirect_on_success = true)
     {
         #debug('handling_save');print_r($_GET);print_r($_POST);print_r($_FILES);
         
@@ -290,11 +288,13 @@ class cm_controller extends action_controller {
             }
             $this->handle_new_files($primary_record_id, true);
             # callback here
-            if (function_exists('after_save')) { after_save($primary_record_id); } # todo should be in model maybe
-            redirect_with_parameters(url_to(array('action' => 'list')), "flash=New ".proper_nounize($this->list_type). " added");
+            if (function_exists('after_save')) { after_save($primary_record_id); } # todo should be in the model, or part of a broader callbacks framework
+
+            if ($redirect_on_success) {
+                redirect_with_parameters(url_to(array('action' => 'list')), "flash=New ".proper_nounize($this->list_type). " added");
+            }
         }
-        else
-        {
+        else {
             die("nothing to save");
         }
     }
