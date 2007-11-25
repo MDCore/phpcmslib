@@ -169,13 +169,26 @@ class forms
     }
 
     function partial($name) {
+        $base_url = App::$route;
+
         if (!is_array($name)) {
-            $name = array('action' => "_$name.php");
+            $base_url['action'] = "_$name.php";
+        }
+        else {
+            foreach($name as $url_part => $value) {
+                $base_url[$url_part] = $value;
+            }
         }
 
         global $path_to_root;
-        require($path_to_root.url_to($name, false, true));
-        die('proper path dagnabbit!!!!');
+
+        $path = ($path_to_root.'/'.
+            $base_url['face'].'/'.
+            'views/'.
+            str_replace('_controller', '', $base_url['controller']).'/'.
+            $base_url['action']
+            );
+        require($path);
     }
 
     function parse_attributes( $attributes ) {
