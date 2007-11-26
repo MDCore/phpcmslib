@@ -1,11 +1,9 @@
 <?
-class Environment
-{
+class Environment {
     public $mail_send_method = 'sendmail';
     public $run_cron_jobs = true;
 
-    function load($environment, $path_to_root)
-    {
+    function load($environment, $path_to_root) {
         #load this environment
         if ($environment == 'auto' | $environment == 'must_match')
         {
@@ -48,8 +46,7 @@ class Environment
         App::$env = new $environment;
     }
 
-    function find_environments($path_to_root)
-    {
+    function find_environments($path_to_root) {
         $environment = null;
         if (App::$reloading) {echo "<li>parsing environments folder</ul>"; }
         $check_path = $path_to_root.'/config/environments/';

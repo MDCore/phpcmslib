@@ -74,27 +74,23 @@ class Application {
     }
 
     function load_models() {
-        if (App::$booting) {App::find_these('models');}
+        if (App::$booting) { App::find_these('models'); }
 
-        if (App::$reloading) {echo "<li>Loading models<ul>"; }
-        if ($_SESSION[APP_NAME]['application']['models'])
-        {
-            foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model)
-            {
+        if (App::$reloading) { echo "<li>Loading models<ul>"; }
+        if ($_SESSION[APP_NAME]['application']['models']) {
+            foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model) {
                 if (App::$reloading) {echo "<li>loading <strong>$model_name</strong> ($model)</li>"; }
                 if (!App::$skip_model_require) { require_once($model); }
             }
         }
-        else
-        {
-            if (App::$reloading) {echo "<li>No models found.</li>"; }
+        else {
+            if (App::$reloading) { echo "<li>No models found.</li>"; }
         }
-        if (App::$reloading) {echo "</ul></li>"; }
+        if (App::$reloading) { echo "</ul></li>"; }
     }
     
     function find_these($name, $face = null, $path = null) {
-        if (App::$reloading)
-        {
+        if (App::$reloading) {
             echo "<li>parsing $name folder";
             if ($face) { echo " for $face"; }
             echo "</li>";
@@ -103,17 +99,14 @@ class Application {
             if (!$path && $face) { $path = $face.'/'.$name; } elseif (!$path && !$face) { $path = $name; }
 
         #check if the dir exists
-        if (!file_exists(App::$env->root.'/'.$path))
-        {
-            if (App::$reloading) {echo "<li>$name folder not found (".App::$env->root.'/'.$path.")</li>"; }
+        if (!file_exists(App::$env->root.'/'.$path)) {
+            if (App::$reloading) { echo "<li>$name folder not found (".App::$env->root.'/'.$path.")</li>"; }
             return false;
         }
 
-        if ($handle = opendir(App::$env->root.'/'.$path))
-        {
+        if ($handle = opendir(App::$env->root.'/'.$path)) {
             $files = Array();
-            while (false != ($file_name = readdir($handle)))
-            {
+            while (false != ($file_name = readdir($handle))) {
                 $layout = $file_name;
                 $file = App::$env->root.'/'.$path.'/'.$file_name;
                 
@@ -124,12 +117,10 @@ class Application {
             ksort($files); // oh my WORD... what a hack. we need model load prioritization TODO
             closedir($handle);
 
-            if ($face)
-            {
+            if ($face) {
                 $_SESSION[APP_NAME]['application'][$face][$name] = $files;
             }
-            else
-            {
+            else {
                 $_SESSION[APP_NAME]['application'][$name] = $files;
             }
         }
@@ -142,14 +133,12 @@ class Application {
 
         if (!$face) { $face = App::$face; }
         
-        if (isset($_SESSION[APP_NAME]['application'][$face][$type_name]) && in_array($name.'.php', array_keys($_SESSION[APP_NAME]['application'][$face][$type_name])))
-        {
+        if (isset($_SESSION[APP_NAME]['application'][$face][$type_name]) && in_array($name.'.php', array_keys($_SESSION[APP_NAME]['application'][$face][$type_name]))) {
             #echo '<pre>';print_r($_SESSION[APP_NAME]['application'][$face][$type_name][$name.'.php']);echo '</pre>';
             $file_to_require = $_SESSION[APP_NAME]['application'][$face][$type_name][$name.'.php'];
             return $file_to_require;
         }
-        else
-        {
+        else {
             return false;
         }
     }
