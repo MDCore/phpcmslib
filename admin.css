@@ -20,12 +20,7 @@ h4 {
     width: 98%;
     margin-bottom: 10px;
 }
-form.frm_filter, form.frm_filter table {
-    margin: 0; padding: 0;
-}
 div.list_rows {
-    /*font-style: oblique;*/
-    /*font-size: 7pt;*/
     margin-top: 0; padding-top: 0;
 }
 table.list {
@@ -36,40 +31,41 @@ table.list {
     font-size: 8pt;
     line-height: 11pt;
 }
-table.list thead tr {
-    background: #e7e5dc;
-    border: 1px solid #cfcfcf;
-}
-table.list tbody tr:hover {
-    background-color: #f8f8f1;
-}
+/* todo move this outside into cm/assets/stylesheets */
+    table.list thead tr {
+        background: #e7e5dc;
+        border: 1px solid #cfcfcf;
+    }
+    table.list tbody tr:hover {
+        background-color: #f8f8f1;
+    }
 
-table.list th {
-    color: #575751;
-    font-weight: bold;
-    text-align: left;
-    white-space: nowrap;
-    border-left: 1px solid #cfcfcf;
-    padding: 5px 5px 5px 5px;
-}
-table.list th a {
-    width: 100%;
-	color: #afad99;
-}
+    table.list th {
+        color: #575751;
+        font-weight: bold;
+        text-align: left;
+        white-space: nowrap;
+        border-left: 1px solid #cfcfcf;
+        padding: 5px 5px 5px 5px;
+    }
+    table.list th a {
+        width: 100%;
+        color: #afad99;
+    }
 
-table.list th a:hover {
-	color: #87846a;
-	}
+    table.list th a:hover {
+        color: #87846a;
+        }
 
-table.list th.sorted {
-    background-color: #f5f4dc;
-}
+    table.list th.sorted {
+        background-color: #f5f4dc;
+    }
 
-table.list th.sorted a {
-	color: #575751;
-	text-decoration: none;
-	cursor: default;
-	}
+    table.list th.sorted a {
+        color: #575751;
+        text-decoration: none;
+        cursor: default;
+        }
 
 table.list td.action_link {
     text-align: right;
@@ -96,45 +92,51 @@ table.list td:hover {
     cursor: pointer;
     text-decoration: underline;
 }
-#bt_show_filters {
-    padding: 0 3px;
-    text-align: center;
-    display: block;
-    text-decoration: none;
-    background: #f8f8f1;
-    color: #afad99;
-    border: 1px solid #dbdad1;
-    width: 90px;
-}
-#bt_show_filters:hover {
-    border: 1px outset #f8f8f1;
-}
-#filters {
-    display: none;
-}
 
-#filters table {
-    display: block;
-    width: 98%;
-    border: 1px solid #ccc;
-    background-color: #E7E5DC;
-    margin-bottom: 4px;
-    font-size: 10px;
-}
-#filters label {
-    font-weight: bold;
-    padding-right: 2px;
-}
-#filters input, #filters select {
-    font-size: 10px;
-}
+/* filters */
+    form.frm_filter, form.frm_filter table {
+        margin: 0; padding: 0;
+    }
+    #bt_show_filters {
+        padding: 0 3px;
+        text-align: center;
+        display: block;
+        text-decoration: none;
+        background: #f8f8f1;
+        color: #afad99;
+        border: 1px solid #dbdad1;
+        width: 90px;
+    }
+    #bt_show_filters:hover {
+        border: 1px outset #f8f8f1;
+    }
+    #filters {
+        display: none;
+    }
 
+    #filters table {
+        display: block;
+        width: 98%;
+        border: 1px solid #ccc;
+        background-color: #E7E5DC;
+        margin-bottom: 4px;
+        font-size: 10px;
+    }
+    #filters label {
+        font-weight: bold;
+        padding-right: 2px;
+    }
+    #filters input, #filters select {
+        font-size: 10px;
+    }
+
+/* deprecated  27-nov-2007
 table.view_form th {
     text-align: left;
     vertical-align: top;
 }
-div.list_form {
-}
+*/
+
 p.form_element label {
    width: 350px; 
    display: block;
@@ -150,6 +152,8 @@ p.form_element textarea.large {
         height: 200px;
         width: 450px;
 }
+/* 
+ * this class is used by the date picker form control */
 .date_picker_button {
     width: 35px !important;
 }
@@ -157,7 +161,7 @@ p.form_element textarea.large {
     width: 12px !important;
 }
 
-
+/* deprecated  27-nov-2007
 .detail-even, .detail-odd {
     margin:0pt 0px 0pt -5px;
     padding:2px 0 15px 10px;
@@ -169,6 +173,8 @@ p.form_element textarea.large {
 .detail-even {
     background-color:#FFFFFA;
 }
+*/
+/* deprecated  27-nov-2007
 #tabmenu {
 		color: #000;
 		border-bottom: 0px solid black;
@@ -208,7 +214,9 @@ p.form_element textarea.large {
 		background: #ABAD85;
 		color: #DEDECF;
     }
+    */
 
+/* this is used by the ajax spinner and the jquery goodness */
 #spinner_div {
     position: absolute;
     right: 15px;
@@ -224,4 +232,53 @@ p.form_element textarea.large {
 }
 #record_selector_buttons_container input {
     margin-left: 15px;
+}
+
+/* paging */
+.paging_page_description {
+    font-size:12px;
+    font-weight:normal;
+    text-decoration: none;
+    margin: 0; padding: 0;
+    margin: 2px 0;
+    font-style: italic;
+}
+.paging_container {
+    background: #fff none repeat scroll 0%;
+    border:1px solid #cfcfcf;
+    color:#575751;
+    margin:5px auto;
+    padding:5px 0pt;
+    text-align:center;
+    width:50%;
+}
+.paging_page_numbers {
+    margin-bottom:3px;
+}
+.paging_page_numbers table td {
+    width:33%;
+}
+.paging_title {
+    font-size:12px;
+    font-weight:bold;
+    letter-spacing:2px;
+    text-decoration: none;
+    margin: 0; padding: 0;
+}
+.paging_number_of {
+    font-size:12px;
+    letter-spacing:1px;
+}
+.paging_page_jump_button {
+    background:#F8F8F1 none repeat scroll 0%;
+    border:1px solid #575751;
+    padding:2px 5px;
+}
+.paging_page_this_page, .paging_page_jump_button {
+font-size:12px;
+font-weight:bold;
+margin:6px 3px 3px;
+}
+.paging_page_this_page {
+color:#CC3311;
 }

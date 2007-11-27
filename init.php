@@ -16,6 +16,7 @@ require_once("functions.php");
 /* cm classes */
     require_once("cm_controller.php");
     require_once("filter.php");
+    require_once("cm_paging.php");
 
 #error_reporting(E_ALL);
 

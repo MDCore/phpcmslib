@@ -48,6 +48,9 @@ class cm_controller extends action_controller {
         if (!isset($this->list_title))      { $this->list_title = proper_nounize(pluralize($this->list_type)); } $this->list_title = proper_nounize($this->list_title);
         if (!isset($this->email_subject))   { $this->email_subject = $this->list_title; }
 
+        # row limit, records per page
+            if (isset($_GET['records_per_page'])) { $this->row_limit = $_GET['records_per_page']; }
+
         #edit page title
             $this->edit_page_title = "Editing a";
             switch(strtolower(substr($this->list_type, 0, 1))) {case 'a': case 'e': case 'i': case 'o': case 'u': $this->edit_page_title .= 'n';}
@@ -259,26 +262,21 @@ class cm_controller extends action_controller {
 
         if ($primary_record_id) #might not have one if saving failed e.g. validation
         {
-            if ($has_meta_data)
-            {
+            if ($has_meta_data) {
                 #deal with related tables
                 foreach ( $_POST as $meta_model => $collection )
                 {
-                    if ( $meta_model != $this->primary_model)
-                    {
+                    if ( $meta_model != $this->primary_model) {
                         $collection[foreign_keyize($this->primary_model)] = $primary_record_id; #add the foreign key straight into the collection
 
-                        if ($primary_model_object->through_model($meta_model))
-                        {
+                        if ($primary_model_object->through_model($meta_model)) {
                             $meta_model_object = new $meta_model;
                             #$meta_model_object->delete("WHERE $fk_field = $edit_id"); #delete the records, to re-add them
                             $meta_model_object->save_multiple($collection);
                         }
-                        else
-                        {
+                        else {
                             $meta_model_object = new $meta_model($collection); 
-                            if (!$meta_model_object->is_valid())
-                            {
+                            if (!$meta_model_object->is_valid()) {
                                 #delete the primary_record
                                 $primary_model_object->delete($primary_record_id);
                                 if (!$meta_model_object->is_valid()) { redirect_with_parameters(url_to(array('action' => 'list')), "flash=".$meta_model_object->validation_errors); die(); }
@@ -308,8 +306,7 @@ class cm_controller extends action_controller {
             $records_deleted = 0;
             foreach ($_POST['delete'] as $delete_id)
             {
-                if (is_int((int)$delete_id))
-                {
+                if (is_int((int)$delete_id)) {
                     $sql_delete .= $delete_id .',';
                     $records_deleted += 1;
                 }
@@ -366,16 +363,6 @@ class cm_controller extends action_controller {
 
         /* setup the list fields */
             $this->list_fields = split_aliased_string($this->list_fields);
-
-        /* setup the paging */
-            if (isset($_GET['start'])) {
-                $this->start_limit = $_GET['start'];
-            }
-            else {
-                $this->start_limit = 0;
-            }
-            $this->paging_back = $this->start_limit - $this->row_limit;
-            $this->paging_next = $this->start_limit + $this->row_limit;
 
         /* draw the list title */
             if (isset($this->page_title)) { $page_title = $this->page_title; }
@@ -451,34 +438,40 @@ class cm_controller extends action_controller {
         }
         
         #turn the array into a string
-
-        #print_r ( $list_sql );
+            #print_r ( $list_sql );
             $results_query = SQL_implode($list_sql);
             $sql_pk = $this->schema_table.".".$this->primary_key_field." as __pk_field";
             $results_query = str_replace( '__pk__', $sql_pk, $results_query );
 
         if ($this->debug_sql) { debug ( $results_query ); }
-        $AR = new AR;
-        $results_list = $AR->db->query($results_query." limit ". $this->start_limit.', '.$this->row_limit);
-        #error check
-        AR::error_check($results_list);
 
-        $sum_query = $results_query;
-        $result2 = $AR->db->query($sum_query); AR::error_check($results2); #SQL Query list_query
-        $num_rows = $result2->numRows(); #count
-        ?><div class="list_rows"><?=$num_rows; ?> <?
-        if ($num_rows != 1) {echo humanize(pluralize($this->list_type));} else {echo humanize($this->list_type);}
+        $AR = new AR;
+        #get the number of records
+            $sql_no_of_records = $results_query;
+            $db_no_of_records = $AR->db->query($sql_no_of_records);
+            AR::error_check($db_no_of_records);
+            $no_of_records = $db_no_of_records->numRows(); #count
+
+        #initialize the paging object
+            $this->paging = new cm_paging($no_of_records);
+            $this->paging->records_per_page = $this->row_limit;
+
+        #open the actual recordset
+            $results_list = $AR->db->query($results_query.' LIMIT '.$this->paging->limit_sql());
+            AR::error_check($results_list);
+
+        ?><div class="list_rows"><?=$this->paging->page_description($this->list_type);?> <?
         
         if (property_exists($this, 'filter_object')) {
-            echo $this->filter_object->match_text($num_rows);
+            echo $this->filter_object->match_text($no_of_records);
         }
         ?></div><?
         ?><div class="list_wrapper"><?
             ?><table class="list"><?=$this->list_header() ?><?=$this->list_body($results_list);?></table><?
-            ?></div><div class="paging"><?=$this->list_paging($num_rows);?></div><?  
+            ?></div><? if (!defined('PRINTING_MODE')) { ?><div class="paging"><?=$this->paging->paging_anchors();?></div><? }  
 
         if ($this->show_record_selector) {
-            ?><div id="record_selector_buttons_container"><input disabled="disabled" type="button" id="bt_select_record" value="Select record" onclick="window.parent.select_record_callback(currently_selected_row.val());" /><input type="button" id="bt_cancel_record_selector" value="cancel" onclick="window.parent.cancel_record_callback();" /></div><?
+            ?><div id="record_selector_buttons_container"><input disabled="disabled" type="button" id="bt_select_record" value="Select <?=$this->list_type;?>" onclick="window.parent.select_record_callback(currently_selected_row.val());" /><input type="button" id="bt_cancel_record_selector" value="cancel" onclick="window.parent.cancel_record_callback();" /></div><?
         }
 
         ?><div><?
@@ -516,8 +509,7 @@ class cm_controller extends action_controller {
         foreach ($this->list_fields as $header => $alias) {
             ?><th <?
             
-            if ($this->list_sort_field == $header)
-            {
+            if ($this->list_sort_field == $header) {
                 echo 'class = "sorted"';
             }
             ?>><?
@@ -529,8 +521,7 @@ class cm_controller extends action_controller {
             }
             if ($sortable) {
                 ?><a href="<?=page_parameters('/^sort$/')?>&amp;sort=<?=$header;?>_<?
-                if ($this->list_sort_field == $header)
-                {
+                if ($this->list_sort_field == $header) {
                     if ($this->list_sort_type == 'ASC') { echo 'desc'; } else { echo 'asc'; }
                 }
                 else { echo 'asc'; }
@@ -608,44 +599,7 @@ class cm_controller extends action_controller {
         }
     }
 
-    public function list_paging($num_rows)
-    {
-
-        if ($num_rows <= $this->row_limit) {return false;}
-        ?><table align="center" width="50%">
-        <tr><td align="left"><?
-        if ($this->paging_back >= 0)
-        {
-            ?><a href="<?=page_parameters('/^start$/');?>&amp;start=<?=$this->paging_back;?>">PREV</a><?
-        }
-        ?></td><td align=center><?
-        $i=0; $l=1;
-
-        
-        for($i=0;$i < $num_rows;$i=$i+$this->row_limit) 
-        {
-            if ($i <> $this->start_limit)
-            {
-                ?><a href="<?=page_parameters('/^start$/');?>&amp;start=<?=$i.$pageextra;?>"><?=$l?></a><?
-            }
-            else
-            {
-                ?><span color="red"><?=$l;?></span><?
-            }
-            
-            echo '&nbsp;';
-            $l++;
-        }
-        ?></td><td align="right"><?
-        if($this->paging_next < $num_rows)
-        {
-            ?><a href="<?=page_parameters('/^start$/');?>&amp;start=<?=$this->paging_next.$pageextra;?>">NEXT</a><?
-        }
-        ?></td></tr></table><?
-    }
-
-    public function draw_filters($filters)
-    {
+    public function draw_filters($filters) {
         /* this whole filter button thing is an enormous hack. todo is fix draw_filters() */
 
         ?><span class="button" id="bt_show_filters" <? if (isset($this->filter_object->has_filter_values) && $this->filter_object->has_filter_values) { echo 'action="h"'; }
@@ -654,7 +608,7 @@ $('#filters').slideToggle('fast');
 if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $(this).html('Hide filters'); }
         "><? if ( !isset($this->filter_object->has_filter_values) || !$this->filter_object->has_filter_values) {
             ?>Show filters</span><div id="filters" style="display: none"><? } else { ?> Hide filters</span><div id="filters" style="display: block"><? } ?>
-    <form id="frm_filter" method="get"><? echo page_parameters('/^filter/,/^start$/', false, 'hidden');
+    <form id="frm_filter" method="get"><? echo page_parameters('/^filter/,/^page_no$/', false, 'hidden');
             ?><table><tr><?
             $cnt=0;
             foreach ($this->filter_object->filters as $filter)
@@ -670,7 +624,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
             { echo '<td>&nbsp;</td>'; }
         ?><tr/></table>
 <input type="submit" value="Apply" />
-        <input type="button" onclick="window.location ='<?=page_parameters('/^filter_/,/^start$/')?>'" value="Clear filters" />
+        <input type="button" onclick="window.location ='<?=page_parameters('/^filter_/,/^page_no$/')?>'" value="Clear filters" />
         </form>
     </div><?
     }
@@ -725,8 +679,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
 
         echo url_to(array('action' => 'save')).page_parameters($parameters_to_remove).$parameters;?>"><?
             
-        if (isset($_POST) && sizeof($_POST) > 0 )
-        {
+        if (isset($_POST) && sizeof($_POST) > 0 ) {
             $this->model_object->update_attributes($_POST[$this->primary_model]);
         }
 
