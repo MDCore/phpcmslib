@@ -583,7 +583,6 @@ class cm_controller extends action_controller {
                     foreach ($this->related_pages as $related_page ) { echo $this->related_page_anchor($related_page, $row); } 
                 }
 
-
             foreach (array_keys($this->list_fields) as $field) { ?><td><?
                 if (substr($field, -2) == '()') {
                     $method = substr($field, 0, strlen($field)-2);

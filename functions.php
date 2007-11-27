@@ -315,8 +315,7 @@ function url_to($path, $include_base = true, $explicit_path = false) {
 }
 function href_to($path) { return url_to($path); }
 
-function route_from_path($path)
-{
+function route_from_path($path) {
     #default route
     $result = array(
         'face' => '',
@@ -352,46 +351,58 @@ function route_from_path($path)
     return $result;
 }
 
-    function as_hiddens($collection, $prefixes = null) {
-        $these_prefixes = $prefixes;
-        $result = '';
-        foreach ($collection as $name => $value)
+function as_hiddens($collection, $prefixes = null) {
+    $these_prefixes = $prefixes;
+    $result = '';
+    foreach ($collection as $name => $value)
+    {
+        if (is_array($value))
         {
-            if (is_array($value))
-            {
-                if ($prefixes != null) { $these_prefixes[] = $name; } else { $these_prefixes = array($name); }
-                #var_dump($these_prefixes);
-                $result .= as_hiddens($value, $these_prefixes);
-                #$prefixes = null;
-                #print_r($value);die();
-            }
-            else
-            {
-                #echo 'prefixes:';var_dump($prefixes);echo "\r\n"; 
-                if (!is_null($prefixes))
-                {
-                    $cnt = 0;
-                    $this_prefix = '';
-                    foreach ($prefixes as $prefix)
-                    {
-                        $cnt++;
-                        if ($cnt == 1)
-                        {
-                            $this_prefix .= $prefix;
-                        }
-                        else
-                        {
-                            $this_prefix .= '['.$prefix.']';
-                        }
-                    }
-                    $name = $this_prefix.'['.$name.']';
-                    #if ($cnt > 1) { $name .= '[]'; }; #append an array thing to this because there 
-                }
-                $this_hidden = '<input type="hidden" name="'.$name.'" value="'.$value.'" />';
-                #var_dump($this_hidden);
-                $result .= $this_hidden;
-            }
+            if ($prefixes != null) { $these_prefixes[] = $name; } else { $these_prefixes = array($name); }
+            #var_dump($these_prefixes);
+            $result .= as_hiddens($value, $these_prefixes);
+            #$prefixes = null;
+            #print_r($value);die();
         }
-        return $result;
+        else
+        {
+            #echo 'prefixes:';var_dump($prefixes);echo "\r\n"; 
+            if (!is_null($prefixes))
+            {
+                $cnt = 0;
+                $this_prefix = '';
+                foreach ($prefixes as $prefix)
+                {
+                    $cnt++;
+                    if ($cnt == 1)
+                    {
+                        $this_prefix .= $prefix;
+                    }
+                    else
+                    {
+                        $this_prefix .= '['.$prefix.']';
+                    }
+                }
+                $name = $this_prefix.'['.$name.']';
+                #if ($cnt > 1) { $name .= '[]'; }; #append an array thing to this because there 
+            }
+            $this_hidden = '<input type="hidden" name="'.$name.'" value="'.$value.'" />';
+            #var_dump($this_hidden);
+            $result .= $this_hidden;
+        }
     }
+    return $result;
+}
+
+
+function random_string($length = 9, $allowed_characters = "abcdefghijkmnopqrstuvwxyz023456789") {
+    $i = 0;
+    $string = '' ;
+
+    for ($i=0; $i < $length; $i++) {
+        $string .= substr($allowed_characters, rand() % strlen($allowed_characters), 1);
+    }
+
+    return $string;
+} 
 ?>
