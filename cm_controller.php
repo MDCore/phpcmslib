@@ -601,12 +601,11 @@ class cm_controller extends action_controller {
 
     public function draw_filters($filters) {
         /* this whole filter button thing is an enormous hack. todo is fix draw_filters() */
-
-        ?><span class="button" id="bt_show_filters" <? if (isset($this->filter_object->has_filter_values) && $this->filter_object->has_filter_values) { echo 'action="h"'; }
+?><span class="button" id="bt_show_filters" <? if (!($this->always_hide_filters) && isset($this->filter_object->has_filter_values) && $this->filter_object->has_filter_values) { echo 'action="h"'; }
 ?> onclick="
 $('#filters').slideToggle('fast');
 if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $(this).html('Hide filters'); }
-        "><? if ( !isset($this->filter_object->has_filter_values) || !$this->filter_object->has_filter_values) {
+        "><? if ($this->always_hide_filters || !isset($this->filter_object->has_filter_values) || !$this->filter_object->has_filter_values) {
             ?>Show filters</span><div id="filters" style="display: none"><? } else { ?> Hide filters</span><div id="filters" style="display: block"><? } ?>
     <form id="frm_filter" method="get"><? echo page_parameters('/^filter/,/^page_no$/', false, 'hidden');
             ?><table><tr><?

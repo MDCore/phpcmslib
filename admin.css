@@ -29,7 +29,7 @@ table.list {
     margin: 0 auto;
     width: 100%;
     font-size: 8pt;
-    line-height: 11pt;
+    /*line-height: 11pt;*/
 }
 /* todo move this outside into cm/assets/stylesheets */
     table.list thead tr {
@@ -81,7 +81,8 @@ table.list td {
     padding: 0 5px;
     margin: 0;
     vertical-align: top;
-    padding-top: 1px;
+    line-height: 12px;
+    /*padding-top: 1px;*/
 }
 
 table.list td:hover {
