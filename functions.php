@@ -190,12 +190,7 @@ function page_parameters($except = '', $always_return_something = true, $method 
 return $return;
 }
 
-function debug ( $str ) { 
-    /*if (is_bool($str))
-    {
-        if ($str == true) { $str = "{true}"; }
-        if ($str == false) { $str = "{false}"; }
-    }*/
+function debug ($str) { 
    echo "<pre>";var_dump($str);echo "</pre>";
 }
 
