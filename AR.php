@@ -398,7 +398,6 @@ class AR implements SeekableIterator { # basic AR class
         return $record_id;
     }
     private function update_core($collection) {
-       //$values = array_map("enquote", $values);
        foreach ($collection as $field => $value)
        {
            $collection[$field] = "'".$value."'";

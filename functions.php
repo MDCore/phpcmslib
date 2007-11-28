@@ -313,7 +313,6 @@ function url_to($path, $include_base = true, $explicit_path = false) {
 
     return $url;
 }
-function href_to($path) { return url_to($path); }
 
 function route_from_path($path) {
     #default route
@@ -393,7 +392,6 @@ function as_hiddens($collection, $prefixes = null) {
     }
     return $result;
 }
-
 
 function random_string($length = 9, $allowed_characters = "abcdefghijkmnopqrstuvwxyz023456789") {
     $i = 0;

@@ -388,7 +388,7 @@ class cm_controller extends action_controller {
             }
 
         if ($this->show_delete) {
-            ?><form id="list_delete" method="post" action="<?=href_to(array('action' =>'delete')).page_parameters('', false)?>"><? 
+            ?><form id="list_delete" method="post" action="<?=url_to(array('action' =>'delete')).page_parameters('', false)?>"><? 
         }
 
     #--------- query, sql_query, sql query, sqlquery, xxxsql ---------------------------------------#
@@ -491,8 +491,8 @@ class cm_controller extends action_controller {
                     ?><a href="<?=$url;?>"><?=$value;?></a><br /><?
                 }
             }
-            if  ($this->back_link) { ?><a href="<?=href_to($this->back_link).page_parameters('/^fk/', false);?>">Back to <?=humanize($this->back_link);?></a><br /><? }
-            if ($this->allow_add) { ?><a href="<?=href_to(array('action' =>'add')).page_parameters('', false);?>">Add a new <?=humanize($this->list_type);?></a><br /><? }
+            if  ($this->back_link) { ?><a href="<?=url_to($this->back_link).page_parameters('/^fk/', false);?>">Back to <?=humanize($this->back_link);?></a><br /><? }
+            if ($this->allow_add) { ?><a href="<?=url_to(array('action' =>'add')).page_parameters('', false);?>">Add a new <?=humanize($this->list_type);?></a><br /><? }
             if ($this->allow_delete) { ?><a href="<?=page_parameters('');?>&amp;delete=y">Delete <?=humanize(pluralize($this->list_type));?></a><br /><? }
             ?></div><?
         }
@@ -550,14 +550,14 @@ class cm_controller extends action_controller {
             # get or set the edit_link_title
                 if (isset($this->edit_link_title)) { $edit_link_title = $this->edit_link_title; } else { $edit_link_title = 'Edit';}#.humanize($this->list_type)
 
-                    ?><td class="action_link"><a href="<?=href_to(array('action' => 'edit')).page_parameters('/^edit/');?>&amp;edit_id=<?=$row->__pk_field;?>"><?=$edit_link_title;?></a></td><?
+                    ?><td class="action_link"><a href="<?=url_to(array('action' => 'edit')).page_parameters('/^edit/');?>&amp;edit_id=<?=$row->__pk_field;?>"><?=$edit_link_title;?></a></td><?
             }
 
             if (!$this->show_delete && $this->allow_view) {
             # get or set the view_title
                 if (isset($this->view_title)) { $view_title = $this->view_title; } else { $view_title = 'View';} #.humanize($this->list_type)
 
-                ?><td class="action_link"><a href="<?=href_to(array('action' => 'view')).page_parameters('/^view/');?>&amp;view_id=<?=$row->__pk_field;?>"><?=$view_title;?></a></td><?
+                ?><td class="action_link"><a href="<?=url_to(array('action' => 'view')).page_parameters('/^view/');?>&amp;view_id=<?=$row->__pk_field;?>"><?=$view_title;?></a></td><?
             }
 
             #related pages documentation
@@ -657,7 +657,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
         # pull out id's and suchlike
         $this->edit_page_title = str_replace('__id__', $edit_id, $this->edit_page_title); #todo fix this hack, replace with actual field names in some way
         ?><h2><?=$this->edit_page_title;?></h2><?
-        ?><form method="post" enctype="multipart/form-data" action="<?=href_to(array('action' => 'update')).page_parameters('/^edit/')?>&edit_id=<?=$edit_id?>"><?
+        ?><form method="post" enctype="multipart/form-data" action="<?=url_to(array('action' => 'update')).page_parameters('/^edit/')?>&edit_id=<?=$edit_id?>"><?
 
         $sql = 'SELECT * FROM '.$this->schema_table.' WHERE '.$this->primary_key_field." = '".$edit_id."'";
         $AR = new AR;

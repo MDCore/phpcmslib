@@ -106,12 +106,6 @@ function proper_case($str) {
     $str[0] = strtoupper($str[0]);return $str;
 }
 
-function enquote($value) { #AR::update uses this as a map function #todo check if this still does
-    return "'$value'";
-} 
-/*
- *
- */
 function split_on_word($string, $range, $add_ellipses = false) {
     /*
      * Let me explain by way of example why I substract 1 from min and max. A string like "cats"
@@ -166,4 +160,7 @@ function value_else_none($value, $none_value = 'none') {
     }
 }
 
+function sanitize_text($text) { #todo, evaluate this name
+    return nl2br(htmlspecialchars(stripslashes($text)));
+}
 ?>
