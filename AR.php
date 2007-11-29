@@ -40,7 +40,7 @@ class AR implements SeekableIterator
     function connect_to_db($dsn = null) 
     {
         if (!$dsn && isset(App::$env)) {
-            $dsn = App::$env->dsn
+            $dsn = App::$env->dsn;
         }
         if ($dsn) {
             //debug("connecting to ".$dsn['database']);
@@ -84,7 +84,7 @@ class AR implements SeekableIterator
 
         //debug echo "<b>before setting pk</b><br>\r\n";
         if (!property_exists($this, 'primary_key_field')) { 
-            $this->primary_key_field = 'id'
+            $this->primary_key_field = 'id';
         }
         //debug echo "<b>after setting pk</b><br>\r\n\r\n";
 
@@ -1008,7 +1008,7 @@ class AR implements SeekableIterator
     {
         if (!property_exists($this, 'sum_field')) {
             return false;
-        }
+        }
         if ($this->count == 0) {
             return 0;
         }
