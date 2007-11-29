@@ -2,7 +2,8 @@
 require_once('string_helpers.php');
 require_once('form_helpers.php');
 
-define('MENU_PAGE_PARAMETERS_TO_SKIP', '/_id$/,/^sort/,/^filter_/,/^fk$/');
+/* todo use this define, maybe */
+define('RELATED_PAGE_PARAMETERS_TO_SKIP', '/_id$/,/^sort/,/^filter_/,/^fk$/');
 
 #this method does a redirect with standard parameters stripped
 function redirect_with_parameters($url, $additional_parameters = '', $return_url = false) {
@@ -43,8 +44,7 @@ function SQL_implode($sql_array, $prepend_phrases = true) {
 
             $result .= ' ';
             #some special cases where we want to tweak the phrase
-                switch ($phrase)
-                {
+                switch ($phrase) {
                 case 'WHERE':
                     if (substr($this_phrase, 0, 4) == 'AND ') { $this_phrase = substr($this_phrase, 4); }
                     break;
@@ -137,7 +137,7 @@ function split_aliased_string($str) {
     if (strlen($str) == 0) { return Array(); }
 
     $new_fields = Array();
-    $str = split(',',$str);
+    $str = explode(',',$str);
     foreach($str as $field)
     {
         $alias = stristr($field, ' as ');
@@ -149,29 +149,24 @@ function split_aliased_string($str) {
 
 function page_parameters($except = '', $always_return_something = true, $method = 'querystring') {
     # methods are querystring or hidden
-    if ($except != '') { $except = split(',',$except); } else { $except = array(); }
+    if ($except != '') { $except = explode(',',$except); } else { $except = false; }
 
     $return = '';
-    if (isset($_GET))
-    {
-        foreach ($_GET as $var => $value)
-        {
+    if (isset($_GET)) {
+        foreach ($_GET as $var => $value) {
             #echo $var; echo $value; echo '<br/>';
             if ($var != 'p' && $var != 'flash') {
                 $matches = 0;
-                if(sizeof($except) > 0)
-                {
+                if($except) {
                     #check for matches
-                    foreach ($except as $check)
-                    {
+                    foreach ($except as $check) {
                         #debug echo "checking for $check in $var";
                         $matches += preg_match($check, $var);
                         #debug echo "$matches<br>";
                     }
                 }
                 
-                if ($matches == 0)
-                {
+                if ($matches == 0) {
                     if ($method == 'querystring') { $return .= '&'. $var .'=' .urlencode($value); }
                     if ($method == 'hidden') { $return .= "<input type=\"hidden\" name=\"$var\" value=\"$value\" />"; }
                     #debug echo "!$return!<br>";
@@ -179,12 +174,12 @@ function page_parameters($except = '', $always_return_something = true, $method 
             }
         }
     }
-    if ( $method == 'querystring' )
-    {
-        if ($always_return_something && $return == '') {$return = '?p=y';}
-        elseif ($return != '')
-        {
-            $return = '?'.substr($return, 1);
+    if ( $method == 'querystring' ) {
+        if ($always_return_something && $return == '') {
+            $return = '?p=y';
+        }
+        elseif ($return != '') {
+            $return[0] = '?';
         }
     }
 return $return;
@@ -297,8 +292,7 @@ function url_to($path, $include_base = true, $explicit_path = false) {
         }
 
     #no specified action?  let the controller decide
-        if (isset($target['action']) && $target['action'] != '') 
-        {
+        if (isset($target['action']) && $target['action'] != '') {
             $url .= '/'.$target['action'];
             if (isset($target['id']) && $target['id'] != '') 
             {
@@ -322,7 +316,7 @@ function route_from_path($path) {
     if (!$result['face']) { $result['face'] = App::$default_face; }
         
     if ($path) {
-        $path = split('/', $path);
+        $path = explode('/', $path);
         if (!in_array($path[0], App::$allowed_faces) && App::$default_face) #i.e. the first param is not a face, or not an allowed face, but we have a default face set
         {
             $result['controller'] = $path[0].'_controller';
@@ -361,8 +355,7 @@ function as_hiddens($collection, $prefixes = null) {
         else
         {
             #echo 'prefixes:';var_dump($prefixes);echo "\r\n"; 
-            if (!is_null($prefixes))
-            {
+            if (!is_null($prefixes)) {
                 $cnt = 0;
                 $this_prefix = '';
                 foreach ($prefixes as $prefix)

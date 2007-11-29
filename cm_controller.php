@@ -499,8 +499,7 @@ class cm_controller extends action_controller {
         $this->render_inline();
     }
 
-    public function list_header()
-    {
+    public function list_header() {
         ?><thead><tr><?
         if ($this->show_record_selector) { ?><th class="record_selector_column">&nbsp;</th><? }
         if ($this->show_delete) { ?><th><input type="checkbox" id="delete_all" name="delete_all" onclick="select_all_rows();" value="on" /></th><? }
@@ -541,6 +540,31 @@ class cm_controller extends action_controller {
     }
 
     public function list_body($results_list) {
+        /* decide what to do with each field, before the loop, instead of in the loop */
+        $list_field_descriptors = array();
+        foreach (array_keys($this->list_fields) as $field) {
+                    if (substr($field, -2) == '()') {
+                        $method = substr($field, 0, strlen($field)-2);
+                        $list_field_descriptors[$field] = array('call_method', $method);
+                    }
+                    // ok... TODO fix this.. now that this uses mdb2. where is my schema introspection on appstart ?
+                    elseif ((stristr($this->list_field_descriptors[$field], ' date') != false) or strtolower($this->list_field_descriptors[$field]) == 'date') {
+                        $list_field_descriptors[$field] = array('date');
+                    }
+                    elseif (stristr($this->list_field_descriptors[$field], 'time') != false) {
+                        $list_field_descriptors[$field] = array('time');
+                    }
+                    elseif (isset($this->field_length_range)) {
+                        $list_field_descriptors[$field] = array('split', $this->field_length_range);
+                    }
+                    else {
+                        $list_field_descriptors[$field] = array('');
+                    }
+        }
+
+
+        ob_start();
+        $no_of_related_pages = sizeof($this->related_pages);
         while ($row = $results_list->fetchRow()) {
             ?><tr class="odd"> <?
             if ($this->show_record_selector) { ?><td class="record_selector_column"><input type="radio" class="record_selector_row" id="record_selector_<?=$row->__pk_field;?>" name="record_selector[]" value="<?=$row->__pk_field;?>"  onclick="cm_select_record(this, <?=$row->__pk_field;?>);" /></td><? }
@@ -576,33 +600,33 @@ class cm_controller extends action_controller {
             *                   fk_title_field          : the name that will be passed to the target action as extra title text. not required.
             *                   append_page_parameters  : setting this values causes page_parameters() to be called with the value of this property
             */                           
-                if ($this->related_pages && sizeof($this->related_pages) > 0) {
+                if ($this->related_pages && $no_of_related_pages > 0) {
                     foreach ($this->related_pages as $related_page ) { echo $this->related_page_anchor($related_page, $row); } 
                 }
 
-            foreach (array_keys($this->list_fields) as $field) { ?><td><?
-                if (substr($field, -2) == '()') {
-                    $method = substr($field, 0, strlen($field)-2);
-                    echo $this->model_object->$method($row);
-                }
-                // ok... TODO fix this.. now that this uses mdb2. where is my schema introspection on appstart ?
-                elseif ((stristr($this->list_fields[$field], ' date') != false) or strtolower($this->list_fields[$field]) == 'date') {
+            foreach (array_keys($this->list_fields) as $field) {
+                $this_field_descriptor = $list_field_descriptors[$field];
+                ?><td><?
+                switch ($this_field_descriptor[0]) {
+                case 'method':
+                    echo $this->model_object->{$list_fields_descriptor[1]}($row);
+                    break;
+                case 'date':
                     echo strftime(DATE_FORMAT, strtotime((string)$row->$field));
-                }
-                elseif (stristr($this->list_fields[$field], 'time') != false) {
-                    // write out a nicely formatted time
+                    break;
+                case 'time':
                     echo strftime(TIME_FORMAT, strtotime((string)$row->$field));
-                }
-                elseif (!is_null($this->field_length_range)) {
-                    echo split_on_word(stripslashes($row->$field), $this->field_length_range, true);
-                }
-                else {
+                    break;
+                case 'split': 
+                    echo split_on_word(stripslashes($row->$field), $this_field_descriptor[1], true);
+                    break;
+                default:
                     echo stripslashes($row->$field);
-                }?></td><?
-            } ?>
-              </tr>
-        <?php
-        }
+                }
+            }
+            ?></td><?
+        } ?></tr><?
+        ob_end_flush();
     }
 
     public function draw_filters($filters) {
@@ -616,9 +640,9 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
     <form id="frm_filter" method="get"><? echo page_parameters('/^filter/,/^page_no$/', false, 'hidden');
             ?><table><tr><?
             $cnt=0;
-            foreach ($this->filter_object->filters as $filter)
-            {
-                if ($cnt % 4 == 0 && $cnt > 0 && ($cnt < sizeof($this->filter_object->filters))) {
+            $no_of_filter_object_filters = sizeof($this->filter_object->filters);
+            foreach ($this->filter_object->filters as $filter) {
+                if ($cnt % 4 == 0 && $cnt > 0 && ($cnt < $no_of_filter_object_filters)) {
                     echo '</tr></table><table><tr>';
                 }
                 echo '<td>'; $this->filter_object->{'filter_'.$filter['type']}($filter);echo '</td>';
@@ -675,8 +699,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
         $this->render_inline();
     }
 
-    public function cm_add()
-    {
+    public function cm_add() {
         ?><h2>Add a new <?=humanize($this->list_type);?></h2><?
         ?><form method="post" enctype="multipart/form-data" action="<?
         $parameters_to_remove = $parameters = '';

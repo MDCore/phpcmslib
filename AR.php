@@ -117,7 +117,7 @@ class AR implements SeekableIterator { # basic AR class
             $validations = array('validates_presence_of');
             foreach ($validations as $validation) {
                 if (property_exists($this, $validation)) {
-                    $this->$validation = split(',',$this->$validation);
+                    $this->$validation = explode(',',$this->$validation);
                 }
             }
         #debug echo('<b>after validation setup</b><br>');
@@ -771,7 +771,7 @@ class AR implements SeekableIterator { # basic AR class
     /* relationship checking methods */
     function has_one($model_name) { 
         if (!property_exists($this, 'has_one')) {return false;}
-        return in_array($model_name, split(',',$this->has_one));
+        return in_array($model_name, explode(',',$this->has_one));
     }
 
     function has_many($model_name) { 
@@ -790,13 +790,13 @@ class AR implements SeekableIterator { # basic AR class
         }
         else
         {
-            return in_array($model_name, split(',',$this->has_many));
+            return in_array($model_name, explode(',',$this->has_many));
         }
     }
 
     function belongs_to($model_name) { 
         if (!property_exists($this, 'belongs_to')) {return false;}
-        return in_array($model_name, split(',',$this->belongs_to));
+        return in_array($model_name, explode(',',$this->belongs_to));
     }
 
     function through_model($model_name) #todo use a better name

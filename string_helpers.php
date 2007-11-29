@@ -14,7 +14,7 @@ function to_sentence($array) {
 }
 function proper_nounize($str) {
     if (is_null($str) || $str == '') { return $str; }
-    $str = str_replace('_', ' ', $str);$result = split(' ', $str); #split $result on " " after converting _ to " "
+    $str = str_replace('_', ' ', $str);$result = explode(' ', $str); #split $result on " " after converting _ to " "
     return implode(' ', array_map('proper_case', $result)); #map applies the proper_Case method to each element in $result
 }
 function foreign_keyize($str) {
@@ -25,9 +25,10 @@ function foreign_keyize($str) {
 }
 function humanize($str) { #todo should this worry about CamelCase ? 
     $result = '';
-    for ($i=0;$i<strlen($str);$i++) # todo too clunky, use a regex
+    $string_length = strlen($str); #this is a speedup; putting it inside the loop means it is called each time
+    for ($i = 0; $i < $string_length; $i++) # todo too clunky, use a regex
     {
-        $char = substr($str,$i,1);
+        $char = $str[$i]; //$char = substr($str, $i, 1);
         if ($char == strtoupper($char) && ($prev_char != strtoupper($prev_char) && $prev_char != ' '))
         {
             $result .= ' '.$char;
@@ -83,6 +84,7 @@ function singularize($str) {
 }
 function pluralize($str) {
     #yes, I know this is lame. I will find a decent pluralization script someday
+    #todo have a pluralization cache and look up words in that cache
 
     if (strtolower(substr($str, -6)) == 'status') {
         return $str.'es';
@@ -114,7 +116,7 @@ function split_on_word($string, $range, $add_ellipses = false) {
     $min = $range[0]-1; $max = $range[1]-1;
     
     /* if the string is less than the max then our work here is done */
-        if (strlen($string) < $max) {
+        if (!isset($string{$max})) { /* speedup for: if (strlen($string) < $max) { */
             return $string;
         }
 
