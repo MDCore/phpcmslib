@@ -25,10 +25,10 @@ $path_to_root = '../../..';
     
 # load this dispatcher class
     $dispatcher_path = $path_to_root.'/vendor/pedantic/lib/'.$dispatcher.'.php';
-    require_once($dispatcher_path);
+    require($dispatcher_path);
 
 #initialize the application
-    require ('./init.php');
+    include('./init.php');
 
 #do the dispatching process
     $dispatch = new $dispatcher; $dispatch->process();

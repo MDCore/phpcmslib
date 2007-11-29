@@ -1,22 +1,23 @@
 <?
 #todo clean up this file. messy
 session_start();
-require_once('MDB2.php');
-require_once("functions.php");
+require('MDB2.php');
+require("functions.php");
 
 /* core classes */
-    require_once("AR.php");
-    require_once("action_controller.php");
-    require_once("action_view_helpers.php");
-    require_once("environment.php");
-    require_once("application.php");
-    require_once("asset_helpers.php");
-    require_once("ajax_helpers.php");
+    require("AR.php");
+    require("action_controller.php");
+    require("action_view_helpers.php");
+    require("environment.php");
+    require("application.php");
+    require('form_helpers.php');
+    require("asset_helpers.php");
+    require("ajax_helpers.php");
 
 /* cm classes */
-    require_once("cm_controller.php");
-    require_once("filter.php");
-    require_once("cm_paging.php");
+    require("cm_controller.php");
+    require("filter.php");
+    require("cm_paging.php");
 
 #error_reporting(E_ALL);
 

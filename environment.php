@@ -11,7 +11,7 @@ class Environment {
             foreach (Environment::find_environments($path_to_root) as $env)
             {
                 if (App::$reloading) {echo "<ul><li>Testing environment <i>$env</i></li>";}
-                require_once($path_to_root."/config/environments/".$env.'.php');
+                require($path_to_root."/config/environments/".$env.'.php');
                 $env_object = new $env;
                 if (isset($env_object->urls))
                 {
@@ -42,7 +42,7 @@ class Environment {
             }
             if (App::$reloading) {echo "</ul>";}
         }
-        require_once($path_to_root."/config/environments/".$environment.'.php'); $_SESSION[APP_NAME]['application']['environment'] = $environment;
+        require($path_to_root."/config/environments/".$environment.'.php'); $_SESSION[APP_NAME]['application']['environment'] = $environment;
         App::$env = new $environment;
     }
 

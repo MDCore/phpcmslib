@@ -1,6 +1,5 @@
 <?php    
-require_once('string_helpers.php');
-require_once('form_helpers.php');
+require('string_helpers.php');
 
 /* todo use this define, maybe */
 define('RELATED_PAGE_PARAMETERS_TO_SKIP', '/_id$/,/^sort/,/^filter_/,/^fk$/');

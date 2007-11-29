@@ -29,12 +29,10 @@ function humanize($str) { #todo should this worry about CamelCase ?
     for ($i = 0; $i < $string_length; $i++) # todo too clunky, use a regex
     {
         $char = $str[$i]; //$char = substr($str, $i, 1);
-        if ($char == strtoupper($char) && ($prev_char != strtoupper($prev_char) && $prev_char != ' '))
-        {
+        if ($char == strtoupper($char) && ($prev_char != strtoupper($prev_char) && $prev_char != ' ')) {
             $result .= ' '.$char;
         }
-        else
-        {
+        else {
             $result .= $char;
         }
         $prev_char = $char;

@@ -80,7 +80,7 @@ class Application {
         if ($_SESSION[APP_NAME]['application']['models']) {
             foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model) {
                 if (App::$reloading) {echo "<li>loading <strong>$model_name</strong> ($model)</li>"; }
-                if (!App::$skip_model_require) { require_once($model); }
+                if (!App::$skip_model_require) { require($model); }
             }
         }
         else {
