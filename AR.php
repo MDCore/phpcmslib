@@ -1,19 +1,14 @@
 <?php
 /**
- * This file implements the ActiveRecord pattern
+ * This file implements the ActiveRecord pattern for Pedantic_Lib
  *
- *  @category PHP
- *  @package Pedantic lib
- *  @author Gavin van Lelyveld <gavin@pedantic.co.za>
+ * @category  PHP
+ * @package   Pedantic_Lib
+ * @author    Gavin van Lelyveld <gavin@pedantic.co.za>
+ * @copyright 2007 Gavin van Lelyveld
+ * @license   proprietary http://pedantic.co.za
+ * @link      http://pedantic.co.za
  **/
-
-if (!defined('SQL_INSERT_DATE_FORMAT')) {
-    define('SQL_INSERT_DATE_FORMAT', '%Y-%m-%d'); 
-}
-if (!defined('SQL_INSERT_DATE_TIME_FORMAT')) {
-    define('SQL_INSERT_DATE_TIME_FORMAT', '%Y-%m-%d %R');
-}
-
 class AR implements SeekableIterator
 {
     public $dirty = false;
@@ -37,6 +32,14 @@ class AR implements SeekableIterator
     private $results;
     private $values = array();
 
+    /**
+     * connects this object to the database
+     *
+     * @param array $dsn default is to use the current environments DSN.
+     *                   Otherwise use the specified DSN to connect this object
+     *
+     * @return void
+     */
     function connect_to_db($dsn = null) 
     {
         if (!$dsn && isset(App::$env)) {
@@ -58,8 +61,10 @@ class AR implements SeekableIterator
     }
 
     /**
-     *  this method pulls in the schema definition and creates the attributes
-     *  in the object, setting them to null
+     * pulls in the schema definition and creates the attributes
+     * in the object, setting them to null
+     *
+     * @return boolean
      */
     function setup_attributes() 
     {
@@ -71,11 +76,23 @@ class AR implements SeekableIterator
         $this->clear_attributes();
     }
 
+    /**
+     * destructor
+     *
+     * @return void
+     */
     function __destruct() 
     {
         unset($this->db);
         unset($this->values);
     }
+    /** constructor
+     *
+     * @param array   $collection         a collection of values in the format [field name] => value with which to initialize this record   
+     * @param boolean $with_value_changes default 'true'. This allows bypassing the value_changes (??) call
+     *
+     * @return void
+     */
     function __construct($collection = null, $with_value_changes = true) 
     {
         if (!$this->db) { 
@@ -153,8 +170,13 @@ class AR implements SeekableIterator
     }
 
     /** 
-     * this method handles dynamic finders, also known as magic methods.
+     * handles dynamic finders, also known as magic methods.
      * an example would be: customer->find_by_firstname_and_lastname('john', 'smith');
+     *
+     * @param string $method_name The name of the method that was called
+     * @param array  $params      The collection of method parameters that were part of the method call
+     *
+     * @return void
      */
     private function __call($method_name, $params) 
     {
@@ -205,6 +227,13 @@ class AR implements SeekableIterator
             
     }
 
+    /**
+     * checks if an allowed variable is set
+     *
+     * @param string $name the name of the variable to check
+     *
+     * @return boolean
+     */
     private function __isset($name) 
     {
         //debug echo 'testing isset '.$name; echo "<br>\r\n\r\n";
@@ -225,6 +254,15 @@ class AR implements SeekableIterator
 
     }
 
+    /** 
+     * deals with magic properties like relationships and also with 
+     * returning record properties
+     *
+     * @param string $name variable name
+     *
+     * @return variant returns an AR object for relationships and changelog
+     *                 returns a property for record properties
+     */
     private function __get($name) 
     {
         //debug echo 'getting '.$name; echo "<br>\r\n\r\n";
@@ -326,6 +364,15 @@ class AR implements SeekableIterator
         return null;
     }
 
+    /**
+     * sets an object property named $name to $value.
+     * It will refuse to set the primary key field.
+     * 
+     * @param string $name  the name of the property to set
+     * @param string $value the value to set the property to
+     *
+     * @return void
+     */
     private function __set($name, $value) 
     {
         //debug echo 'setting '.$name.' to <u>"'.$value.'"</u>'; echo "<br>\r\n";
@@ -348,14 +395,19 @@ class AR implements SeekableIterator
 
     /**
      * creates a new record; analogous to ROR new method. A shortcut for clear_attributes
+     *
+     * @return AR
      */
     function create() 
     {
         $this->clear_attributes();
+        return $this;
     }
 
     /**
      * works on an existing record in the database and updates it.
+     *
+     * @return integer or boolean
      */
     function update() 
     {
@@ -365,6 +417,10 @@ class AR implements SeekableIterator
     /**
      * works on a brand new object, without a record in the database
      * and saves it to the database
+     *
+     * @param string $save_type default is "save". whether or not to process this 'save' as a save or an update
+     *
+     * @return integer or boolean
      */
     function save($save_type = "save") 
     {
@@ -464,7 +520,11 @@ class AR implements SeekableIterator
     }
     
     /**
-     * this method does the actual saving to the database by converting the collection to SQL
+     * does the actual saving to the database by converting the collection to SQL
+     *
+     * @param array $collection An array of field names (matching the schema) and values to save
+     *
+     * @return integer
      */
     private function save_core($collection) 
     {
@@ -481,7 +541,11 @@ class AR implements SeekableIterator
     }
 
     /**
-     * this method does the actual updating to the database by converting the collection to SQL
+     * does the actual updating to the database by converting the collection to SQL
+     *
+     * @param array $collection An array of field names (matching the schema) and values to update
+     *
+     * @return integer
      */
     private function update_core($collection) 
     {
@@ -499,10 +563,13 @@ class AR implements SeekableIterator
     
     /**
      * saves multiple records to the database (warning, old cold)
-     *
      * an example collection passed would be
      * customer_id => 25
      * product_id => Array(1, 2, 3, 4)
+     *
+     * @param array $collection a collection of records to save
+     *
+     * @return void
     */
     function save_multiple($collection) 
     {
@@ -582,6 +649,10 @@ class AR implements SeekableIterator
     /**
      * inserts entries into the the changelog on save or update.
      * marks the action as saved or updated if the changelog table has an action field
+     *
+     * @param string $action a change action on the record. 'update', 'save' or 'delete'
+     *
+     * @return void
      */
     function changelog_entry($action) 
     {
@@ -612,6 +683,10 @@ class AR implements SeekableIterator
 
     /**
      * gets the highest revision of a specific record
+     *
+     * @param integer $record_id id of the record for which we are finding the highest revision
+     *
+     * @return array  an array consisting of (the highest revision number, the created date)
      */
     function changelog_highest_revision($record_id) 
     {
@@ -636,6 +711,11 @@ class AR implements SeekableIterator
     /**
      * used to modify values in the save/update collection
      * e.g. password_md5 is changed to the md5 version of the password
+     *
+     * @param string &$field field name to test
+     * @param string &$value the current value of that field
+     *
+     * @return boolean
      */
     function write_value_changes(&$field, &$value) 
     {
@@ -670,8 +750,12 @@ class AR implements SeekableIterator
     }
 
     /**
-     * criteria_to_sql takes dynamic criteria, usually from find,
+     *  takes dynamic criteria, usually from find,
      *  and converts them to SQL
+     *
+     * @param variant $criteria if criteria is numeric it is assumed to be a primary key ....etcetc
+     *
+     * @return string the criteria as SQL
      */
     function criteria_to_sql($criteria) 
     {
@@ -704,6 +788,13 @@ class AR implements SeekableIterator
         return $sql_criteria;
     }
 
+    /**
+     * do an sql query
+     *
+     * @param string $sql an sql query
+     *
+     * @return AR
+     */
     function find_by_sql($sql) 
     {
         /* returns $this */
@@ -730,6 +821,14 @@ class AR implements SeekableIterator
         return $this;
     }
 
+    /**
+     * builds a SQL statement based on dynamic criteria
+     *
+     * @param string $finder_criteria        criteria that modify the WHERE clause of the SQL
+     * @param array  $additional_sql_options this is merged with the SQL array, thus allowing additional SELECT, FROM etc criteria to be specified by a finder
+     *
+     * @return AR
+     */
     function find($finder_criteria = null, $additional_sql_options = null) 
     {
         /* returns $this, by way of find_by_sql */
@@ -752,9 +851,16 @@ class AR implements SeekableIterator
         return $result;
     }
 
+    /**
+     * updates the attributes of this record
+     *
+     * @param array   $collection         a collection of values in the format [field name] => value with which to initialize this record   
+     * @param boolean $with_value_changes default 'true'. This allows bypassing the value_changes (??) call
+     *
+     * @return AR returns $this
+     */
     public function update_attributes($collection = null, $with_value_changes = false) 
     {
-        /* returns $this */
         if ( !$collection ) { // if no row is passed then set the current row in results
             if ($this->results && !MDB2::isError($this->results)) {
                 $collection = $this->results->fetchRow();
@@ -799,7 +905,6 @@ class AR implements SeekableIterator
 
     function as_collection($fields = null, $key_field = null, $compress_single_field = false) 
     {
-        /* todo: simply this method. It's a bit complicated to do something simple: then again, as_array now covers that */
         if ($this->last_finder_sql_query == '') {
             throw new Exception('as_collection only works on a collection of records.');
             return false;
@@ -816,11 +921,15 @@ class AR implements SeekableIterator
         } 
         $result = Array();
 
-        $current_index = $this->results->offset; //get the current index of the MDB2 resultset, since we are going to be messing with it; I want to come back to the same place later
+        /*
+         * get the current index of the MDB2 resultset. Since we are going to be moving around in the recordset
+         * I want to be able to get back to the same place later
+         */
+        $current_index = $this->results->offset;
         $this->results->seek(0); //go to the beginning of the resultset
         while ($record = $this->results->fetchRow()) {
             $row = array();
-             //create an array of all the requested fields
+            /*create an array of all the requested fields */
             foreach ($fields as $field) {
                 /* todo: test this functionality */
                 if (substr($field, -2) == '()') {
@@ -843,13 +952,31 @@ class AR implements SeekableIterator
     }
     
     /**
-     *  as array is a simplified version of as_collection
+     * returns a simple array (based on the current recordset criteria) of values for $field
+     * as_array is a simplified version of as_collection
+     *
+     * @param string $field the field name which is the value portion of the array
+     *
+     * @return array an array of the format [primary_key] => value
      */
     function as_array($field = null) 
     {
         return $this->as_collection($field, $this->primary_key_field, true);
     }
 
+    /**
+     * returns an array of html <option> tags for a specific field
+     *
+     * @param variant $selected        the value to mark as the selected option
+     * @param string  $field           the field name to use as the option value
+     * @param variant $show_all_option defines the first <option> tag. 
+     *                                 Default is false which doesn't draw an additional tag.
+     *                                 'all', true or 'true' draws a tag with '--- Any ---' as the text
+     *                                 'none' draws a tag with '--- none ---' as the text
+     *                                 'select_one draws a tag with '--- select one ---' as the text
+     *
+     * @return array an array of html <option> tags
+     */
     function as_select_options($selected = null, $field = null, $show_all_option = false) 
     {
         $result = '';
@@ -874,6 +1001,13 @@ class AR implements SeekableIterator
         return $result;
     }
 
+    /**
+     * checks if a model is in the has_one relationship of this object's model
+     *
+     * @param string $model_name the name of the model to check for
+     *
+     * @return boolean
+     */
     function has_one($model_name) 
     {
         if (!property_exists($this, 'has_one')) {
@@ -882,6 +1016,13 @@ class AR implements SeekableIterator
         return in_array($model_name, explode(',', $this->has_one));
     }
 
+    /**
+     * checks if a model is in the has_many relationship of this object's model
+     *
+     * @param string $model_name the name of the model to check for
+     *
+     * @return boolean
+     */
     function has_many($model_name) 
     {
         if (!property_exists($this, 'has_many')) {
@@ -899,6 +1040,13 @@ class AR implements SeekableIterator
         }
     }
 
+    /**
+     * checks if a model is in the belongs_to relationship of this object's model
+     *
+     * @param string $model_name the name of the model to check for
+     *
+     * @return boolean
+     */
     function belongs_to($model_name)
     {
         if (!property_exists($this, 'belongs_to')) {
@@ -907,6 +1055,13 @@ class AR implements SeekableIterator
         return in_array($model_name, explode(',', $this->belongs_to));
     }
 
+    /**
+     * checks if a model is in the through_model relationship of this object's model
+     *
+     * @param string $model_name the name of the model to check for
+     *
+     * @return boolean
+     */
     function through_model($model_name) 
     {
         if (!property_exists($this, 'has_many_through')) { 
@@ -922,6 +1077,13 @@ class AR implements SeekableIterator
         }
     }
 
+    /**
+     * checks if a model is in the has_many_through relationship of this object's model
+     *
+     * @param string $model_name the name of the model to check for
+     *
+     * @return boolean
+     */
     function has_many_through($model_name) 
     {
         if (!property_exists($this, 'has_many_through')) {
@@ -939,12 +1101,15 @@ class AR implements SeekableIterator
     }
 
     /**
-     * This method returns an english string explaining what the requirements for this field are...
-     * well, it will one day when I get there :) 
+     * returns a * if a field is required (checks validates_presence_of)
+     *
+     * @param string $field_name the field name for which we are checking the requirements
+     *
+     * @return variant returns null if the field is not required and '*' if it is
      */
     function requirements($field_name) 
     {
-        /*todo flesh out this method */
+        /*todo flesh out this method to return an english string explaining what the requirements for this field are */
         //debug("validation requirements for $field_name on ".get_class($this));
         if (property_exists($this, 'validates_presence_of')) { 
             $required_fields = $this->validates_presence_of;
@@ -958,7 +1123,9 @@ class AR implements SeekableIterator
     }
 
     /**
-     * checks that this record is valid. Returns true or false
+     * checks that this record is valid
+     *
+     * @return boolean true is valid, false is invalid
      */
     function is_valid() 
     {
@@ -1003,6 +1170,8 @@ class AR implements SeekableIterator
      * does a sum of all the values for a specific sum_field in this recordset.
      * Loops through the current collection, so finder criteria are naturally
      * taken into account
+     *
+     * @return float the sum value
      */
     function sum() 
     {
@@ -1026,12 +1195,14 @@ class AR implements SeekableIterator
         return $sum;
     }
 
-    /*
-     * calling this method shows a 'friendly' name for this record.
+    /**
+     * shows a 'friendly' name for this record.
      * for example: $customer->display_name() might show first_name and last_name
-     *  because the model has a custom display_name method.
+     * because the model has a custom display_name method.
      * AR looks for fields in the schema named title, name or id (in that order)
-     *  and sets one of those as the display field
+     * and sets one of those as the display field
+     *
+     * @return string the display_field value of the current record, or false if no records in this recordset
      */
     function display_name() 
     {
@@ -1041,6 +1212,15 @@ class AR implements SeekableIterator
         return $this->values[$this->display_field];
     }
 
+    /**
+     * checks a recordset for errors
+     *
+     * @param resultset $result       an MDB2 resultset
+     * @param boolean   $die_on_error default is true. If true it throws an exception if there
+     *                                is an error with the recordset otherwise it returns null
+     *
+     * @return variant the MDB2 resultcode
+     */
     function error_check($result, $die_on_error = true) 
     {
         if (PEAR::isError($result) || MDB2::isError($result)) {
@@ -1060,6 +1240,8 @@ class AR implements SeekableIterator
     
     /**
      * returns the current AR object
+     *
+     * @return AR
      */
     function current() 
     {
@@ -1068,6 +1250,7 @@ class AR implements SeekableIterator
 
     /**
      * returns the key for this record
+     *
      * @return integer
      */
     function key() 
@@ -1079,6 +1262,9 @@ class AR implements SeekableIterator
 
     /**
      * seeks to a specific record
+     *
+     * @param integer $index the key of the record to seek to
+     *
      * @return boolean
      */
     function seek($index) 
@@ -1096,6 +1282,7 @@ class AR implements SeekableIterator
 
     /**
      * checks that this is a valid record
+     *
      * @return boolean
      */
     function valid() 
@@ -1113,6 +1300,8 @@ class AR implements SeekableIterator
 
     /** 
      * moves to the beginning of the collection
+     *
+     * @return void
      */
     function rewind() 
     {
@@ -1128,6 +1317,7 @@ class AR implements SeekableIterator
 
     /** 
      * selects the next record in the collection
+     *
      * @return void
      */
     function next() 
@@ -1146,16 +1336,27 @@ class AR implements SeekableIterator
     );
 }
 
+if (!defined('SQL_INSERT_DATE_FORMAT')) {
+    define('SQL_INSERT_DATE_FORMAT', '%Y-%m-%d'); 
+}
+if (!defined('SQL_INSERT_DATE_TIME_FORMAT')) {
+    define('SQL_INSERT_DATE_TIME_FORMAT', '%Y-%m-%d %R');
+}
+
 /**
- * compares two arrays or two AR objects
- * returning an array of changed attributes
+ * compares two arrays or two AR objects returning an array of changed attributes
  *
- * It automatically ignores id, updated_on, created_on, revision and user_id
- *  unless include_boilerplate is set to true
- *  @return array
+ * @param variant $record1             an array in the format [field name] => value or an AR object
+ * @param variant $record2             an array in the format [field name] => value or an AR object
+ * @param boolean $include_boilerplate It automatically ignores id, updated_on, 
+ *                                      created_on, revision and user_id unless 
+ *                                      include_boilerplate is set to true
+ *
+ * @return array a 1 dimensional array of changed attributes
  */
 function compare_records($record1, $record2, $include_boilerplate = false)
 {
+    /* todo: return the changed values too */
     if (!is_array($record1)) {
         $record1 = $record1->values;
     }
