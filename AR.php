@@ -1,4 +1,5 @@
 <?php
+require ('DB/NestedSet.php');
 /**
  * This file implements the ActiveRecord pattern for Pedantic_Lib
  *
@@ -23,7 +24,6 @@ class AR implements SeekableIterator
      * these can be here as settable but not gettable */    
     /*
         public $model_name, $primary_key_field, $schema_table, $display_field, ;
-        public $has_changelog;
      */
     public $has_one, $has_many, $has_many_through, $belongs_to;
 
@@ -50,11 +50,13 @@ class AR implements SeekableIterator
             //debug("connecting to ".$dsn['database']);
             $this->dsn = $dsn;
 
-            $this->db =& MDB2::singleton($dsn);
+            //$this->db =& MDB2::singleton($dsn);
+            $this->db =& MDB2::factory($dsn);
             //print_r($this->db);
             $this->error_check($this->db);
 
             if ($this->acts_as_nested_set) {
+                $this->nested_set = null;
                 $this->nested_set =& DB_NestedSet::factory('MDB2', $this->dsn, $this->nested_set_params);
                 $this->nested_set->setAttr(array(
                     'node_table' => $this->nested_set_node_table,
@@ -104,16 +106,6 @@ class AR implements SeekableIterator
     function __construct($collection = null, $with_value_changes = true) 
     {
 
-        /* set the acts_as_nested_set property. connect_to_db() needs it */
-        if (!isset($this->acts_as_nested_set)) {
-            $this->acts_as_nested_set = false;
-        }
-
-        /* connect this model to the database */
-        if (!$this->db) { 
-            $this->connect_to_db();
-        }
-
         //debug echo "<b>before setting pk</b><br>\r\n";
         /* set the default primary key field */
         if (!property_exists($this, 'primary_key_field')) { 
@@ -162,7 +154,7 @@ class AR implements SeekableIterator
             $this->has_changelog = false; 
         }
 
-        /*set the display field */
+        /*set the display field. acts_as_nested_set needs it */
         if (!property_exists($this, 'display_field')) {
             if (isset($this->schema_definition['title'])) {
                 $this->display_field = 'title';
@@ -172,25 +164,42 @@ class AR implements SeekableIterator
                 $this->display_field = 'id';
             }
         }
+
         //debug echo('<b>after setting display_field</b><br>');
 
-        /* check for a nested set */
-        if ($this->acts_as_nested_set) {
-            /* an array of field names that DB_NestedSet expects */
+        /* set the acts_as_nested_set property. connect_to_db() needs it */
+        if (property_exists($this, 'acts_as_nested_set')) {
+            $this->acts_as_nested_set = true;
+
+            /* 
+             * an array of field names that DB_NestedSet expects.The format is quite
+             * strange: OUR name for the field is on the left while the name
+             * that DB_NestedSet expects is the one on the right
+             */
             $this->nested_set_params = array(
-                'id'        => 'id',
-                'parent_id' => 'parent_id',
-                'left_id'   => 'left_id',
-                'right_id'  => 'right_id',
-                'order_num' => 'order_num',
-                'level'     => 'level',
-                'name'      => $this->display_field,
+                'id' => 'id',
+                'parent_id' => 'rootid',
+                'left_id' => 'l',
+                'right_id' => 'r',
+                'node_order' => 'norder',
+                'level' => 'level',
+                $this->display_field => 'name'
             );
+            /* add the other fields in the schema to the nested_set_params */
+            foreach (array_keys($this->schema_definition) as $schema_field) {
+                if (!array_key_exists($schema_field, $this->nested_set_params)) {
+                    $this->nested_set_params[$schema_field] = $schema_field;
+                }
+            }
+
             /* set the node table and the lock table */
             $this->nested_set_node_table = $this->schema_table; // I don't see any reason why the node table is not the schema table
-            if (!isset($this->nested_set_lock_table)) {
-                $this->nested_set_lock_table = $this->schema_table.'_lock';
+            if (!property_exists($this, 'nested_set_lock_table')) {
+                $this->nested_set_lock_table = $this->schema_table.'_locks';
             }
+
+        } else {
+            $this->acts_as_nested_set = false;
         }
         
         /* nested_set and changelog are mutually exclusive, because of the types of
@@ -220,7 +229,11 @@ class AR implements SeekableIterator
         if ($collection) {
             $this->update_attributes($collection, $with_value_changes);
         }
-        //die('end of construction');
+
+        /* connect this model to the database */
+        if (!$this->db) { 
+            $this->connect_to_db();
+        }
     }
 
     /** 
@@ -242,8 +255,23 @@ class AR implements SeekableIterator
             }
 
             if ($method_name == 'children') {
+                /* getchildren returns a multi-dimensional array of records. */
                 $child_ids = $this->nested_set->getChildren($this->values[$this->primary_key_field], true); // parameters: id_field, keep_as_array?
-
+                /* get just the record_id's so that we can find() those records (rather than working with an array */ 
+                $child_ids = array_keys($child_ids);
+                $children = new $this->model_name;
+                $children->find($child_ids);
+                return $children;
+            }
+            if ($method_name == 'branch') {
+                /* branch returns a multi-dimensional array of records. */
+                $branch_ids = $this->nested_set->getBranch($this->values[$this->primary_key_field], true); // parameters: id_field, keep_as_array?
+                /* get just the record_id's so that we can find() those records (rather than working with an array */ 
+                #print_r($branch_ids);
+                $branch_ids = array_keys($branch_ids);
+                $branch = new $this->model_name;
+                $branch->find($branch_ids);
+                return $branch;
             }
         }
         //overload finders
@@ -596,13 +624,23 @@ class AR implements SeekableIterator
      */
     private function save_core($collection) 
     {
-        /* is this model a nested_set ? Use the nested_set connection to handle saves */
+
+        /* is this model a nested_set ? Use the nested_set connection to do the initial save */
         if ($this->acts_as_nested_set) {
-            if (!isset($collection['parent_id'])) {
-                /* create a root node */
-                $record_id = $this->nested_set->createRootNode(array($collection), false, false); // parameters: collection, no target_node id, DON'T reinit the tree
+            /* unset the nested_set fields */
+            foreach (array('left_id', 'right_id', 'node_order', 'level') as $ns_field) {
+                unset($collection[$ns_field]);
             }
-            else {
+
+            if (!isset($collection['parent_id']) || $collection['parent_id'] == '') {
+
+                unset($collection['parent_id']);
+
+                /* create a root node */
+                $record_id = $this->nested_set->createRootNode($collection, false, true); // parameters: collection, no target_node id, reinit the tree ( DB_NestedSet gives an error if the reinit param is not true for createRootNode (it appears)
+
+            } else {
+
                 /* create a child node */
                 $record_id = $this->nested_set->createSubNode($collection['parent_id'], $collection);
             }
@@ -988,6 +1026,11 @@ class AR implements SeekableIterator
         return $this;
     }
 
+    /**
+     * clears the properties / attributes of the record and resets it as a clean record;
+     *
+     * @return AR
+     */
     public function clear_attributes() 
     {
         if (property_exists($this, 'schema_definition') && is_array($this->schema_definition)) {
@@ -996,6 +1039,8 @@ class AR implements SeekableIterator
             }
         }
         $this->dirty = false;
+
+        return $this;
     }
 
     function as_collection($fields = null, $key_field = null, $compress_single_field = false) 
@@ -1268,24 +1313,34 @@ class AR implements SeekableIterator
      *
      * @return float the sum value
      */
-    function sum() 
+    function sum($sum_field = null) 
     {
-        if (!property_exists($this, 'sum_field')) {
-            return false;
+        if (!$sum_field) {
+            if (!property_exists($this, 'sum_field')) {
+                return false;
+            }
+            $sum_field = $this->sum_field;
         }
         if ($this->count == 0) {
             return 0;
         }
 
-        $current_index = $this->key(); //get the current index of the MDB2 resultset, since we are going to be messing with it; I want to come back to the same place later
-        $this->rewind(); //go to the beginning of the resultset
+
+        /* 
+         * get the current index of the MDB2 resultset, since we are going to be 
+         * messing with it; I want to come back to the same place later
+         */
+        $current_index = $this->key();
+        /* go to the beginning of the resultset */
+        $this->rewind();
 
         $sum = 0;
         foreach ($this as $record) {
-            $sum += $this->{$this->sum_field};
+            $sum += $this->values[$sum_field];
         }
 
-        $this->seek($current_index); //go back to the index stored earlier
+        /* go back to the index stored earlier */
+        $this->seek($current_index);
 
         return $sum;
     }

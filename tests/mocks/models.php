@@ -11,7 +11,6 @@ class db_conn extends AR
             'database' => 'ARTest'
         );
         parent::connect_to_db($dsn);
-        #$this->db =& MDB2::factory($dsn);
     }
 }
 class customer extends db_conn
@@ -33,6 +32,11 @@ class category extends db_conn
 {
     public $has_many = array("products" =>
         array('ORDER BY' => 'products.name'));
+}
+
+class tree_table extends db_conn
+{
+    public $acts_as_nested_set;
 }
 
 class user extends db_conn

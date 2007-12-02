@@ -44,13 +44,15 @@ static $schema_sql = array(
               `category_id` int(11) NOT NULL,
               `name` varchar(255) NOT NULL,
               `cost` double NOT NULL,
+              `secondary_cost` double NOT NULL,
               PRIMARY KEY  (`id`)
             ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
           'insert' => array(
-                "INSERT INTO ARTest.products (id, category_id, name, cost) VALUES (1, 1, 'Cool Shoe', 200)",
-                "INSERT INTO ARTest.products (id, category_id, name, cost) VALUES (2, 1, '2xCool Shoe', 400)"
+                "INSERT INTO ARTest.products (id, category_id, name, cost, secondary_cost) VALUES (1, 1, 'Cool Shoe', 200, 50)",
+                "INSERT INTO ARTest.products (id, category_id, name, cost, secondary_cost) VALUES (2, 1, '2xCool Shoe', 400, 25)"
             )
         ),
+
     "category" => array('create' => 
             "create table ARTest.categories (
               `id` int(11) NOT NULL auto_increment,
@@ -58,6 +60,33 @@ static $schema_sql = array(
               PRIMARY KEY  (`id`)
             ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
           'insert' => "INSERT INTO ARTest.categories (id, name) VALUES (1, 'Shoes')"),
+
+    "tree_table" => array('create' => 
+            "CREATE TABLE ARTest.tree_tables (
+                    `id` int(11) NOT NULL auto_increment,
+                    `parent_id` int(11) NOT NULL,
+                    `left_id` int(11) NOT NULL,
+                    `right_id` int(11) NOT NULL,
+                    `node_order` int(11) NOT NULL,
+                    `level` int(11) NOT NULL,
+                    `name` varchar(255) NOT NULL,
+                    `sum_test` float NOT NULL,
+                    PRIMARY KEY  (`id`)
+                ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+            "
+                /*, 'insert' => "INSERT INTO ARTest.categories (id, name) VALUES (1, 'Shoes')"
+                 */
+            ),
+    "tree_tables_lock" => array('create' => 
+            "CREATE TABLE ARTest.tree_tables_locks (
+                    `lockID` varchar(255) NOT NULL,
+                    `lockTable` varchar(255) NOT NULL,
+                    `lockStamp` varchar(255) NOT NULL
+                ) ENGINE=MyISAM DEFAULT CHARSET=latin1;"
+                /*, 'insert' => "INSERT INTO ARTest.categories (id, name) VALUES (1, 'Shoes')"
+                 */
+            ),
+
     "user" => array('create' => 
             "create table ARTest.users (
               `id` int(11) NOT NULL auto_increment,
@@ -104,202 +133,306 @@ static $schema_sql = array(
         }
     }
     
-    static $schema_definition = array(
+static $schema_definition = array(
     'product' => Array(
-	'id' => Array(
-		'type' => 'int',
-		'mdb2type' => 'integer',
-		'length' => '4',
-		'default' => ''
-	),
-	'category_id' => Array(
-		'type' => 'int',
-		'mdb2type' => 'integer',
-		'length' => '4',
-		'default' => ''
-	),
-	'name' => Array(
-		'type' => 'varchar',
-		'mdb2type' => 'text',
-		'length' => '255',
-		'default' => ''
-    ),
-	'cost' => Array(
-		'type' => 'float',
-		'mdb2type' => 'float',
-		'default' => ''
+        'id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'category_id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'name' => Array(
+            'type' => 'varchar',
+            'mdb2type' => 'text',
+            'length' => '255',
+            'default' => ''
+        ),
+        'cost' => Array(
+            'type' => 'float',
+            'mdb2type' => 'float',
+            'default' => ''
+        ),
+        'secondary_cost' => Array(
+            'type' => 'float',
+            'mdb2type' => 'float',
+            'default' => ''
         )
     ),
     'category' => Array(
-	'id' => Array(
-		'type' => 'int',
-		'mdb2type' => 'integer',
-		'length' => '4',
-		'default' => ''
-	),
-	'name' => Array(
-		'type' => 'varchar',
-		'mdb2type' => 'text',
-		'length' => '255',
-		'default' => ''
-            ),
+        'id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
         ),
+        'name' => Array(
+            'type' => 'varchar',
+            'mdb2type' => 'text',
+            'length' => '255',
+            'default' => ''
+        ),
+    ),
+
+    'tree_table' => Array(
+        'id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'parent_id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'left_id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'right_id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'level' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'node_order' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'name' => Array(
+            'type' => 'varchar',
+            'mdb2type' => 'text',
+            'length' => '255',
+            'default' => ''
+        ),
+        'sum_test' => Array(
+            'type' => 'float',
+            'mdb2type' => 'float',
+            'default' => ''
+        )
+    ),
+
+    'tree_table_lock' => Array(
+        'lockID' => Array(
+            'type' => 'varchar',
+            'mdb2type' => 'text',
+            'length' => '255',
+            'default' => ''
+        ),
+        'lockTable' => Array(
+            'type' => 'varchar',
+            'mdb2type' => 'text',
+            'length' => '255',
+            'default' => ''
+        ),
+        'lockStamp' => Array(
+            'type' => 'varchar',
+            'mdb2type' => 'text',
+            'length' => '255',
+            'default' => ''
+        ),
+    ),
     'user' => Array(
-	'id' => Array(
-		'type' => 'int',
-		'mdb2type' => 'integer',
-		'length' => '4',
-		'default' => ''
-	),
-	'name' => Array(
-		'type' => 'varchar',
-		'mdb2type' => 'text',
-		'length' => '255',
-		'default' => ''
-            ),
+        'id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
         ),
+        'name' => Array(
+            'type' => 'varchar',
+            'mdb2type' => 'text',
+            'length' => '255',
+            'default' => ''
+        ),
+    ),
     'find' => Array(
-	'id' => Array(
-		'type' => 'int',
-		'mdb2type' => 'integer',
-		'length' => '4',
-		'default' => ''
-	),
-	'name' => Array(
-		'type' => 'varchar',
-		'mdb2type' => 'text',
-		'length' => '255',
-		'default' => ''
-            ),
+        'id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
         ),
+        'name' => Array(
+            'type' => 'varchar',
+            'mdb2type' => 'text',
+            'length' => '255',
+            'default' => ''
+        ),
+    ),
+    'user' => Array(
+        'id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'name' => Array(
+            'type' => 'varchar',
+            'mdb2type' => 'text',
+            'length' => '255',
+            'default' => ''
+        ),
+    ),
+    'find' => Array(
+        'id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'name' => Array(
+            'type' => 'varchar',
+            'mdb2type' => 'text',
+            'length' => '255',
+            'default' => ''
+        ),
+    ),
     'user_find' => Array(
-	'id' => Array(
-		'type' => 'int',
-		'mdb2type' => 'integer',
-		'length' => '4',
-		'default' => ''
-	),
-	'find_id' => Array(
-		'type' => 'int',
-		'mdb2type' => 'integer',
-		'length' => '4',
-		'default' => ''
-	),
-	'user_id' => Array(
-		'type' => 'int',
-		'mdb2type' => 'integer',
-		'length' => '4',
-		'default' => ''
-	),
+        'id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
         ),
+        'find_id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'user_id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+    ),
 
     'customer' => Array(
-	'id' => Array(
-		'type' => 'int',
-		'mdb2type' => 'integer',
-		'length' => '4',
-		'default' => ''
-	),
-	'created_on' => Array(
-		'type' => 'datetime',
-		'mdb2type' => 'timestamp',
-		'length' => '',
-		'default' => ''
-	),
-	'updated_on' => Array(
-		'type' => 'datetime',
-		'mdb2type' => 'timestamp',
-		'length' => '',
-		'default' => ''
-	),
-	'name' => Array(
-		'type' => 'varchar',
-		'mdb2type' => 'text',
-		'length' => '255',
-		'default' => ''
-	),
-	'company_name' => Array(
-		'type' => 'varchar',
-		'mdb2type' => 'text',
-		'length' => '255',
-		'default' => ''
-	),
-	'address' => Array(
-		'type' => 'text',
-		'mdb2type' => 'text',
-		'length' => '',
-		'default' => ''
-	),
-	'active' => Array(
-		'type' => 'char',
-		'mdb2type' => 'text',
-		'length' => '1',
-		'default' => 'Y'
-            ),
-            ),
-            
+        'id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'created_on' => Array(
+            'type' => 'datetime',
+            'mdb2type' => 'timestamp',
+            'length' => '',
+            'default' => ''
+        ),
+        'updated_on' => Array(
+            'type' => 'datetime',
+            'mdb2type' => 'timestamp',
+            'length' => '',
+            'default' => ''
+        ),
+        'name' => Array(
+            'type' => 'varchar',
+            'mdb2type' => 'text',
+            'length' => '255',
+            'default' => ''
+        ),
+        'company_name' => Array(
+            'type' => 'varchar',
+            'mdb2type' => 'text',
+            'length' => '255',
+            'default' => ''
+        ),
+        'address' => Array(
+            'type' => 'text',
+            'mdb2type' => 'text',
+            'length' => '',
+            'default' => ''
+        ),
+        'active' => Array(
+            'type' => 'char',
+            'mdb2type' => 'text',
+            'length' => '1',
+            'default' => 'Y'
+        ),
+    ),
+
     'customer_changelog' => Array(
-	'id' => Array(
-		'type' => 'int',
-		'mdb2type' => 'integer',
-		'length' => '4',
-		'default' => ''
-	),
-	'revision' => Array(
-		'type' => 'int',
-		'mdb2type' => 'integer',
-		'length' => '4',
-		'default' => ''
-	),
-	'customer_id' => Array(
-		'type' => 'int',
-		'mdb2type' => 'integer',
-		'length' => '4',
-		'default' => ''
-	),
-	'action' => Array(
-		'type' => 'varchar',
-		'mdb2type' => 'text',
-		'length' => '255',
-		'default' => ''
-	),
-	'created_on' => Array(
-		'type' => 'datetime',
-		'mdb2type' => 'timestamp',
-		'length' => '',
-		'default' => ''
-	),
-	'updated_on' => Array(
-		'type' => 'datetime',
-		'mdb2type' => 'timestamp',
-		'length' => '',
-		'default' => ''
-	),
-	'name' => Array(
-		'type' => 'varchar',
-		'mdb2type' => 'text',
-		'length' => '255',
-		'default' => ''
-	),
-	'company_name' => Array(
-		'type' => 'varchar',
-		'mdb2type' => 'text',
-		'length' => '255',
-		'default' => ''
-	),
-	'address' => Array(
-		'type' => 'text',
-		'mdb2type' => 'text',
-		'length' => '',
-		'default' => ''
-	),
-	'active' => Array(
-		'type' => 'char',
-		'mdb2type' => 'text',
-		'length' => '1',
-		'default' => 'Y'
-	)
-        ));
+        'id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'revision' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'customer_id' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'action' => Array(
+            'type' => 'varchar',
+            'mdb2type' => 'text',
+            'length' => '255',
+            'default' => ''
+        ),
+        'created_on' => Array(
+            'type' => 'datetime',
+            'mdb2type' => 'timestamp',
+            'length' => '',
+            'default' => ''
+        ),
+        'updated_on' => Array(
+            'type' => 'datetime',
+            'mdb2type' => 'timestamp',
+            'length' => '',
+            'default' => ''
+        ),
+        'name' => Array(
+            'type' => 'varchar',
+            'mdb2type' => 'text',
+            'length' => '255',
+            'default' => ''
+        ),
+        'company_name' => Array(
+            'type' => 'varchar',
+            'mdb2type' => 'text',
+            'length' => '255',
+            'default' => ''
+        ),
+        'address' => Array(
+            'type' => 'text',
+            'mdb2type' => 'text',
+            'length' => '',
+            'default' => ''
+        ),
+        'active' => Array(
+            'type' => 'char',
+            'mdb2type' => 'text',
+            'length' => '1',
+            'default' => 'Y'
+        )
+    ));
 
 }
 ?>

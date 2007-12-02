@@ -27,36 +27,44 @@ class ARTest extends PHPUnit_Framework_TestCase {
      * @access public
      * @static
      */
-    public $delete_db = true;
+    public $delete_db = false;
 
-    public static function main() {
+    public static function main()
+    {
         require_once 'PHPUnit/TextUI/TestRunner.php';
 
         $suite  = new PHPUnit_Framework_TestSuite('ARTest');
         $result = PHPUnit_TextUI_TestRunner::run($suite);
     }
 
-    public function __construct() {
-        $dsn = array(
+    public function __construct()
+    {
+        $this->dsn = array(
             'phptype' => 'mysql',
             'username' => 'dev',
             'password' => 'dev',
             'hostspec' => 'localhost'
         );
-        $this->db =& MDB2::Connect($dsn);
+        $this->db =& MDB2::Connect($this->dsn);
         App::error_check($this->db);
 
-        $this->db->query('DROP DATABASE IF EXISTS ARTest');
-        $this->db->query('CREATE DATABASE ARTest');
-        App::error_check($this->db);
+        $this->recreate_database();
         
     }
-    public function __destruct() {
+    public function __destruct()
+    {
         if ($this->delete_db) {
             $this->db->query('DROP DATABASE IF EXISTS ARTest');
             App::error_check($this->db);
         }
         unset($this->db);
+    }
+    public function recreate_database() 
+    {
+        $this->db->query('DROP DATABASE IF EXISTS ARTest');
+        AR::error_check($this->db);
+        $this->db->query('CREATE DATABASE ARTest');
+        AR::error_check($this->db);
     }
     /**
      * Sets up the fixture, for example, opens a network connection.
@@ -66,12 +74,15 @@ class ARTest extends PHPUnit_Framework_TestCase {
      */
     protected function setUp() 
     {
+        //var_dump('setUp');
+        $this->recreate_database();
 
         #setup the tables
             foreach (App::$schema_sql as $class_name => $query)
             {
                 $this->db->query($query['create']);
-                App::error_check($this->db);
+                AR::error_check($this->db);
+                
                 #hack for customers
                     if ($class_name == 'customer') {
                         $customers_sql = "INSERT INTO ARTest.customers (name, address, company_name)
@@ -79,21 +90,20 @@ class ARTest extends PHPUnit_Framework_TestCase {
                             FROM large_test_data.customers
                             LIMIT 5000";
                             $result = $this->db->query($customers_sql);
-                            App::error_check($result);
-
-                    }
-                    else {
+                            AR::error_check($result);
+                    } else {
                         if (is_array($query['insert'])) {
                             foreach ($query['insert'] as $statement) {
+                                //echo $statement."\r\n";
                                 $result = $this->db->query($statement);
                                 App::error_check($result);
                             }
                         }
                         else {
                             $this->db->query($query['insert']);
+                            AR::error_check($this->db);
                         }
                     }
-                App::error_check($this->db);
             }
     }
 
@@ -105,12 +115,16 @@ class ARTest extends PHPUnit_Framework_TestCase {
      */
     protected function tearDown()
     {
+        //var_dump('tearDown');
+
         if (!$this->delete_db) { return false; }
+
         #delete all the tables
         foreach (App::$schema_sql as $class_name => $query)
         {
             $model_object = new $class_name;
             $drop_sql = 'DROP TABLE '.$model_object->schema_table;
+            //echo $drop_sql."\r\n";
             $this->db->query($drop_sql);
             App::error_check($this->db);
         }
@@ -192,6 +206,11 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(2, $customer->count);
     }
 
+    public function test_find_by_id()
+    {
+        $customer = new customer;
+        $this->assertEquals(1, $customer->find_by_id(1)->count);
+    }
     public function test_find_all()
     {
         $customer = new customer;
@@ -667,10 +686,16 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertNotEquals('new name', $customer->name);
         $c2 = null;
 
-        /* not a test per se... but this code generates an error when it shouldn't. not sure how to test for that */
+        /* 
+         * not a test per se... but this code generates an error when it shouldn't. not sure how to test for that ( pre nov 2007 )
+         * 2007-12-02: not sure this is giving an error anymore
+         *
+         *
+         *check that clear_attributes() returns $this
+         * */
             $customer = new customer;
             $customer->schema_definition = null;
-            $customer->clear_attributes();
+            $this->assertEquals(get_class($customer), get_class($customer->clear_attributes()));
     }
 
     public function test_as_collection() {
@@ -770,7 +795,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
     public function testCriteria_to_sql_single_id()
     {
         $customer = new customer;
-        $this->assertEquals('customers.id=1', $customer->criteria_to_sql(1));
+        $this->assertEquals('ARTest.customers.id=1', $customer->criteria_to_sql(1));
     }
     public function testCriteria_all()
     {
@@ -781,7 +806,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
     {
         $customer = new customer;
         #array of id's
-            $this->assertEquals('customers.id IN (1,2,4)', $customer->criteria_to_sql(array(1, 2, 4)));
+            $this->assertEquals('ARTest.customers.id IN (1,2,4)', $customer->criteria_to_sql(array(1, 2, 4)));
         #empty array
             $this->assertEquals('1=2', $customer->criteria_to_sql(array()));
     }
@@ -801,6 +826,10 @@ class ARTest extends PHPUnit_Framework_TestCase {
 
         $product->find('all');
         $this->assertEquals(600, $product->sum());
+
+        /* test a custom sum field */
+        $product->find('all');
+        $this->assertEquals(75, $product->sum('secondary_cost'));
     }
 
     public function testDisplay_name()
@@ -819,6 +848,51 @@ class ARTest extends PHPUnit_Framework_TestCase {
 
         $customer->find(1); $customer->display_field = 'id';
         $this->assertEquals(1, $customer->display_name());
+    }
+
+    /* acts_as_nested_set tests */
+    public function testnested_set()
+    {
+        $cat = new tree_table;
+        $this->assertTrue($cat->acts_as_nested_set);
+
+        $sql = 'DESCRIBE ARTest.tree_tables;';
+        $this->db->query($sql);
+        AR::error_check($this->db);
+
+        $test = new tree_table;
+
+        //father
+        $cat = new tree_table(
+            array('name' => 'Father', 'sum_test' => 65)
+        );
+        $cat->save();
+
+        /* check that sum_test was saved */
+        $this->AssertEquals(65, $test->find(1)->sum_test);
+
+        $this->assertEquals(1, $test->find('all')->count);
+
+        //son
+        $cat->clear_attributes();
+        $cat->parent_id = 1;
+        $cat->name = 'Son'; $cat->sum_test = 35;
+        $cat->save();
+
+        //grandson
+        $cat->clear_attributes();
+        $cat->parent_id = 2;
+        $cat->name = 'Grandson'; $cat->sum_test = 10;
+        $cat->save();
+
+        $this->assertEquals(3, $test->find('all')->count);
+        /* the father node has only one child, the son */
+        $this->assertEquals(1, $test->find_by_id(1)->children()->count);
+
+        /* the father node has 3 nodes in its branch */
+        $this->assertEquals(3, $test->find_by_id(1)->branch()->count);
+
+        $this->assertEquals(110, $test->find_by_id(1)->branch()->sum('sum_test'));
     }
 }
 
