@@ -32,6 +32,7 @@ class AR implements SeekableIterator
     private $results;
     private $values = array();
 
+
     /**
      * connects this object to the database
      *
@@ -48,11 +49,18 @@ class AR implements SeekableIterator
         if ($dsn) {
             //debug("connecting to ".$dsn['database']);
             $this->dsn = $dsn;
+
             $this->db =& MDB2::singleton($dsn);
             //print_r($this->db);
             $this->error_check($this->db);
-        } else {
-            //raise an exception here ?
+
+            if ($this->acts_as_nested_set) {
+                $this->nested_set =& DB_NestedSet::factory('MDB2', $this->dsn, $this->nested_set_params);
+                $this->nested_set->setAttr(array(
+                    'node_table' => $this->nested_set_node_table,
+                    'lock_table' => $this->nested_set_lock_table
+                ));
+            }
         }
 
         if ($this->db) { 
@@ -89,53 +97,65 @@ class AR implements SeekableIterator
     /** constructor
      *
      * @param array   $collection         a collection of values in the format [field name] => value with which to initialize this record   
-     * @param boolean $with_value_changes default 'true'. This allows bypassing the value_changes (??) call
+     * @param boolean $with_value_changes default 'true'. This allows bypassing the value_changes (??link??) call
      *
      * @return void
      */
     function __construct($collection = null, $with_value_changes = true) 
     {
+
+        /* set the acts_as_nested_set property. connect_to_db() needs it */
+        if (!isset($this->acts_as_nested_set)) {
+            $this->acts_as_nested_set = false;
+        }
+
+        /* connect this model to the database */
         if (!$this->db) { 
             $this->connect_to_db();
         }
 
         //debug echo "<b>before setting pk</b><br>\r\n";
+        /* set the default primary key field */
         if (!property_exists($this, 'primary_key_field')) { 
             $this->primary_key_field = 'id';
         }
         //debug echo "<b>after setting pk</b><br>\r\n\r\n";
 
-        /*get the model name */
+        /* get the model name */
         $this->model_name = get_class($this);
         //debug echo "<b>after setting_model_name</b><br>\r\n\r\n";
        
-        /*pull in the schema definition, and set the attributes to null */
+        /* pull in the schema definition, and set the record attributes to null */
             $this->setup_attributes();
         //debug echo('<b>after setup_attribs</b><br>');
         
-        /*set the primary table, checking first if this model_name is a changelog */
+        /* set the primary table, checking first if this model_name is a changelog model */
         if (!property_exists($this, 'schema_table')) {
+            /* is this model a changelog model? */
             $changelog_pos = strpos($this->model_name, '_changelog');
             if ($changelog_pos > 0) {
                 /* 
-                 * check if the parent model has a schema_table and use it 
+                 * check if the 'parent' model has a schema_table and use it 
                  * instead of inferring the table name from the parent model name
                  */
                 $parent_model_name = substr($this->model_name, 0, $changelog_pos);
                 $parent_model_name = new $parent_model_name;
                 if (isset($parent_model_name->schema_table)) {
+                    /* determine the changelog table name based on the parent model schema table name */
                     $this->schema_table = $parent_model_name->schema_table.'_changelog'; 
                 } else {
+                    /* determine the changelog table name based on the parent model name */
                     $this->schema_table = tableize(pluralize(substr($this->model_name, 0, $changelog_pos))).'_changelog';
                 }
                 unset($parent_model_name);
             } else {
+                /* not a changelog at all. Just set the schema table name based on the model name */
                 $this->schema_table = tableize(pluralize($this->model_name));
             }
         }
-        //debug echo('<b>after setting primary table and stuffs</b><br>');
+        //debug echo('<b>after setting primary table etc</b><br>');
 
-        /*set that this model has a changelog */
+        /* does this model have a changelog? */
         if (property_exists($this->model_name, 'changelog')) { 
             $this->has_changelog = true; unset($this->changelog); 
         } else {
@@ -154,7 +174,40 @@ class AR implements SeekableIterator
         }
         //debug echo('<b>after setting display_field</b><br>');
 
-        /*split the validations - todo. maybe use getobjectvars? todo add all validations */
+        /* check for a nested set */
+        if ($this->acts_as_nested_set) {
+            /* an array of field names that DB_NestedSet expects */
+            $this->nested_set_params = array(
+                'id'        => 'id',
+                'parent_id' => 'parent_id',
+                'left_id'   => 'left_id',
+                'right_id'  => 'right_id',
+                'order_num' => 'order_num',
+                'level'     => 'level',
+                'name'      => $this->display_field,
+            );
+            /* set the node table and the lock table */
+            $this->nested_set_node_table = $this->schema_table; // I don't see any reason why the node table is not the schema table
+            if (!isset($this->nested_set_lock_table)) {
+                $this->nested_set_lock_table = $this->schema_table.'_lock';
+            }
+        }
+        
+        /* nested_set and changelog are mutually exclusive, because of the types of
+         * changes that a nested set requires i.e. changing the tree position of a
+         * single record possibly means changing a large part of the whole tree.
+         * This will flood the changelog. I'm requiring them to be mutually
+         * exclusive until we can solve this problem.
+         */
+        if ($this->acts_as_nested_set && $this->has_changelog) {
+            trigger_error("Properties acts_as_nested_set and has_changelog are mutually exclusive", E_USER_ERROR); die();
+        }
+
+        /*
+         * split the validations
+         * todo. maybe use getobjectvars?
+         * todo add all validations
+         */
         $validations = array('validates_presence_of');
         foreach ($validations as $validation) {
             if (property_exists($this, $validation)) {
@@ -163,15 +216,17 @@ class AR implements SeekableIterator
         }
         //debug echo('<b>after validation setup</b><br>');
 
+        /* update the attributes if the object is created with a collection */
         if ($collection) {
             $this->update_attributes($collection, $with_value_changes);
-        } //updates attribs if object is created with a collection
+        }
         //die('end of construction');
     }
 
     /** 
      * handles dynamic finders, also known as magic methods.
-     * an example would be: customer->find_by_firstname_and_lastname('john', 'smith');
+     * an example: customer->find_by_firstname_and_lastname('john', 'smith');
+     * that method does not exist so __call breaks down the method call and converts it to parameters for find() (??link??)
      *
      * @param string $method_name The name of the method that was called
      * @param array  $params      The collection of method parameters that were part of the method call
@@ -180,6 +235,17 @@ class AR implements SeekableIterator
      */
     private function __call($method_name, $params) 
     {
+        /* nested set function checks */
+        if ($this->acts_as_nested_set) {
+            if ($this->count == 0) {
+                return null;
+            }
+
+            if ($method_name == 'children') {
+                $child_ids = $this->nested_set->getChildren($this->values[$this->primary_key_field], true); // parameters: id_field, keep_as_array?
+
+            }
+        }
         //overload finders
         $finder_criteria_pos = null; $finder_type = null;
         if (substr($method_name, 0, 8) == 'find_by_') { 
@@ -271,7 +337,8 @@ class AR implements SeekableIterator
             return $this->values;
         }
 
-        //check for changelog request
+        /* check for a changelog request */
+        /* todo: re-use changelog, or set the model names etc in the __construct */
         if ($name == 'changelog' && $this->has_changelog) {
             if ($this->count == 0) {
                 throw new Exception("no changelog for empty ".$this->model_name);
@@ -287,20 +354,20 @@ class AR implements SeekableIterator
             return $this->changelog;
         }
 
-        //if it's for reals then return it, and short circuit all the testing
+        /*if it's for reals then return it, and short circuit all the checks */
         if (property_exists($this, $name)) { 
             return $this->$name;
         }
 
-        //attributes / properties of the record
+        /* attributes / properties / values of the record */
         if (array_key_exists($name, $this->values)) {
             //echo "\r\nreturning $name with value ";var_dump($this->values[$name]);echo "\r\n";
             return $this->values[$name]; 
         }
 
-        //relationships magic
+        /* relationships magic */
         if ($this->belongs_to($name)) {
-            //if this object belongs to another one, it contains the foreign key
+            /* if this object belongs to another one, this object contains the foreign key */
             //debug('finding by '.$name);
             if ($this->count == 0) { 
                 return false;
@@ -416,7 +483,8 @@ class AR implements SeekableIterator
 
     /**
      * works on a brand new object, without a record in the database
-     * and saves it to the database
+     * and saves it to the database. In actuality this method handles
+     * both save and update.
      *
      * @param string $save_type default is "save". whether or not to process this 'save' as a save or an update
      *
@@ -484,12 +552,12 @@ class AR implements SeekableIterator
             }
         }
 
-        /*deal with updated_on */
+        /* deal with updated_on */
         if (in_array('updated_on', array_keys($collection)) && !$this->preserve_updated_on) { 
             $collection['updated_on'] = $now;
         }
 
-        /*deal with user_id */
+        /* deal with user_id */
         if (in_array('user_id', array_keys($collection))) {
             if ($_SESSION[APP_NAME]['user_id']) {
                 $collection['user_id'] = $_SESSION[APP_NAME]['user_id'];
@@ -503,10 +571,10 @@ class AR implements SeekableIterator
             $record_id = $this->update_core($collection);
         }
 
-        /*if the save failed, raise an error */
+        /* if the save failed, raise an error */
            //todo... pass the exception back up to here, instead of doing an error check inside *_core 
         
-        /*save/update the changelog */
+        /* save/update the changelog */
         if ($this->has_changelog) {
             $this->changelog_entry($save_type);
         }
@@ -528,15 +596,31 @@ class AR implements SeekableIterator
      */
     private function save_core($collection) 
     {
-        $fields = implode(',', array_keys($collection)); $values = "'".implode("','", array_values($collection))."'";
-        $sql = 'INSERT INTO '.$this->dsn['database'].'.'.$this->schema_table." ($fields) VALUES ($values)";
-        $this->last_sql_query = $sql;
-        //debug ( $sql );die();
-        $save = $this->db->query($sql);$this->error_check($save);
-        
-        //get the key of the new record
+        /* is this model a nested_set ? Use the nested_set connection to handle saves */
+        if ($this->acts_as_nested_set) {
+            if (!isset($collection['parent_id'])) {
+                /* create a root node */
+                $record_id = $this->nested_set->createRootNode(array($collection), false, false); // parameters: collection, no target_node id, DON'T reinit the tree
+            }
+            else {
+                /* create a child node */
+                $record_id = $this->nested_set->createSubNode($collection['parent_id'], $collection);
+            }
+        } else {
+            /* build the sql query */
+            $fields = implode(',', array_keys($collection)); $values = "'".implode("','", array_values($collection))."'";
+            $sql = 'INSERT INTO '.$this->dsn['database'].'.'.$this->schema_table." ($fields) VALUES ($values)";
+
+            $this->last_sql_query = $sql;
+            //debug ( $sql );die();
+
+            $save = $this->db->query($sql); $this->error_check($save);
+            
+            /* get the key of the new record */
             $record_id = $this->db->lastInsertID($this->schema_table, $this->primary_key_field);
             $this->values[$this->primary_key_field] = $record_id;
+        }
+
         return $record_id;
     }
 
@@ -549,16 +633,27 @@ class AR implements SeekableIterator
      */
     private function update_core($collection) 
     {
-        foreach ($collection as $field => $value) {
-            $collection[$field] = "'".$value."'";
+        $record_id = $this->values[$this->primary_key_field];
+
+        /* is this model a nested_set ? Use the nested_set connection to handle updates */
+        if ($this->acts_as_nested_set) {
+            $this->nested_set->updateNode($this->values[$record_id], $collection);
+        } else {
+            foreach ($collection as $field => $value) {
+                $collection[$field] = "'".$value."'";
+            }
+
+            /* build the sql query */
+            $update_sql = implode_with_keys(',', $collection, "");
+            $sql = 'UPDATE '.$this->dsn['database'].'.'.$this->schema_table." SET $update_sql WHERE ".$this->primary_key_field."=".$this->values[$this->primary_key_field];
+            
+            $this->last_sql_query = $sql;
+
+            //debug($sql);
+            $update = $this->db->query($sql); $this->error_check($update);
         }
 
-        $update_sql = implode_with_keys(',', $collection, "");
-        $sql = 'UPDATE '.$this->dsn['database'].'.'.$this->schema_table." SET $update_sql WHERE ".$this->primary_key_field."=".$this->values[$this->primary_key_field];
-        //debug($sql);
-        $this->last_sql_query = $sql;
-        $update = $this->db->query($sql);$this->error_check($update);
-        return $this->values[$this->primary_key_field];
+        return $record_id;
     }
     
     /**
@@ -1390,5 +1485,7 @@ function compare_records($record1, $record2, $include_boilerplate = false)
  * more callbacks todo:
  * before_delete (great for cancelling delete and marking as "deleted")
  * after_delete
+ *
+ * must AR always have a schema table ?
  */
 ?>
