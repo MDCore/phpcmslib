@@ -851,14 +851,10 @@ class ARTest extends PHPUnit_Framework_TestCase {
     }
 
     /* acts_as_nested_set tests */
-    public function testnested_set()
+    public function testnested_set_basics()
     {
         $cat = new tree_table;
         $this->assertTrue($cat->acts_as_nested_set);
-
-        $sql = 'DESCRIBE ARTest.tree_tables;';
-        $this->db->query($sql);
-        AR::error_check($this->db);
 
         $test = new tree_table;
 
@@ -893,6 +889,23 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(3, $test->find_by_id(1)->branch()->count);
 
         $this->assertEquals(110, $test->find_by_id(1)->branch()->sum('sum_test'));
+    }
+    public function testnested_set_multiple_root_nodes()
+    {
+        $cat = new tree_table(array('name' => 'grandfather', 'sum_test' => 150));
+        $this->assertEquals(1, $cat->save());
+        $cat = new tree_table(array('name' => 'father', 'sum_test' => 125));
+        $this->assertEquals(2, $cat->save());
+        $cat = new tree_table(array('name' => 'son', 'sum_test' => 100));
+        $this->assertEquals(3, $cat->save());
+        $cat = new tree_table(array('name' => 'grandson', 'sum_test' => 75));
+        $this->assertEquals(4, $cat->save());
+        $cat = new tree_table(array('name' => 'great-grandson', 'sum_test' => 75));
+        $this->assertEquals(5, $cat->save());
+        
+        /* check that all the records are there */
+        $test = new tree_table;
+        $this->assertEquals(5, $test->find('all')->count);
     }
 }
 

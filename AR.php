@@ -636,8 +636,14 @@ class AR implements SeekableIterator
 
                 unset($collection['parent_id']);
 
-                /* create a root node */
-                $record_id = $this->nested_set->createRootNode($collection, false, true); // parameters: collection, no target_node id, reinit the tree ( DB_NestedSet gives an error if the reinit param is not true for createRootNode (it appears)
+                /* create a root node
+                 * parameters:
+                 *      collection,
+                 *      no target node_id,
+                 *      don't reinit the tree (true seems to delete the entire tree and start again
+                 *          ensuring that there is only one root node. most likely a bad idea.)
+                 */
+                $record_id = $this->nested_set->createRootNode($collection, false, false);
 
             } else {
 
