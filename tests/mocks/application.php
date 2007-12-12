@@ -64,11 +64,12 @@ static $schema_sql = array(
     "tree_table" => array('create' => 
             "CREATE TABLE ARTest.tree_tables (
                     `id` int(11) NOT NULL auto_increment,
-                    `parent_id` int(11) NOT NULL,
-                    `left_id` int(11) NOT NULL,
-                    `right_id` int(11) NOT NULL,
-                    `node_order` int(11) NOT NULL,
-                    `level` int(11) NOT NULL,
+                    `ns_root_id` int(11) NOT NULL,
+                    `ns_parent_id` int(11) NOT NULL,
+                    `ns_left_id` int(11) NOT NULL,
+                    `ns_right_id` int(11) NOT NULL,
+                    `ns_node_order` int(11) NOT NULL,
+                    `ns_level` int(11) NOT NULL,
                     `name` varchar(255) NOT NULL,
                     `sum_test` float NOT NULL,
                     PRIMARY KEY  (`id`)
@@ -186,31 +187,37 @@ static $schema_definition = array(
             'length' => '4',
             'default' => ''
         ),
-        'parent_id' => Array(
+        'ns_root_id' => Array(
             'type' => 'int',
             'mdb2type' => 'integer',
             'length' => '4',
             'default' => ''
         ),
-        'left_id' => Array(
+        'ns_parent_id' => Array(
             'type' => 'int',
             'mdb2type' => 'integer',
             'length' => '4',
             'default' => ''
         ),
-        'right_id' => Array(
+        'ns_left_id' => Array(
             'type' => 'int',
             'mdb2type' => 'integer',
             'length' => '4',
             'default' => ''
         ),
-        'level' => Array(
+        'ns_right_id' => Array(
             'type' => 'int',
             'mdb2type' => 'integer',
             'length' => '4',
             'default' => ''
         ),
-        'node_order' => Array(
+        'ns_level' => Array(
+            'type' => 'int',
+            'mdb2type' => 'integer',
+            'length' => '4',
+            'default' => ''
+        ),
+        'ns_node_order' => Array(
             'type' => 'int',
             'mdb2type' => 'integer',
             'length' => '4',

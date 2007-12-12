@@ -178,11 +178,12 @@ class AR implements SeekableIterator
              */
             $this->nested_set_params = array(
                 'id' => 'id',
-                'parent_id' => 'rootid',
-                'left_id' => 'l',
-                'right_id' => 'r',
-                'node_order' => 'norder',
-                'level' => 'level',
+                'ns_root_id' => 'rootid',
+                'ns_parent_id' => 'parent',
+                'ns_left_id' => 'l',
+                'ns_right_id' => 'r',
+                'ns_node_order' => 'norder',
+                'ns_level' => 'level',
                 $this->display_field => 'name'
             );
             /* add the other fields in the schema to the nested_set_params */
@@ -250,12 +251,12 @@ class AR implements SeekableIterator
     {
         /* nested set function checks */
         if ($this->acts_as_nested_set) {
-            if ($this->count == 0) {
-                return null;
-            }
 
             if ($method_name == 'children') {
-                /* getchildren returns a multi-dimensional array of records. */
+                if ($this->count == 0) { /* we have to do this here, for each method because doing it once for all the methods will return null even if we are just doing a basic find() */
+                    return null;
+                }
+                /* getChildren() returns a multi-dimensional array of records. */
                 $child_ids = $this->nested_set->getChildren($this->values[$this->primary_key_field], true); // parameters: id_field, keep_as_array?
                 /* get just the record_id's so that we can find() those records (rather than working with an array) */ 
                 $children = new $this->model_name;
@@ -265,14 +266,18 @@ class AR implements SeekableIterator
                 }
                 return $children;
             }
-            if ($method_name == 'branch') {
-                /* branch returns a multi-dimensional array of records. */
-                $branch_ids = $this->nested_set->getBranch($this->values[$this->primary_key_field], true); // parameters: id_field, keep_as_array?
+            if ($method_name == 'sub_branch') {
+                if ($this->count == 0) { /* we have to do this here, for each method because doing it once for all the methods will return null even if we are just doing a basic find() */
+                    return null;
+                }
+                /* getSubBranch() returns a multi-dimensional array of records. */
+                $branch_ids = $this->nested_set->getSubBranch($this->values[$this->primary_key_field], true); // parameters: id_field, keep_as_array?
                 /* get just the record_id's so that we can find() those records (rather than working with an array */ 
-                #print_r($branch_ids);
-                $branch_ids = array_keys($branch_ids);
                 $branch = new $this->model_name;
-                $branch->find($branch_ids);
+                if (is_array($branch_ids) && sizeof($branch_ids) > 0 ) {
+                    $branch_ids = array_keys($branch_ids);
+                    $branch->find($branch_ids);
+                }
                 return $branch;
             }
         }
@@ -478,6 +483,11 @@ class AR implements SeekableIterator
             throw new Exception('Cannot modify value of primary key field');
             return false;
         }
+        // check for nested set parent_id setting, rename it to ns_parent_id
+        if (property_exists($this, 'acts_as_nested_set') && 'parent_id' == $name) {
+            $this->values['ns_parent_id'] = $value;
+            return true;
+        }
         // check for properties, or values, of the record and set those in the values array
         if (isset($this->schema_definition) && (in_array($name, array_keys($this->values)))) {
             //debug if (1==2) { echo "setting dirty for $name to $value\r\n";}
@@ -626,17 +636,17 @@ class AR implements SeekableIterator
      */
     private function save_core($collection) 
     {
-
         /* is this model a nested_set ? Use the nested_set connection to do the initial save */
         if ($this->acts_as_nested_set) {
+
             /* unset the nested_set fields */
-            foreach (array('left_id', 'right_id', 'node_order', 'level') as $ns_field) {
+            foreach (array('ns_left_id', 'ns_right_id', 'ns_node_order', 'ns_level') as $ns_field) {
                 unset($collection[$ns_field]);
             }
 
-            if (!isset($collection['parent_id']) || $collection['parent_id'] == '') {
+            if (!isset($collection['ns_parent_id']) || $collection['ns_parent_id'] == '') {
 
-                unset($collection['parent_id']);
+                unset($collection['ns_parent_id']);
 
                 /* create a root node
                  * parameters:
@@ -649,8 +659,9 @@ class AR implements SeekableIterator
 
             } else {
 
+            //print_r($collection);die();
                 /* create a child node */
-                $record_id = $this->nested_set->createSubNode($collection['parent_id'], $collection);
+                $record_id = $this->nested_set->createSubNode($collection['ns_parent_id'], $collection);
             }
         } else {
 

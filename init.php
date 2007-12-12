@@ -16,7 +16,7 @@ require($path_to_root.'/config/application.php');
 
 if (isset($use_PEAR_in_vendor) && $use_PEAR_in_vendor) {
     $local_pear_path = $path_to_root.'/vendor/PEAR/pear/php/';
-    ini_set('include_path', ini_get('include_path').PATH_SEPARATOR.$current_include);
+    ini_set('include_path', ini_get('include_path').PATH_SEPARATOR.$local_pear_path);
 } 
 
 /* PEAR Libraries */

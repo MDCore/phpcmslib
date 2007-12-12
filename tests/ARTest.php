@@ -848,6 +848,24 @@ class ARTest extends PHPUnit_Framework_TestCase {
     }
 
     /* acts_as_nested_set tests */
+    public function testnested_set_children_method()
+    {
+        $test = new customer;
+        try
+        {
+            $test->children();
+        }
+        catch(exception $e)
+        {
+            return;
+        }
+        $this->fail('an exception was not raised');
+    }
+    public function testnested_set_children_method2()
+    {
+        $test = new tree_table;
+        $this->assertEquals(null, $test->children());
+    }
     public function testnested_set_basics()
     {
         $cat = new tree_table;
@@ -872,7 +890,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $cat->save();
 
         /* the father node has only one child, the son */
-        $this->assertEquals(1, $test->find_by_id(1)->children()->count);
+        $this->assertEquals(1, $test->find_by_id(1)->children()->count, 'the father node should have 1 child');
 
         //grandson
         $cat = new tree_table;
@@ -883,30 +901,26 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(3, $test->find('all')->count);
 
         /* the son node has only one child, the grandson */
-        $this->assertEquals(1, $test->find_by_id(2)->children()->count);
+        $this->assertEquals(1, $test->find_by_id(2)->children()->count, 'the son node should only have one child, the grandson');
 
-        /* the father node has 3 nodes in its branch */
-        $this->assertEquals(3, $test->find_by_id(1)->branch()->count);
+        /* the father node has 3 nodes in its subbranch */
+        $this->assertEquals(2, $test->find_by_id(1)->sub_branch()->count, 'the father node should have 2 nodes in its sub_branch');
 
-        $this->assertEquals(110, $test->find_by_id(1)->branch()->sum('sum_test'));
-    }
-    public function testnested_set_children_method()
-    {
-        $test = new customer;
-        try
-        {
-            $test->children();
-        }
-        catch(exception $e)
-        {
-            return;
-        }
-        $this->fail('an exception was not raised');
-    }
-    public function testnested_set_children_method2()
-    {
-        $test = new tree_table;
-        $this->assertEquals(null, $test->children());
+        $this->assertEquals(45, $test->find_by_id(1)->sub_branch()->sum('sum_test'));
+        
+        //great-grandson
+        $cat = new tree_table;
+        $cat->parent_id = 3;
+        $cat->name = 'Great-grandson'; $cat->sum_test = 5;
+        $result = $cat->save();
+
+        /* the father node now has 3 nodes in its subbranch */
+        $this->assertEquals(3, $test->find_by_id(1)->sub_branch()->count, 'The father node should have 3 nodes in its subbranch.');
+
+        /* the son node has 2 nodes in its branch */
+        $this->assertEquals(2, $test->find_by_id(2)->sub_branch()->count, 'The son node should have 2 nodes in its subbranch.');
+
+        $this->assertEquals(50, $test->find_by_id(1)->sub_branch()->sum('sum_test'));
     }
 
 
@@ -926,6 +940,33 @@ class ARTest extends PHPUnit_Framework_TestCase {
         /* check that all the records are there */
         $test = new tree_table;
         $this->assertEquals(5, $test->find('all')->count);
+    }
+    public function testnested_set_bigger_tree()
+    {
+        /* the tree */
+        $cat = new tree_table(array('name' => 'father', 'sum_test' => 125)); $cat->save();
+        $cat = new tree_table(array('ns_parent_id' => 1, 'name' => 'eldest son', 'sum_test' => 100)); $cat->save();
+        $cat = new tree_table(array('ns_parent_id' => 1, 'name' => 'middle son', 'sum_test' => 100)); $cat->save();
+        $cat = new tree_table(array('ns_parent_id' => 1, 'name' => 'youngest son', 'sum_test' => 100)); $cat->save();
+
+        $cat = new tree_table(array('ns_parent_id' => 3, 'name' => 'daughter of middle son', 'sum_test' => 100)); $cat->save();
+        $cat = new tree_table(array('ns_parent_id' => 3, 'name' => 'son of middle son', 'sum_test' => 100)); $cat->save();
+
+        $cat = new tree_table(array('ns_parent_id' => 2, 'name' => 'daughter of eldest son', 'sum_test' => 100)); $cat->save();
+
+        $cat = new tree_table(array('name' => 'brother of father', 'sum_test' => 125)); $cat->save();
+        $cat = new tree_table(array('name' => 'sister of father', 'sum_test' => 125)); $cat->save();
+
+        $cat = new tree_table(array('ns_parent_id' => 5, 'name' => 'grandaughter of father, daughter of daughter of middle son', 'sum_test' => 125)); $cat->save();
+
+        /* the tests */
+        $test = new tree_table;
+        $this->assertEquals(1, $test->find_by_id(1)->count, 'Record #2 not found');
+
+        $this->assertEquals(7, $test->find_by_id(1)->sub_branch()->count, 'The father has 7 people in his sub_tree');
+        $this->assertEquals(3, $test->find_by_id(3)->sub_branch()->count, 'The middle son has 3 people in his sub_tree');
+
+        $this->assertEquals(5, $test->find_by_id(10)->ns_parent_id, 'parent_id should be 5');
     }
 }
 
