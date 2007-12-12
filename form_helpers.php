@@ -202,7 +202,8 @@ class forms
         }
     }
 
-    function form_element($title, $validation_requirements, $element_id, $element, $note = null) {
+    function form_element($title, $validation_requirements, $element_id, $element, $note = null)
+    {
         $result = '';
         $result .= '<p class="form_element" id="fe_'.forms::name_to_id($element_id).'">';
         $result .= '<label>'.$title.':';
@@ -213,7 +214,8 @@ class forms
         return $result;
     }
 
-    function form($default_model, $record = null) {
+    function form($default_model, $record = null)
+    {
         ?><div class="form list_form"><?
         
         $page = App::$controller;
@@ -340,14 +342,10 @@ class forms
         if ( ($element_description[1] == 'select' || $element_description[1] == 'multi_select') && !isset($record->$fk_model) )
         {
             #check for has_one or belongs_to
-                if ($element_description[1] == 'select')
-                {
-                    if (class_exists($fk_model))
-                    {
+                if ($element_description[1] == 'select') {
+                    if (class_exists($fk_model)) {
                         $options_object = new $fk_model;
-                    }
-                    else
-                    {
+                    } else {
                         trigger_error("<i>$fk_model</i> model class does not exist.", E_USER_ERROR); 
                     }
 
@@ -371,8 +369,7 @@ class forms
             $element_description['options'] = $options;
 
             #multi select ?
-            if( $primary_model_object->has_many_through(pluralize($fk_model)) )
-            {   
+            if( $primary_model_object->has_many_through(pluralize($fk_model)) ) {
                 #multi select
                 $fk_model_object = new $fk_model;
                 $join_model_object_name = $primary_model_object->has_many_through(pluralize($fk_model));
@@ -399,8 +396,7 @@ class forms
                 $element_description['value'] = array_values($values);
                 
             }
-            elseif (!(array_key_exists('options', $element_description)))
-            {
+            elseif (!(array_key_exists('options', $element_description))) {
                 trigger_error("Relationship to  <i>".$fk_model."</i> not found", E_USER_WARNING); 
             }
         }

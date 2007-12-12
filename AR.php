@@ -1,5 +1,4 @@
 <?php
-require ('DB/NestedSet.php');
 /**
  * This file implements the ActiveRecord pattern for Pedantic_Lib
  *
@@ -58,6 +57,7 @@ class AR implements SeekableIterator
             if ($this->acts_as_nested_set) {
                 $this->nested_set = null;
                 $this->nested_set =& DB_NestedSet::factory('MDB2', $this->dsn, $this->nested_set_params);
+                $this->error_check($this->nested_set);
                 $this->nested_set->setAttr(array(
                     'node_table' => $this->nested_set_node_table,
                     'lock_table' => $this->nested_set_lock_table
@@ -257,10 +257,12 @@ class AR implements SeekableIterator
             if ($method_name == 'children') {
                 /* getchildren returns a multi-dimensional array of records. */
                 $child_ids = $this->nested_set->getChildren($this->values[$this->primary_key_field], true); // parameters: id_field, keep_as_array?
-                /* get just the record_id's so that we can find() those records (rather than working with an array */ 
-                $child_ids = array_keys($child_ids);
+                /* get just the record_id's so that we can find() those records (rather than working with an array) */ 
                 $children = new $this->model_name;
-                $children->find($child_ids);
+                if (is_array($child_ids) && sizeof($child_ids) > 0 ) {
+                    $child_ids = array_keys($child_ids);
+                    $children->find($child_ids);
+                }
                 return $children;
             }
             if ($method_name == 'branch') {
@@ -651,6 +653,7 @@ class AR implements SeekableIterator
                 $record_id = $this->nested_set->createSubNode($collection['parent_id'], $collection);
             }
         } else {
+
             /* build the sql query */
             $fields = implode(',', array_keys($collection)); $values = "'".implode("','", array_values($collection))."'";
             $sql = 'INSERT INTO '.$this->dsn['database'].'.'.$this->schema_table." ($fields) VALUES ($values)";
@@ -1171,6 +1174,10 @@ class AR implements SeekableIterator
      */
     function has_many($model_name) 
     {
+        /* nested set automatically has many of itself (children) */
+        if ($this->acts_as_nested_set && $this->model_name == $model_name) { 
+            return true;
+        }
         if (!property_exists($this, 'has_many')) {
             return false;
         }
@@ -1195,6 +1202,11 @@ class AR implements SeekableIterator
      */
     function belongs_to($model_name)
     {
+        /* nested set automatically belongs to itself (parent) */
+        if ($this->acts_as_nested_set && $this->model_name == $model_name) { 
+            return true;
+        }
+
         if (!property_exists($this, 'belongs_to')) {
             return false;
         }

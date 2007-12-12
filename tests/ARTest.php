@@ -8,10 +8,6 @@ if (!defined('PHPUnit_MAIN_METHOD')) { define('PHPUnit_MAIN_METHOD', 'ARTest::ma
 }
 
 require_once 'PHPUnit/Framework.php';
-require_once 'MDB2.php';
-
-require_once '../AR.php';
-require_once '../functions.php';
 
 #test models
 require_once 'mocks/models.php';
@@ -274,10 +270,11 @@ class ARTest extends PHPUnit_Framework_TestCase {
 
         $collection = array('name' => 'new name');
         $customer = new customer($collection);
-        $customer->save();
+        $this->assertEquals(5001, $customer->save());
 
         $ct = new customer;
         $ct->find_most_recent_by_id_and_name(5001, 'new name');
+        $this->assertNotEquals('MDB2_Error', get_class($customer->id));
         $this->assertEquals(5001, $customer->id);
         $this->assertEquals('new name', $customer->name);
     }
@@ -866,30 +863,53 @@ class ARTest extends PHPUnit_Framework_TestCase {
 
         /* check that sum_test was saved */
         $this->AssertEquals(65, $test->find(1)->sum_test);
-
         $this->assertEquals(1, $test->find('all')->count);
 
         //son
-        $cat->clear_attributes();
+        $cat = new tree_table;
         $cat->parent_id = 1;
         $cat->name = 'Son'; $cat->sum_test = 35;
         $cat->save();
 
-        //grandson
-        $cat->clear_attributes();
-        $cat->parent_id = 2;
-        $cat->name = 'Grandson'; $cat->sum_test = 10;
-        $cat->save();
-
-        $this->assertEquals(3, $test->find('all')->count);
         /* the father node has only one child, the son */
         $this->assertEquals(1, $test->find_by_id(1)->children()->count);
+
+        //grandson
+        $cat = new tree_table;
+        $cat->parent_id = 2;
+        $cat->name = 'Grandson'; $cat->sum_test = 10;
+        $result = $cat->save();
+
+        $this->assertEquals(3, $test->find('all')->count);
+
+        /* the son node has only one child, the grandson */
+        $this->assertEquals(1, $test->find_by_id(2)->children()->count);
 
         /* the father node has 3 nodes in its branch */
         $this->assertEquals(3, $test->find_by_id(1)->branch()->count);
 
         $this->assertEquals(110, $test->find_by_id(1)->branch()->sum('sum_test'));
     }
+    public function testnested_set_children_method()
+    {
+        $test = new customer;
+        try
+        {
+            $test->children();
+        }
+        catch(exception $e)
+        {
+            return;
+        }
+        $this->fail('an exception was not raised');
+    }
+    public function testnested_set_children_method2()
+    {
+        $test = new tree_table;
+        $this->assertEquals(null, $test->children());
+    }
+
+
     public function testnested_set_multiple_root_nodes()
     {
         $cat = new tree_table(array('name' => 'grandfather', 'sum_test' => 150));

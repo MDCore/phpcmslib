@@ -11,7 +11,7 @@ class Application {
 
     function init($path_to_root) {
 
-    # check for application load or reload
+        /* check for application load or reload */
         if (!isset($_SESSION[APP_NAME]['application'])) {App::$booting = true;}
         if ( isset($_GET['reload']) ) {
             App::$booting = true; App::$reloading = true; $_GET['reload'] = '';
@@ -20,13 +20,13 @@ class Application {
 
         global $environment; #pull in the environment from the config
         
-        # check for running from shell, for tests
+        /* check for running from shell, for tests */
         if (isset($_SERVER['SHELL']) && !is_null($_SERVER['SHELL'])) {
-            #todo, fix this hack... should be test, maybe ?
+            //todo, fix this hack... should be test, maybe ?
             $environment = 'development';    
         }
         
-        #slurp config/application.php settings
+        /* slurp config/application.php settings */
             global $default_face; if ($default_face) { App::$default_face = $default_face; }
             global $allowed_faces; if ($allowed_faces) { App::$allowed_faces = explode(',', $allowed_faces); }
 
@@ -35,15 +35,15 @@ class Application {
         }
 
         Environment::load($environment, $path_to_root);
- 
-        #load the schema definition
-            include $path_to_root.'/config/cache/schema_definition.php';
-            if (!isset($schema_definition) || $schema_definition == null) { trigger_error('Schema definition not set', E_USER_WARNING);  }
-            App::$schema_definition = $schema_definition;
+
+        /* load the schema definition */
+        include $path_to_root.'/config/cache/schema_definition.php';
+        if (!isset($schema_definition) || $schema_definition == null) { trigger_error('Schema definition not set', E_USER_WARNING);  }
+        App::$schema_definition = $schema_definition;
 
         App::load_models(); 
 
-        #load the layouts, controllers and views for ALL faces
+        /* load the layouts, controllers and views for ALL faces */
         if (App::$booting) {
             if (App::$reloading) { echo "<li>Using face <strong>".App::$default_face."</strong></li>"; }
 
@@ -52,7 +52,7 @@ class Application {
                 App::find_these('controllers', $face);
             }
 
-    #run cron jobs, only on app start, not each page load!
+            /* run cron jobs, only on app boot, not each page load! */
             if (class_exists('cron_job')) {
                 require($path_to_root.'/cron_jobs/auto_mailer.php');
                 if (App::$env->run_cron_jobs)
@@ -63,7 +63,7 @@ class Application {
             }
         }
 
-    # if forced reload then print app variables and die
+        /* if forced reload then print app variables and die */
         if (App::$reloading) {
             echo "<li>Session:<pre>";print_r($_SESSION[APP_NAME]);echo '</pre></li>';
             echo "<li>App::\$env<pre>";print_r(App::$env);echo '</pre></li>';

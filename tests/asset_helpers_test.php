@@ -4,9 +4,6 @@ if (!defined('PHPUnit_MAIN_METHOD')) { define('PHPUnit_MAIN_METHOD', 'functions_
 }
 
 require_once 'PHPUnit/Framework.php';
-require_once 'MDB2.php';
-
-require_once '../asset_helpers.php';
  
 class asset_helpers_test extends PHPUnit_Framework_TestCase {
 
