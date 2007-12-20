@@ -695,7 +695,7 @@ class AR implements SeekableIterator
 
         /* is this model a nested_set ? Use the nested_set connection to handle updates */
         if ($this->acts_as_nested_set) {
-            $this->nested_set->updateNode($this->values[$record_id], $collection);
+            $this->nested_set->updateNode($record_id, $collection);
         } else {
             foreach ($collection as $field => $value) {
                 $collection[$field] = "'".$value."'";
