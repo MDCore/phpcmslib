@@ -464,8 +464,11 @@ class forms
             #determine the validation requirements for this field
             $model_object = new $default_model;
 
-            $label = humanize($element_description[0]);
-            if (isset($element_description['label'])) {$label = $element_description['label'];}
+            if (isset($element_description['label'])) {
+                $label = $element_description['label'];
+            } else {
+                $label = humanize($element_description[0]);
+            }
             if (!isset($element_description['note'])) {$element_description['note'] = '';}
             echo self::form_element($label, $model_object->requirements($db_field_name), $field_name, $element_html, $element_description['note']);
         }

@@ -30,55 +30,67 @@ class cm_controller extends action_controller {
 
         # todo document this all
         #foreign key(s)
-            if (isset($_GET['fk'])) {
-                $fk = $_GET['fk'];
-                $fk = explode(',', $fk);
-                foreach ($fk as $keyval) {
-                    $key = substr($keyval, 0, strpos($keyval, '~'));
-                    $value = substr($keyval, strpos($keyval, '~')+1);
-                    $this->foreign_keys[$key] = $value;
-                }
+        if (isset($_GET['fk'])) {
+            $fk = $_GET['fk'];
+            $fk = explode(',', $fk);
+            foreach ($fk as $keyval) {
+                $key = substr($keyval, 0, strpos($keyval, '~'));
+                $value = substr($keyval, strpos($keyval, '~')+1);
+                $this->foreign_keys[$key] = $value;
             }
-            else {
-                $this->foreign_keys = array();
-            }
-
+        }
+        else {
+            $this->foreign_keys = array();
+        }
         if (!isset($this->list_type))       { $this->list_type =  singularize($this->controller_name); }
         if (!isset($this->primary_model))   { $this->primary_model = $this->list_type; }
         if (!isset($this->list_title))      { $this->list_title = proper_nounize(pluralize($this->list_type)); } $this->list_title = proper_nounize($this->list_title);
-        if (!isset($this->email_subject))   { $this->email_subject = $this->list_title; }
+        //deprecated? if (!isset($this->email_subject))   { $this->email_subject = $this->list_title; }
 
-        # row limit, records per page
-            if (isset($_GET['records_per_page'])) { $this->row_limit = $_GET['records_per_page']; }
+        //row limit, records per page
+        if (isset($_GET['records_per_page'])) { $this->row_limit = $_GET['records_per_page']; }
 
-        #edit page title
-            $this->edit_page_title = "Editing a";
-            switch(strtolower(substr($this->list_type, 0, 1))) {case 'a': case 'e': case 'i': case 'o': case 'u': $this->edit_page_title .= 'n';}
-            $this->edit_page_title .= ' '.humanize($this->list_type);
-             
-            $this->draw_form_buttons = true;
+        //edit page title
+        $this->edit_page_title = "Editing a";
+        switch(strtolower(substr($this->list_type, 0, 1))) {case 'a': case 'e': case 'i': case 'o': case 'u': $this->edit_page_title .= 'n';}
+        $this->edit_page_title .= ' '.humanize($this->list_type);
 
-            if (isset($_GET['delete']) && $_GET['delete'] == 'y') {$this->show_delete = true;} else {$this->show_delete = false;}
+        $this->draw_form_buttons = true;
 
-        #setup some objects
-            $this->model_object = new $this->primary_model; #instantiate an object of this model so we can interrogate it
-            $this->filter_object = new filter;
-            
-        #pull certain variables from the model
-            $this->primary_key_field = $this->model_object->primary_key_field;
-            $this->schema_table = $this->model_object->schema_table;
-            
-        # setup the SQL query for the list page
-            $sql_pk = $this->schema_table.".".$this->primary_key_field." as __pk_field";
-            if (!isset($this->sql_query)) {
-                $this->sql_query = array(
-                    'SELECT' => $this->schema_table.'.*, '.$sql_pk,
-                    'FROM'   => $this->schema_table
-                );
-            }
-            else {
-                #oh... um.. right then... well... ok.
-            }
+        /* are we goign into edit mode */
+        if (isset($_GET['delete']) && $_GET['delete'] == 'y') {
+            $this->show_delete = true;
+        } else {
+            $this->show_delete = false;
+        }
+
+        /* the title for the edit action_link */
+        if (!isset($this->edit_link_title)) {
+            $this->edit_link_title = 'Edit';
+        }
+        
+        //todo homogenize view title and edit_link_title
+        /* the title for the view action_link */
+        if (!isset($this->view_title)) {
+            $this->view_title = 'View';
+        }
+
+        //setup some objects
+        $this->model_object = new $this->primary_model; #instantiate an object of this model so we can interrogate it
+        $this->filter_object = new filter;
+
+        //pull certain variables from the model
+        $this->primary_key_field = $this->model_object->primary_key_field;
+        $this->schema_table = $this->model_object->schema_table;
+
+        //setup the SQL query for the list page
+        $sql_pk = $this->schema_table.".".$this->primary_key_field." as __pk_field";
+        if (!isset($this->sql_query)) {
+            $this->sql_query = array(
+                'SELECT' => $this->schema_table.'.*, '.$sql_pk,
+                'FROM'   => $this->schema_table
+            );
+        }
 
         if ( isset( $this->view_page ) ) {
             $this->allow_view = true;
@@ -87,21 +99,18 @@ class cm_controller extends action_controller {
             $this->view_page = tableize(pluralize($this->list_type)).'_view.php';
         }
 
-        if ($this->allow_filters) {
+        if ($this->allow_filters ) {
             if ($this->filters) {
-                #setup the filter names
+                //setup the filter names
                 $this->filter_object->init($this->primary_model, $this->filters);
-                
                 $this->has_filters = true;
-            }
-            else {
+            } else {
                 $this->has_filters = false;
             }
         }
 
-        #some fk stuff
-            if (!isset($this->foreign_key_title_prefix)) {$this->foreign_key_title_prefix = ' in ';}
-
+        //some fk stuff
+        if (!isset($this->foreign_key_title_prefix)) {$this->foreign_key_title_prefix = ' in ';}
     }
 
     function __call($method_name, $params) {
@@ -350,6 +359,15 @@ class cm_controller extends action_controller {
 
     public function cm_list()
     {
+
+        if (!isset($this->list_type)) {
+            /* if the list_type property has not been set then something
+             * has gone quite wrong. Probably your cm_controller __construct()
+             * has not called parent __construct()
+             */
+            trigger_error("list_type not set but trying to draw cm_list(). Check that your controller's __construct() calls parent::__construct()", E_USER_ERROR);die();
+        }
+
         /* settings tweaks if in print mode */
             if (defined('PRINTING_MODE')) {
                 $this->allow_filters = false;
@@ -543,68 +561,68 @@ class cm_controller extends action_controller {
         /* decide what to do with each field, before the loop, instead of in the loop */
         $list_field_descriptors = array();
         foreach (array_keys($this->list_fields) as $field) {
-                    if (substr($field, -2) == '()') {
-                        $method = substr($field, 0, strlen($field)-2);
-                        $list_field_descriptors[$field] = array('call_method', $method);
-                    }
-                    // ok... TODO fix this.. now that this uses mdb2. where is my schema introspection on appstart ?
-                    elseif ((stristr($this->list_field_descriptors[$field], ' date') != false) or strtolower($this->list_field_descriptors[$field]) == 'date') {
-                        $list_field_descriptors[$field] = array('date');
-                    }
-                    elseif (stristr($this->list_field_descriptors[$field], 'time') != false) {
-                        $list_field_descriptors[$field] = array('time');
-                    }
-                    elseif (isset($this->field_length_range)) {
-                        $list_field_descriptors[$field] = array('split', $this->field_length_range);
-                    }
-                    else {
-                        $list_field_descriptors[$field] = array('');
-                    }
+            if (substr($field, -2) == '()') {
+                $method = substr($field, 0, strlen($field)-2);
+                $list_field_descriptors[$field] = array('call_method', $method);
+            }
+            // ok... TODO fix this.. now that this uses mdb2. where is my schema introspection on appstart ?
+            elseif ((stristr($this->list_field_descriptors[$field], ' date') != false) or strtolower($this->list_field_descriptors[$field]) == 'date') {
+                $list_field_descriptors[$field] = array('date');
+            }
+            elseif (stristr($this->list_field_descriptors[$field], 'time') != false) {
+                $list_field_descriptors[$field] = array('time');
+            }
+            elseif (isset($this->field_length_range)) {
+                $list_field_descriptors[$field] = array('split', $this->field_length_range);
+            }
+            else {
+                $list_field_descriptors[$field] = array('');
+            }
         }
 
-
         ob_start();
-        $no_of_related_pages = sizeof($this->related_pages);
+        $no_of_related_pages = sizeof($this->related_pages); //it's faster to do the sizeof here than inside the loop
+        $list_fields_field_names = array_keys($this->list_fields);
+
+        /* the start of the big loop */
         while ($row = $results_list->fetchRow()) {
-            ?><tr class="odd"> <?
+            ?><tr class="odd"><?
             if ($this->show_record_selector) { ?><td class="record_selector_column"><input type="radio" class="record_selector_row" id="record_selector_<?=$row->__pk_field;?>" name="record_selector[]" value="<?=$row->__pk_field;?>"  onclick="cm_select_record(this, <?=$row->__pk_field;?>);" /></td><? }
             if ($this->show_delete) { ?><td><input type="checkbox" class="delete_row" name="delete[]" value="<?=$row->__pk_field;?>" /></td><? }
 
+            /* if we are not in delete mode and editing is allowed */
             if (!$this->show_delete && $this->allow_edit) {
-            # get or set the edit_link_title
-                if (isset($this->edit_link_title)) { $edit_link_title = $this->edit_link_title; } else { $edit_link_title = 'Edit';}#.humanize($this->list_type)
-
-                    ?><td class="action_link"><a href="<?=url_to(array('action' => 'edit')).page_parameters('/^edit/');?>&amp;edit_id=<?=$row->__pk_field;?>"><?=$edit_link_title;?></a></td><?
+                ?><td class="action_link"><a href="<?=url_to(array('action' => 'edit')).page_parameters('/^edit/');?>&amp;edit_id=<?=$row->__pk_field;?>"><?=$this->edit_link_title;?></a></td><?
             }
 
+            /* if we are not in delete mode and viewing is allowed */
             if (!$this->show_delete && $this->allow_view) {
-            # get or set the view_title
-                if (isset($this->view_title)) { $view_title = $this->view_title; } else { $view_title = 'View';} #.humanize($this->list_type)
-
-                ?><td class="action_link"><a href="<?=url_to(array('action' => 'view')).page_parameters('/^view/');?>&amp;view_id=<?=$row->__pk_field;?>"><?=$view_title;?></a></td><?
+                # get or set the view_title
+                    ?><td class="action_link"><a href="<?=url_to(array('action' => 'view')).page_parameters('/^view/');?>&amp;view_id=<?=$row->__pk_field;?>"><?=$this->view_title;?></a></td><?
             }
 
-            #related pages documentation
-            /* a related page draws an extra action link in the list next to say, edit or delete like so:
-            *     [ edit ] [ delete ] [ related ]
-            *
-            *     This is the structure of a related page:
-            *           It is an array of arrays: each related page is a record in the primary array.
-            *           A single record is structured like so:
-            *                   title                   : the title of the related page. e.g. "related" would be the title in the example above. If this is not set then the target controller name will be used.
-            *                   controller              : the target route controller, without _controller appended. E.g. Orders
-            *                   action                  : the target route action. not required.
-            *                   id                      : the target route id. the value of this field name in this record will be passed as the id. not required.
-            *                   fk                      : the foreign key name that the target controller is going to expect. the list page will, by default, append the primary key of this table, unless fk_field is set. not required.
-            *                   fk_field                : the field name to use for the value of the foreign_key field. not required.
-            *                   fk_title_field          : the name that will be passed to the target action as extra title text. not required.
-            *                   append_page_parameters  : setting this values causes page_parameters() to be called with the value of this property
-            */                           
-                if ($this->related_pages && $no_of_related_pages > 0) {
-                    foreach ($this->related_pages as $related_page ) { echo $this->related_page_anchor($related_page, $row); } 
-                }
+            /**
+             * a related page draws an extra action link in the list next to say, edit or delete like so:
+             *     [ edit ] [ delete ] [ related ]
+             *
+             *     This is the structure of a related page:
+             *           It is an array of arrays: each related page is a record in the primary array.
+             *           A single record is structured like so:
+             *                   title                   : the title of the related page. e.g. "related" would be the title in the example above. If this is not set then the target controller name will be used.
+             *                   controller              : the target route controller, without _controller appended. E.g. Orders
+             *                   action                  : the target route action. not required.
+             *                   id                      : the target route id. the value of this field name in this record will be passed as the id. not required.
+             *                   fk                      : the foreign key name that the target controller is going to expect. the list page will, by default, append the primary key of this table, unless fk_field is set. not required.
+             *                   fk_field                : the field name to use for the value of the foreign_key field. not required.
+             *                   fk_title_field          : the name that will be passed to the target action as extra title text. not required.
+             *                   append_page_parameters  : setting this values causes page_parameters() to be called with the value of this property
+             */                           
+            if ($this->related_pages && $no_of_related_pages > 0) {
+                foreach ($this->related_pages as $related_page ) { echo $this->related_page_anchor($related_page, $row); } 
+            }
 
-            foreach (array_keys($this->list_fields) as $field) {
+            /* here we actually write out the value of the field */
+            foreach ($list_fields_field_names as $field) {
                 $this_field_descriptor = $list_field_descriptors[$field];
                 ?><td><?
                 switch ($this_field_descriptor[0]) {
@@ -625,7 +643,8 @@ class cm_controller extends action_controller {
                 }
             }
             ?></td><?
-        } ?></tr><?
+        }
+        ?></tr><?
         ob_end_flush();
     }
 
