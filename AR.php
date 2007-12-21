@@ -991,12 +991,11 @@ class AR implements SeekableIterator
             return;
         }
 
-        $sql['SELECT']      = "*";
+        $sql['SELECT']      = $this->schema_table.'.*';
         $sql['FROM']        = $this->dsn['database'].'.'.$this->schema_table;
         $sql['WHERE']       = $this->criteria_to_sql($finder_criteria);
 
         if ($additional_sql_options) {
-           
             $sql = SQL_merge($sql, $additional_sql_options);
         }
 

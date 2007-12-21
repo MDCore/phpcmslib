@@ -461,6 +461,7 @@ class cm_controller extends action_controller {
         }
         
         #turn the array into a string
+            $this->list_sql = $list_sql;
             #print_r ( $list_sql );
             $results_query = SQL_implode($list_sql);
             $sql_pk = $this->schema_table.".".$this->primary_key_field." as __pk_field";
@@ -679,17 +680,22 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
 
     public function cm_view()
     {
+        // is this function even in use anymore ?!!?
+        // todo refactor as quick viewing class, like the edit
+
         $edit_id = $_GET['view_id'];
+        $record = $this->model_object->find($edit_id);
+        if ($record && $record->count > 0) {
+            //valid record
+        } else {
+            echo 'No '.humanize($this->primary_model).' found.';die();
+        }
+
         if (!$view_page) {$view_page = $this->view_page;}
         ?><h2>Viewing a<?
         switch(strtolower(substr($this->list_type, 0, 1))) {case 'a': case 'e': case 'i': case 'o': case 'u': echo 'n';}
         ?> <?=humanize($this->list_type)?></h2><?
-        $sql = 'SELECT * FROM '.$this->schema_table.' WHERE '.$this->primary_key_field.' = '.$edit_id;
-        $AR = new AR;
-        $values = $AR->db->query($sql);AR::error_check($values);
-        $values = $values->fetchRow();
-        $this->model_object->update_attributes($values);
-        $record = $this->model_object;
+
         require(App::$env->content_path.'/'.$view_page);
         $this->render_inline();
     }
@@ -697,17 +703,19 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
     public function cm_edit()
     {
         $edit_id = $_GET['edit_id'];
+        $record = $this->model_object->find($edit_id);
+
+        if ($record && $record->count > 0) {
+            //valid record
+        } else {
+            echo 'No '.humanize($this->primary_model).' found.';die();
+        }
+
+
         # pull out id's and suchlike
         $this->edit_page_title = str_replace('__id__', $edit_id, $this->edit_page_title); #todo fix this hack, replace with actual field names in some way
         ?><h2><?=$this->edit_page_title;?></h2><?
         ?><form method="post" enctype="multipart/form-data" action="<?=url_to(array('action' => 'update')).page_parameters('/^edit/')?>&edit_id=<?=$edit_id?>"><?
-
-        $sql = 'SELECT * FROM '.$this->schema_table.' WHERE '.$this->primary_key_field." = '".$edit_id."'";
-        $AR = new AR;
-        $values = $AR->db->query($sql);AR::error_check($values);
-        $values = $values->fetchRow();
-        $this->model_object->update_attributes($values);
-        $record = $this->model_object;
 
         $form_fields = $this->form_fields;
         if (isset($form_fields)) {
@@ -770,7 +778,20 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
                     $_SESSION[APP_NAME]['username'] = $email;
                     $_SESSION[APP_NAME]['user_id'] = $user_id;
 
-                    if (method_exists($this, 'assign_login_rights')) { $this->assign_login_rights(); }
+                    /**
+                     * assigning login rights
+                     *
+                     * if the method exists it MUST return true or logging in was a failure.
+                     * assign_login_rights() must be a method of the face controller
+                     */
+                    if (method_exists($this, 'assign_login_rights')) {
+                        if ($this->assign_login_rights() !== true) {
+                            unset($_SESSION[APP_NAME]);
+                            $redirect = 'location: '.url_to(array('face' => 'cm')).'?flash='.urlencode('Unable to login. Please contact your system administrator.');
+                            header($redirect);
+                            die();
+                        }
+                    }
 
                     #successful login! redirect to default. 
                         header('location: '.url_to(array('face' => 'cm')));
@@ -783,10 +804,10 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
                 }
             }
             else {
-                $_GET['flash'] = null;
+                //$_GET['flash'] = null;
                 App::$route['controller'] = 'default_controller';
                 App::$route['action'] = 'login';
-                global $view_parameters; $view_parameters['hide_menu'] = true;
+                //not working for some reason $this->view_parameters['hide_menu'] = true;
             }
         }
         
