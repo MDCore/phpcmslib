@@ -360,12 +360,13 @@ class forms
             $field_name = $default_model."[$db_field_name]";
 
             if ($element_description['field']) {$field = $element_description['field'];} else {$field = null;}
-            if ($element_description['show_all_option']) {$show_all_option = $element_description['show_all_option'];} else {$show_all_option = null;}
-            if ($element_description['criteria']) {$criteria = $element_description['criteria'];} else {$criteria = '';}
-            if ($element_description['order by']) {$criteria .= 'ORDER BY '.$element_description['order by'];}
+            if ($element_description['show_all_option']) {$show_all_option = $element_description['show_all_option'];} else { $show_all_option = null; }
+            if ($element_description['criteria']) { $criteria = $element_description['criteria']; } else { $criteria = ''; }
+            if ($element_description['additional_sql_options']) { $additional_sql_options = $element_description['additional_sql_options']; } else { $criteria = null; }
+            if ($element_description['order by']) { $criteria .= 'ORDER BY '.$element_description['order by']; }
 
             if ($criteria == '') { $criteria = 'all'; }
-            $options = $options_object->find($criteria)->as_select_options($record->$db_field_name, $field, $show_all_option);
+            $options = $options_object->find($criteria, $additional_sql_options)->as_select_options($record->$db_field_name, $field, $show_all_option);
             $element_description['options'] = $options;
 
             #multi select ?
