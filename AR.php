@@ -105,7 +105,6 @@ class AR implements SeekableIterator
      */
     function __construct($collection = null, $with_value_changes = true) 
     {
-
         //debug echo "<b>before setting pk</b><br>\r\n";
         /* set the default primary key field */
         if (!property_exists($this, 'primary_key_field')) { 
@@ -296,31 +295,34 @@ class AR implements SeekableIterator
         if ($finder_criteria_pos) {
             $find_by = substr($method_name, $finder_criteria_pos);
             $find_by = explode('_and_', $find_by);
-            $finder_criteria = '';
+            $finder_criteria = array();
+
+            $finder_where = '';
             $cnt = 0;
-            foreach ($find_by as $finder_criterion) {
-                $finder_criteria.= $finder_criterion." = '".$params[$cnt]."' AND ";
+            foreach ($find_by as $find_by_field) {
+                $finder_where .= $this->dsn['database'].'.'.$this->schema_table.'.'.$find_by_field." = '".$params[$cnt]."' AND ";
                 $cnt++;
             }
             if ($cnt > 0 ) { 
-                $finder_criteria = '('.substr($finder_criteria, 0, strlen($finder_criteria)-5).')';
+                // strip the last AND from the finder criteria string
+                $finder_where = '('.substr($finder_where, 0, strlen($finder_where)-5).')';
             }
+            $finder_criteria['WHERE'][] = $finder_where;
             
-            //extra params for special finders
-            if (is_array($params[$cnt])) { 
-                $additional_criteria = $params[$cnt];
+            //special finders
+            if (is_array($params[$cnt])) {
+                $finder_criteria = SQL_merge($finder_criteria, $params[$cnt]);
             }
-            switch ( $finder_type )
-            {
+            switch ($finder_type) {
             case 'most recent':
-                $additional_criteria['ORDER BY'][] = $this->primary_key_field.' DESC';
+                $finder_criteria['ORDER BY'][] = $this->primary_key_field.' DESC';
                 break;
             case 'first':
-                $additional_criteria['ORDER BY'][] = $this->primary_key_field.' ASC';
+                $finder_criteria['ORDER BY'][] = $this->primary_key_field.' ASC';
                 break;
             }
 
-            return $this->find($finder_criteria, $additional_criteria);
+            return $this->find(null, $finder_criteria);
         } else {
             throw new Exception("Method $method_name not defined");
                 return null;
@@ -785,10 +787,10 @@ class AR implements SeekableIterator
         //mark deleted in changelog
         if ($this->has_changelog) {
             $to_delete = new $this->model_name;
-            $changelog_criteria['SELECT']      = "*";
+            $changelog_criteria['SELECT']      = $this->dsn['database'].'.'.$this->schema_table.'.*';
             $changelog_criteria['FROM']        = $this->dsn['database'].'.'.$this->schema_table;
             $changelog_criteria['WHERE']       = $sql_criteria;
-            $to_delete->find_by_sql(SQL_implode($changelog_criteria));
+            $to_delete->find_by_sql($changelog_criteria);
             foreach ($to_delete as $record) {
                 $this->changelog_entry('delete');
             }
@@ -903,8 +905,9 @@ class AR implements SeekableIterator
     }
 
     /**
-     *  takes dynamic criteria, usually from find,
-     *  and converts them to SQL
+     * Takes criteria for modifying the WHERE clause of an SQL statement
+     * and converts them to SQL.
+     * This method is used by find() and delete()
      *
      * @param variant $criteria if criteria is numeric it is assumed to be a primary key ....etcetc
      *
@@ -912,7 +915,7 @@ class AR implements SeekableIterator
      */
     function criteria_to_sql($criteria) 
     {
-        /*if passed a numeric value assume it's a Primary Key */
+        /*if passed a numeric value we assume it's a Primary Key */
         if (is_numeric($criteria)) {
             $sql_criteria = 
                 $this->dsn['database'].'.'.
@@ -920,6 +923,7 @@ class AR implements SeekableIterator
                 $this->primary_key_field.'='.
                 $criteria;
         } elseif (is_string($criteria)) {
+            /* a string can be either 'ALL' or pure SQL */
             if (strtolower($criteria)== 'all') {
                 $sql_criteria = '1=1';
             } else {
@@ -927,14 +931,15 @@ class AR implements SeekableIterator
             }
         } elseif (is_array($criteria)) {
             if (sizeof($criteria) > 0) {
-                /*I assume we are passing an array of ID's */
+                /*I assume we are beign passed an array of ID's */
                 $sql_criteria = $this->dsn['database'].'.'.$this->schema_table.'.'.$this->primary_key_field.' IN (';
                 foreach ($criteria as $id) {
                     $sql_criteria .= $id.',';
-                } 
+                }
                 $sql_criteria = substr($sql_criteria, 0, strlen($sql_criteria)-1);
                 $sql_criteria .= ')';
             } else {
+                /* an empty array ? what a strange thing to pass. No records for you! */
                 $sql_criteria = '1=2';
             }
         }
@@ -944,13 +949,17 @@ class AR implements SeekableIterator
     /**
      * do an sql query
      *
-     * @param string $sql an sql query
+     * @param mixed $sql an sql query or an SQL collection
      *
      * @return AR
      */
     function find_by_sql($sql) 
     {
-        /* returns $this */
+        
+        if (is_array($sql)) {
+            $sql = SQL_implode($sql);
+        }
+
         $this->last_sql_query = $sql;
         $this->last_finder_sql_query = $sql;
         $this->results = $this->db->query($sql);
@@ -991,7 +1000,7 @@ class AR implements SeekableIterator
             return;
         }
 
-        $sql['SELECT']      = $this->schema_table.'.*';
+        $sql['SELECT']      = $this->dsn['database'].'.'.$this->schema_table.'.*';
         $sql['FROM']        = $this->dsn['database'].'.'.$this->schema_table;
         $sql['WHERE']       = $this->criteria_to_sql($finder_criteria);
 
@@ -999,7 +1008,7 @@ class AR implements SeekableIterator
             $sql = SQL_merge($sql, $additional_sql_options);
         }
 
-        $result = $this->find_by_sql(SQL_implode($sql));
+        $result = $this->find_by_sql($sql);
         return $result;
     }
 

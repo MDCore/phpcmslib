@@ -240,25 +240,25 @@ class ARTest extends PHPUnit_Framework_TestCase {
     {
         $customer = new customer;
         $customer->find('all', array('ORDER BY' => 'id DESC'));
-        $this->assertEquals('SELECT customers.* FROM ARTest.customers WHERE 1=1 ORDER BY id DESC', $customer->last_sql_query);
+        $this->assertEquals('SELECT ARTest.customers.* FROM ARTest.customers WHERE 1=1 ORDER BY id DESC', $customer->last_sql_query);
     }
     public function test_single_finder_with_attributes2()
     {
         $customer = new customer;
         $customer->find_by_name('Mary Williams', array('ORDER BY' => 'id DESC'));
-        $this->assertEquals("SELECT customers.* FROM ARTest.customers WHERE (name = 'Mary Williams') ORDER BY id DESC", $customer->last_sql_query);
+        $this->assertEquals("SELECT ARTest.customers.* FROM ARTest.customers WHERE (ARTest.customers.name = 'Mary Williams') ORDER BY id DESC", $customer->last_sql_query);
     }
     public function test_single_finder_with_attributes3()
     {
         $customer = new customer;
         $customer->find_by_name('cust 1', array('WHERE' => 'AND name != \'cats\''));
-        $this->assertEquals("SELECT customers.* FROM ARTest.customers WHERE (name = 'cust 1') AND name != 'cats'", $customer->last_sql_query);
+        $this->assertEquals("SELECT ARTest.customers.* FROM ARTest.customers WHERE (ARTest.customers.name = 'cust 1') AND name != 'cats'", $customer->last_sql_query);
     }
     public function test_single_finder_with_attributes4()
     {
         $customer = new customer;
         $customer->find_by_name('cust 1', array('WHERE' => array("AND name != 'cats'", "AND name != 'lol'")));
-        $this->assertEquals("SELECT customers.* FROM ARTest.customers WHERE (name = 'cust 1') AND name != 'cats' AND name != 'lol'", $customer->last_sql_query);
+        $this->assertEquals("SELECT ARTest.customers.* FROM ARTest.customers WHERE (ARTest.customers.name = 'cust 1') AND name != 'cats' AND name != 'lol'", $customer->last_sql_query);
     }
 
     public function test_special_finders()
@@ -303,7 +303,7 @@ class ARTest extends PHPUnit_Framework_TestCase {
 
     public function test_finder_all_with_criteria() {
         $customer = new customer;
-        $expected = 'SELECT customers.* FROM ARTest.customers WHERE 1=1 AND id=2559';
+        $expected = 'SELECT ARTest.customers.* FROM ARTest.customers WHERE 1=1 AND id=2559';
         $customer->find('all', array('WHERE' => ' AND id=2559'));
         $result = $customer->last_sql_query;
         $this->assertEquals($expected, $result);
