@@ -468,7 +468,7 @@ class cm_controller extends action_controller {
             $sql_pk = $this->schema_table.".".$this->primary_key_field." as __pk_field";
             $results_query = str_replace( '__pk__', $sql_pk, $results_query );
 
-        if ($this->debug_sql) { debug ( $results_query ); }
+        if ($this->debug_sql) { print_r($results_query); }
 
         $AR = new AR;
         #get the number of records

@@ -520,6 +520,24 @@ class ARTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals("new name's", $customer->name);
     }
 
+    public function testSave_keeps_user_id() {
+    /* there was a bug in AR::save() where it would set the user_id in the collection
+     * to $_SESSION[APP_NAME]['user_id'] if it existed
+     */
+        define('APP_NAME', 'ARTest');
+        $_SESSION[APP_NAME]['user_id'] = 17;
+
+        $user_find = new user_find(array(
+            'find_id' => 99, 
+            'user_id' => 25
+        ));
+        $uf_id = $user_find->save();
+
+        $test = new user_find;
+        $test->find_by_id($uf_id);
+        $this->assertEquals(25, $test->user_id, 'AR::save() is changing the value of user_id');
+    }
+
     /*
      * update tests
      */

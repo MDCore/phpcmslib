@@ -599,13 +599,6 @@ class AR implements SeekableIterator
             $collection['updated_on'] = $now;
         }
 
-        /* deal with user_id */
-        if (in_array('user_id', array_keys($collection))) {
-            if ($_SESSION[APP_NAME]['user_id']) {
-                $collection['user_id'] = $_SESSION[APP_NAME]['user_id'];
-            }
-        }
-
         if ($save_type == "save") { 
             $record_id = $this->save_core($collection);
         }
@@ -642,7 +635,7 @@ class AR implements SeekableIterator
         if ($this->acts_as_nested_set) {
 
             /* unset the nested_set fields */
-            foreach (array('ns_left_id', 'ns_right_id', 'ns_node_order', 'ns_level') as $ns_field) {
+            foreach (array('ns_left_id', 'ns_right_id', 'ns_root_id', 'ns_node_order', 'ns_level') as $ns_field) {
                 unset($collection[$ns_field]);
             }
 
