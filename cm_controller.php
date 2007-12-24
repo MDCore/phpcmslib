@@ -264,7 +264,8 @@ class cm_controller extends action_controller {
             $has_meta_data = true;
         }
         # save the form data for the primary model 
-            $primary_model_object = new $this->primary_model($collection);
+        $primary_model_object = new $this->primary_model;
+        $primary_model_object->update_attributes($collection);
 
         if (!$primary_model_object->is_valid()) {
             $_GET['flash'] = $primary_model_object->validation_errors; 
