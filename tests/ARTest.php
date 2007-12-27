@@ -862,6 +862,12 @@ class ARTest extends PHPUnit_Framework_TestCase {
 
         $customer->find(1); $customer->display_field = 'id';
         $this->assertEquals(1, $customer->display_name());
+
+        // test for apostrophe's and stripslashes
+        $customer = new customer;
+        $customer->find(1); $customer->company_name = "O' Reilly"; $customer->save();
+        $customer->find_by_id(1);
+        $this->assertEquals("O' Reilly", $customer->display_name());
     }
 
     /* acts_as_nested_set tests */
