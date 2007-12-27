@@ -50,6 +50,9 @@ class cm_controller extends action_controller {
         //row limit, records per page
         if (isset($_GET['records_per_page'])) { $this->row_limit = $_GET['records_per_page']; }
 
+        //add page title
+        $this->add_page_title = 'Add a new '.humanize($this->list_type);
+
         //edit page title
         $this->edit_page_title = "Editing a";
         switch(strtolower(substr($this->list_type, 0, 1))) {case 'a': case 'e': case 'i': case 'o': case 'u': $this->edit_page_title .= 'n';}
@@ -728,7 +731,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
     }
 
     public function cm_add() {
-        ?><h2>Add a new <?=humanize($this->list_type);?></h2><?
+        ?><h2><?=$this->add_page_title;?></h2><?
         ?><form method="post" enctype="multipart/form-data" action="<?
         $parameters_to_remove = $parameters = '';
         if (isset($this->add_postback_parameters)) {$parameters_to_remove .= ','.$this->add_postback_parameters['filters']; $parameters.= '&'.$this->add_postback_parameters['parameters'];}
@@ -775,7 +778,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
                 $user = new user;
                 $user_id = $user->is_valid_user( $email, $password );
                 if ( $user_id ) {
-                    $_SESSION[APP_NAME]['display_name'] = $user->first_name.' '.$user->last_name;
+                    $_SESSION[APP_NAME]['display_name'] = $user->display_name();
                     $_SESSION[APP_NAME]['username'] = $email;
                     $_SESSION[APP_NAME]['user_id'] = $user_id;
 
