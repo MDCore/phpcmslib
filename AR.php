@@ -1030,7 +1030,7 @@ class AR implements SeekableIterator
 
         if ( $collection ) {  // it's possible no collection was set with the DB lookup: checking again.
             //set row variables to properties
-            foreach ($collection as $field => $value) {   
+            foreach ($collection as $field => $value) {
                 if ($with_value_changes) {
                     //apply value changes to this field and value
                     $value_change_result = $this->write_value_changes($field, $value);
