@@ -706,6 +706,12 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
 
     public function cm_edit()
     {
+        $this->render_inline();
+        if (!$this->allow_edit) {
+            echo 'Edit not allowed';
+            return true;
+        }
+
         $edit_id = $_GET['edit_id'];
         $record = $this->model_object->find($edit_id);
 
@@ -714,7 +720,6 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
         } else {
             echo 'No '.humanize($this->primary_model).' found.';die();
         }
-
 
         # pull out id's and suchlike
         $this->edit_page_title = str_replace('__id__', $edit_id, $this->edit_page_title); #todo fix this hack, replace with actual field names in some way
@@ -731,7 +736,14 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
     }
 
     public function cm_add() {
+        $this->render_inline();
         ?><h2><?=$this->add_page_title;?></h2><?
+
+        if (!$this->allow_add) {
+            echo 'Add is not allowed';
+            return true;
+        }
+
         ?><form method="post" enctype="multipart/form-data" action="<?
         $parameters_to_remove = $parameters = '';
         if (isset($this->add_postback_parameters)) {$parameters_to_remove .= ','.$this->add_postback_parameters['filters']; $parameters.= '&'.$this->add_postback_parameters['parameters'];}
@@ -755,7 +767,6 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
         }
         if ($this->draw_form_buttons) {forms::form_buttons('save',false);}
         ?></form><?
-        $this->render_inline();
     }
 
 #------------------------------#
