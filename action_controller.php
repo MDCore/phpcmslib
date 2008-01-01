@@ -101,8 +101,10 @@ class action_controller {
     public function render_as_string($url_as_array, $layout = null)
     {
         #save some settings
-            $current_route = App::$route;
-            $current_layout = $this->layout;
+            $current['route'] = App::$route;
+            $current['layout'] = $this->layout;
+            $current['face'] = $this->face;
+            $current['controller'] = $this->controller_name;
             $current_rendered_status = $this->action_rendered_inline;
 
             App::$route = $url_as_array;
@@ -112,6 +114,13 @@ class action_controller {
                 $_GET = $url_as_array['GET'];
             }
             $this->layout = $layout;
+            if (isset($url_as_array['face'])) {
+                $this->face = $url_as_array['face'];
+            }
+            if (isset($url_as_array['controller'])) {
+                $this->controller_name = $url_as_array['controller'];
+            }
+
             $this->action_rendered_inline = false;
 
         #execute the action, saving the contents
@@ -127,8 +136,10 @@ class action_controller {
             ob_clean();
 
         #restore settings
-            App::$route = $current_route; #reset the route
-            $this->layout = $current_layout;
+            App::$route = $current['route']; #reset the route
+            $this->layout = $current['layout'];
+            $this->face = $current['face'];
+            $this->controller_name = $current['controller'];
             $this->action_rendered_inline = $current_rendered_status;
             if (isset($current_GET)) { $_GET = $current_GET; }
 
