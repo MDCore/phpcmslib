@@ -461,7 +461,7 @@ class cm_controller extends action_controller {
             $this->list_sort_field = "sort_order ASC";
         }
         if ($this->list_sort_field) {
-            $list_sql['ORDER BY'][] = $this->list_sort_field.' '.$this->list_sort_type;
+            $list_sql['ORDER BY'] = $this->list_sort_field.' '.$this->list_sort_type;
         }
         
         #turn the array into a string
