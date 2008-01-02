@@ -631,8 +631,8 @@ class cm_controller extends action_controller {
                 $this_field_descriptor = $list_field_descriptors[$field];
                 ?><td><?
                 switch ($this_field_descriptor[0]) {
-                case 'method':
-                    echo $this->model_object->{$list_fields_descriptor[1]}($row);
+                case 'call_method':
+                    echo $this->model_object->{$this_field_descriptor[1]}($row);
                     break;
                 case 'date':
                     echo strftime(DATE_FORMAT, strtotime((string)$row->$field));
@@ -825,7 +825,6 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
                 //not working for some reason $this->view_parameters['hide_menu'] = true;
             }
         }
-        
     }
 }
 ?>
