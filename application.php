@@ -9,7 +9,7 @@ class Application {
     static $render_contents = null;
     static $skip_model_require = false;
 
-    function init($path_to_root) {
+    static function init($path_to_root) {
 
         /* check for application load or reload */
         if (!isset($_SESSION[APP_NAME]['application'])) {App::$booting = true;}
@@ -73,11 +73,11 @@ class Application {
         }
     }
 
-    function load_models() {
+    static function load_models() {
         if (App::$booting) { App::find_these('models'); }
 
         if (App::$reloading) { echo "<li>Loading models<ul>"; }
-        if ($_SESSION[APP_NAME]['application']['models']) {
+        if (isset($_SESSION[APP_NAME]['application']['models'])) {
             foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model) {
                 if (App::$reloading) {echo "<li>loading <strong>$model_name</strong> ($model)</li>"; }
                 global $path_to_root;
@@ -90,7 +90,7 @@ class Application {
         if (App::$reloading) { echo "</ul></li>"; }
     }
     
-    function find_these($name, $face = null, $path = null) {
+    static function find_these($name, $face = null, $path = null) {
         if (App::$reloading) {
             echo "<li>parsing $name folder";
             if ($face) { echo " for $face"; }
@@ -127,7 +127,7 @@ class Application {
         }
     }
 
-    function require_this($type_name, $name, $face = null) {
+    static function require_this($type_name, $name, $face = null) {
         #this is not used to require models, only other resources
 
         $type_name = pluralize($type_name);
@@ -144,7 +144,7 @@ class Application {
         }
     }
 
-    function error_check($result, $die_on_error = true) {
+    static function error_check($result, $die_on_error = true) {
         if (PEAR::isError($result) || MDB2::isError($result)) {
             if ($die_on_error)
             {
@@ -160,4 +160,185 @@ class Application {
 }
 #convenience method
 class App extends Application { var $foo = ''; } #foo is there cos I read something about empty classes not working so lekker. yes, yes, where's my proof...
+
+
+/**
+ * error handler only in !dev
+ */
+
+function application_exception_handler($exc) {
+    $errno = $exc->getCode();
+    $errstr = $exc->getMessage();
+    $errfile = $exc->getFile();
+    $errline = $exc->getLine();
+
+    $backtrace = $exc->getTrace();
+
+    email_error($errno, $errstr, $errfile, $errline, $backtrace);
+}
+
+function application_error_handler($errno, $errstr='', $errfile='', $errline='') {
+    // if error has been supressed with an @
+    if (error_reporting() == 0) {
+        return;
+    }
+
+    if(!defined('E_STRICT')) {
+        define('E_STRICT', 2048);
+    }
+    if(!defined('E_RECOVERABLE_ERROR')) {
+        define('E_RECOVERABLE_ERROR', 4096);
+    }
+    /* I don't want these errors to be dealt with... they're annoying ones :) */
+    switch($errno) {
+    case E_STRICT:
+    case E_NOTICE:
+    case E_USER_NOTICE:
+        return true; // false means: let the default error handler take care of it
+        break;
+        /*
+    case E_ERROR:
+    case E_WARNING:
+    case E_PARSE:
+    case E_CORE_ERROR:
+    case E_CORE_WARNING:
+    case E_COMPILE_ERROR:
+    case E_COMPILE_WARNING:
+    case E_USER_ERROR:
+    case E_USER_WARNING:
+    case E_RECOVERABLE_ERROR:
+        */
+    }
+
+    $backtrace = array_reverse(debug_backtrace());
+
+    email_error($errno, $errstr, $errfile, $errline, $backtrace);
+}
+
+function email_error($errno, $errstr='', $errfile='', $errline='', $backtrace = null) {
+    /* stringify and friendlify error codes */
+    switch($errno) {
+    case E_ERROR:
+        $error_friendly = "Error";
+        $error_type = 'E_ERROR';
+        break;
+    case E_WARNING:
+        $error_friendly = "Warning";
+        $error_type = 'E_WARNING';
+        break;
+    case E_PARSE:
+        $error_friendly = "Parse Error";
+        $error_type = 'E_PARSE';
+        break;
+    case E_NOTICE:
+        $error_friendly = "Notice";
+        $error_type = 'E_NOTICE';
+        break;
+    case E_CORE_ERROR:
+        $error_friendly = "Core Error";
+        $error_type = 'E_CORE_ERROR';
+        break;
+    case E_CORE_WARNING:
+        $error_friendly = "Core Warning";
+        $error_type = 'E_CORE_WARNING';
+        break;
+    case E_COMPILE_ERROR:
+        $error_friendly = "Compile Error";
+        $error_type = 'E_COMPILE_ERROR';
+        break;
+    case E_COMPILE_WARNING:
+        $error_friendly = "Compile Warning";
+        $error_type = 'E_COMPILE_WARNING';
+        break;
+    case E_USER_ERROR:
+        $error_friendly = "User Error";
+        $error_type = 'E_USER_ERROR';
+        break;
+    case E_USER_WARNING:
+        $error_friendly = "User Warning";
+        $error_type = 'E_USER_WARNING';
+        break;
+    case E_USER_NOTICE:
+        $error_friendly = "User Notice";
+        $error_type = 'E_USER_NOTICE';
+        break;
+    case E_STRICT:
+        $error_friendly = "Strict Notice";
+        $error_type = 'E_STRICT';
+        break;
+    case E_RECOVERABLE_ERROR:
+        $error_friendly = "Recoverable Error";
+        $error_type = 'E_RECOVERABLE_ERROR';
+        break;
+    default:
+        $error_type = "Unknown error ($errno)";
+        break;
+    }
+
+    foreach ($backtrace as $v) {
+        if (isset($v['class'])) {
+            $trace = 'in class '.$v['class'].'::'.$v['function'].'(';
+            if (isset($v['args'])) {
+                $separator = '';
+                foreach($v['args'] as $arg ) {
+                    $trace .= "$separator".getArgument($arg);
+                    $separator = ', ';
+                }
+            }
+            $trace .= ')';
+        }
+
+        elseif (isset($v['function']) && empty($trace)) {
+            $trace = 'in function '.$v['function'].'(';
+            if (!empty($v['args'])) {
+                $separator = '';
+                foreach($v['args'] as $arg ) {
+                    $trace .= "$separator".getArgument($arg);
+                    $separator = ', ';
+                }
+            }
+            $trace .= ')';
+        }
+    }
+
+    $body = "<h2>$error_friendly ($error_type)</h2> $errstr in <strong>$errfile</strong> on line <strong>$errline</strong>";
+    $body .= '<br/><hr/>'.$trace;
+
+    // find out who to mail to and do it
+    global $email_errors_to;
+    if (isset($email_errors_to) && $email_errors_to != '') {
+        $subject = '['.$_SERVER['HTTP_HOST'].'] Error - '.date(DATE_RFC822);
+        mail('gavin@pedantic.co.za', $subject, $body);
+
+        // print a pretty error message 
+        die('An error has occured. The system administrator has been notified.');
+    } else {
+        echo $body;
+        die();
+    }
+}
+
+function getArgument($arg) {
+    switch (strtolower(gettype($arg))) {
+        case 'string':
+            return( '"'.str_replace( array("\n"), array(''), $arg ).'"' );
+        case 'boolean':
+            return (bool)$arg;
+        case 'object':
+            return 'object('.get_class($arg).')';
+        case 'array':
+            $ret = 'array(';
+            $separtor = '';
+            foreach ($arg as $k => $v) {
+                $ret .= $separtor.getArgument($k).' => '.getArgument($v);
+                $separtor = ', ';
+            }
+            $ret .= ')';
+            return $ret;
+        case 'resource':
+            return 'resource('.get_resource_type($arg).')';
+        default:
+            return var_export($arg, true);
+    }
+}
 ?>
