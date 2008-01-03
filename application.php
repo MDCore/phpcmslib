@@ -22,8 +22,13 @@ class Application {
         
         /* check for running from shell, for tests */
         if (isset($_SERVER['SHELL']) && !is_null($_SERVER['SHELL'])) {
-            //todo, fix this hack... should be test, maybe ?
-            $environment = 'development';    
+            //todo, fix this hack
+            if (isset($GLOBALS['argv']) && isset($GLOBALS['argv'][1])) {
+                $environment = $GLOBALS['argv'][1];
+            } else {
+                //should be test, maybe ?
+                $environment = 'development';    
+            }
         }
         
         /* slurp config/application.php settings */

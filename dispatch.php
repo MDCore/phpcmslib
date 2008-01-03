@@ -1,7 +1,7 @@
 <?
 if (isset($config['profiling']) && $config['profiling'] == true) apd_set_pprof_trace();
 
-$path_to_root = '../../..';
+if (!isset($path_to_root)) { $path_to_root = '../../..'; }
 
 #get the name of any dispatcher passed in the querystring
     $dispatcher = '';
@@ -28,7 +28,7 @@ $path_to_root = '../../..';
     require($dispatcher_path);
 
 #initialize the application
-    include('./init.php');
+    include($path_to_root.'/vendor/pedantic/lib/init.php');
 
 #do the dispatching process
     $dispatch = new $dispatcher; $dispatch->process();
