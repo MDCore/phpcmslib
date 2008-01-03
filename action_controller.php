@@ -107,7 +107,11 @@ class action_controller {
             $current['controller'] = $this->controller_name;
             $current_rendered_status = $this->action_rendered_inline;
 
-            App::$route = $url_as_array;
+            /* overwrite individual items, that way current ways stay the same e.g. the face */
+            foreach ($url_as_array as $url_portion => $url_value) {
+                App::$route[$url_portion] = $url_value;
+            }
+            //App::$route = $url_as_array;
             #deal with $_GET
             if (isset($url_as_array['GET'])) {
                 $current_GET = $_GET;
