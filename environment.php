@@ -32,8 +32,8 @@ class Environment {
             }
             if ($environment == "auto") # i.e. it's still auto
             {
-                $environment = "staging";
-                if (App::$reloading) {echo "<li>No environment matched. Using <strong>staging</strong> environment.</li>";}
+                $environment = "development";
+                if (App::$reloading) {echo "<li>No environment matched. Using <strong>development</strong> environment.</li>";}
             }
             if ($environment == "must_match")
             {
