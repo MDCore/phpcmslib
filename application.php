@@ -280,70 +280,89 @@ function email_error($errno, $errstr='', $errfile='', $errline='', $backtrace = 
         break;
     }
 
-    foreach ($backtrace as $v) {
-        if (isset($v['class'])) {
-            $trace = 'in class '.$v['class'].'::'.$v['function'].'(';
-            if (isset($v['args'])) {
-                $separator = '';
-                foreach($v['args'] as $arg ) {
-                    $trace .= "$separator".getArgument($arg);
-                    $separator = ', ';
-                }
-            }
-            $trace .= ')';
-        }
+    $trace = '';
 
-        elseif (isset($v['function']) && empty($trace)) {
-            $trace = 'in function '.$v['function'].'(';
-            if (!empty($v['args'])) {
-                $separator = '';
-                foreach($v['args'] as $arg ) {
-                    $trace .= "$separator".getArgument($arg);
-                    $separator = ', ';
-                }
-            }
-            $trace .= ')';
-        }
-    }
+    /* backtrace does echo()'s and print_r()'s so grab it! */
+    ob_start();
+    backtrace();
+
+
+    /* $_GET */
+    echo '<br/><hr/><h3>$_GET</h3>';var_dump($_GET);
+
+    /* $_POST */
+    echo '<br/><hr/><h3>$_GET</h3>';var_dump($_GET);
+
+
+    /* $_SERVER */
+    echo '<br/><hr/><h3>$_SERVER</h3>';var_dump($_SERVER);
+
+    $backtrace = ob_get_contents();
+
+    ob_clean();
 
     $body = "<h2>$error_friendly ($error_type)</h2> $errstr in <strong>$errfile</strong> on line <strong>$errline</strong>";
-    $body .= '<br/><hr/>'.$trace;
+    $body .= '<br/><hr/>'.$backtrace;
+        
 
-    // find out who to mail to and do it
+    /* find out who to  send the mail to and do it */
     global $email_errors_to;
     if (isset($email_errors_to) && $email_errors_to != '') {
+        $headers = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+
         $subject = '['.$_SERVER['HTTP_HOST'].'] Error - '.date(DATE_RFC822);
-        mail('gavin@pedantic.co.za', $subject, $body);
+        $body = '<html><head></head><body>'.$body.'</body></html>';
+        mail('gavin@pedantic.co.za', $subject, $body, $headers);
 
         // print a pretty error message 
-        die('An error has occured. The system administrator has been notified.');
+        http_header('501');
+        echo '<h1>HTTP/1.1 500 Internal Server Error</h1>';
+        echo 'An error has occured. The system administrator has been notified.';
+        die();
     } else {
         echo $body;
         die();
     }
 }
 
-function getArgument($arg) {
-    switch (strtolower(gettype($arg))) {
-        case 'string':
-            return( '"'.str_replace( array("\n"), array(''), $arg ).'"' );
-        case 'boolean':
-            return (bool)$arg;
-        case 'object':
-            return 'object('.get_class($arg).')';
-        case 'array':
-            $ret = 'array(';
-            $separtor = '';
-            foreach ($arg as $k => $v) {
-                $ret .= $separtor.getArgument($k).' => '.getArgument($v);
-                $separtor = ', ';
+function backtrace()
+{
+    $bt = debug_backtrace();
+   
+    echo "<h3>Backtrace (most recent call last)</h3>\n";
+    /* I'm starting at two here because:
+     * 0 is backtrace()
+     * 1 is email_error()
+     *
+     * basically a waste of time
+     */
+    for($i = 2; $i <= count($bt) - 1; $i++) {
+        if(!isset($bt[$i]["file"])) {
+            echo "[PHP core called function]<br />";
+        } else {
+            echo "File: <strong>".$bt[$i]["file"]."</strong><br/>";
+        }
+       
+        if(isset($bt[$i]["line"])) {
+            echo "<strong>line ".$bt[$i]["line"]."</strong><br />";
+        }
+        echo "function called: <i>".$bt[$i]["function"].'</i><br />';
+       
+        if($bt[$i]["args"]) {
+            echo "args: ";
+            for($j = 0; $j <= count($bt[$i]["args"]) - 1; $j++) {
+                if(is_array($bt[$i]["args"][$j])) {
+                    var_dump($bt[$i]["args"][$j]);
+                } else {
+                    echo $bt[$i]["args"][$j];
+                }
+                           
+                if($j != count($bt[$i]["args"]) - 1) {
+                    echo ", ";
+                }
             }
-            $ret .= ')';
-            return $ret;
-        case 'resource':
-            return 'resource('.get_resource_type($arg).')';
-        default:
-            return var_export($arg, true);
+        }
     }
 }
 ?>
