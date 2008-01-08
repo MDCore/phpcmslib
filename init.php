@@ -56,10 +56,10 @@ if (!isset($only_require_libraries)) {
     App::init($path_to_root);
 
     // set the custom error handler
-    //if ($environment != 'development' && $environment != '') {
-        set_error_handler('application_error_handler');
-        //set_exception_handler('application_exception_handler');
-    //}
+    if ($environment != '') {
+        set_error_handler('framework_error_handler');
+        set_exception_handler('framework_exception_handler');
+    }
 
 
 }

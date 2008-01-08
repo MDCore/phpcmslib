@@ -168,21 +168,10 @@ class App extends Application { var $foo = ''; } #foo is there cos I read someth
 
 
 /**
- * error handler only in !dev
+ * error handler only for !dev
  */
 
-function application_exception_handler($exc) {
-    $errno = $exc->getCode();
-    $errstr = $exc->getMessage();
-    $errfile = $exc->getFile();
-    $errline = $exc->getLine();
-
-    $backtrace = $exc->getTrace();
-
-    email_error($errno, $errstr, $errfile, $errline, $backtrace);
-}
-
-function application_error_handler($errno, $errstr='', $errfile='', $errline='') {
+function framework_error_handler($errno, $errstr='', $errfile='', $errline='') {
     // if error has been supressed with an @
     if (error_reporting() == 0) {
         return;
@@ -217,10 +206,44 @@ function application_error_handler($errno, $errstr='', $errfile='', $errline='')
 
     $backtrace = array_reverse(debug_backtrace());
 
-    email_error($errno, $errstr, $errfile, $errline, $backtrace);
+    handle_error($errno, $errstr, $errfile, $errline, $backtrace);
+}
+function framework_exception_handler($exc) {
+    $errno = $exc->getCode();
+    $errstr = $exc->getMessage();
+    $errfile = $exc->getFile();
+    $errline = $exc->getLine();
+
+    $backtrace = $exc->getTrace();
+
+    handle_error($errno, $errstr, $errfile, $errline, $backtrace);
 }
 
-function email_error($errno, $errstr='', $errfile='', $errline='', $backtrace = null) {
+function handle_error($errno, $errstr='', $errfile='', $errline='', $backtrace = null) {
+    /* Lets 500 - Internal Server Error this script */
+    http_header('500');
+
+    $detailed_error = detailed_error_description($errno, $errstr, $errfile, $errline, $backtrace);
+
+    /* do we send an email or just display it? */
+    global $email_errors_to;
+    global $environment;
+    if (isset($email_errors_to) && $email_errors_to != '' && $environment != 'development') {
+        $headers = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+
+        $subject = '['.$_SERVER['HTTP_HOST'].'] Error - '.date(DATE_RFC822);
+        mail($email_errors_to, $subject, $detailed_error, $headers);
+
+        // print a pretty error message 
+        die(friendly_error_description());
+    } else {
+        //die(friendly_error_description());
+        die($detailed_error);
+    }
+}
+
+function detailed_error_description($errno, $errstr='', $errfile='', $errline='', $backtrace = null) {
     /* stringify and friendlify error codes */
     switch($errno) {
     case E_ERROR:
@@ -280,64 +303,75 @@ function email_error($errno, $errstr='', $errfile='', $errline='', $backtrace = 
         break;
     }
 
-    $trace = '';
-
     /* backtrace does echo()'s and print_r()'s so grab it! */
     ob_start();
-    backtrace();
+    ?>
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+        <title><?=APP_DISPLAY_NAME;?></title>
+<style type="text/css">
+.error_handler_part {
+    border: 2px solid #999;
+    background-color: #ffffcc;
+    padding: 5px;
+    margin-bottom: 5px;
+}
+.error_handler_part h3 {
+    margin: 0; padding: 0;
+}
+</style>
+    </head>
+    <body>
+    <h2><?="$error_friendly ($error_type)";?></h2> in <strong><?=$errfile;?></strong> on line <strong><?=$errline;?></strong><pre><?=$errstr;?></pre><?
 
+    if (isset($backtrace) && !is_null($backtrace)) {
+        backtrace($backtrace);
+    }
 
     /* $_GET */
-    echo '<br/><hr/><h3>$_GET</h3>';var_dump($_GET);
+    echo '<div class="error_handler_part"><h3>$_GET</h3><pre>';print_r($_GET);echo '</pre></div>';
 
     /* $_POST */
-    echo '<br/><hr/><h3>$_GET</h3>';var_dump($_GET);
+    echo '<div class="error_handler_part"><h3>$_POST</h3><pre>';print_r($_POST);echo '</pre></div>';
 
 
     /* $_SERVER */
-    echo '<br/><hr/><h3>$_SERVER</h3>';var_dump($_SERVER);
+    echo '<div class="error_handler_part"><h3>$_SERVER</h3><pre>';print_r($_SERVER);echo '</pre></div>';
 
-    $backtrace = ob_get_contents();
+    ?></body></html><?
 
+    $error_page = ob_get_contents();
     ob_clean();
-
-    $body = "<h2>$error_friendly ($error_type)</h2> $errstr in <strong>$errfile</strong> on line <strong>$errline</strong>";
-    $body .= '<br/><hr/>'.$backtrace;
-        
-
-    /* find out who to  send the mail to and do it */
-    global $email_errors_to;
-    if (isset($email_errors_to) && $email_errors_to != '') {
-        $headers = "MIME-Version: 1.0\r\n";
-        $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
-
-        $subject = '['.$_SERVER['HTTP_HOST'].'] Error - '.date(DATE_RFC822);
-        $body = '<html><head></head><body>'.$body.'</body></html>';
-        mail('gavin@pedantic.co.za', $subject, $body, $headers);
-
-        // print a pretty error message 
-        http_header('501');
-        echo '<h1>HTTP/1.1 500 Internal Server Error</h1>';
-        echo 'An error has occured. The system administrator has been notified.';
-        die();
-    } else {
-        echo $body;
-        die();
-    }
+    return $error_page;
+}
+function friendly_error_description() {
+    ob_start();
+    ?><html>
+        <head></head>
+        <body>
+        <h1>Oops!</h1>
+        Something went wrong that we didn't expect and unfortunately we can't carry on.<br/><br/>
+        Don't worry, we've sent an email to the system administrator, so someone does know about it.
+        </body>
+        </html>
+    <?
+    $error_page = ob_get_contents();
+    ob_clean();
+    return $error_page;
 }
 
-function backtrace()
-{
-    $bt = debug_backtrace();
+function backtrace($backtrace = null) {
+    if (!is_null($backtrace)) {
+        $bt = $backtrace;
+    } else {
+        $bt = debug_backtrace();
+    }
    
-    echo "<h3>Backtrace (most recent call last)</h3>\n";
-    /* I'm starting at two here because:
-     * 0 is backtrace()
-     * 1 is email_error()
-     *
-     * basically a waste of time
-     */
-    for($i = 2; $i <= count($bt) - 1; $i++) {
+    echo '<div class="error_handler_part"><h3>Backtrace (most recent call last)</h3>';
+
+    for($i = 0; $i <= count($bt)- 1; $i++) {
         if(!isset($bt[$i]["file"])) {
             echo "[PHP core called function]<br />";
         } else {
@@ -353,7 +387,7 @@ function backtrace()
             echo "args: ";
             for($j = 0; $j <= count($bt[$i]["args"]) - 1; $j++) {
                 if(is_array($bt[$i]["args"][$j])) {
-                    var_dump($bt[$i]["args"][$j]);
+                    echo '<pre>';print_r($bt[$i]["args"][$j]); echo '</pre>';
                 } else {
                     echo $bt[$i]["args"][$j];
                 }
@@ -363,6 +397,8 @@ function backtrace()
                 }
             }
         }
+        echo '<hr/>';
     }
+    echo '</div>';
 }
 ?>
