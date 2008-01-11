@@ -3,6 +3,7 @@ class schema_interregator
 {
     function pull_schema_for_model($model_name, $echo_progress = false)
     {
+        if (substr($model_name, 0, 1) != '_')  { /* don't try to interrogate or load models prefixed with _ */
             $model_object = new $model_name;
             if (!isset($model_object->virtual))
             {
@@ -43,6 +44,7 @@ class schema_interregator
                     return $fields_in_table;
                 }
             }
+        }
     }
 
     function pull_schema()
