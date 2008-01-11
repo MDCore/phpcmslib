@@ -31,14 +31,12 @@ class dispatcher
            #echo '<pre>';print_r(App::$route);echo '</pre>';
         #load the controller
             #load the face_controller for this face first
-            if ($face_controller_path = App::require_this('controller', 'face_controller', App::$route['face']))
-            {
+            if ($face_controller_path = App::require_this('controller', 'face_controller', App::$route['face'])) {
                 #the face controller was found
                 require($face_controller_path);
                 $face_controller = new face_controller;
             }
-            else
-            {
+            else {
                 #a face controller is required
                     trigger_error("face_controller not found for <strong>".App::$route['face']."</strong> face", E_USER_ERROR); 
             }
@@ -48,15 +46,21 @@ class dispatcher
             
         #-------------------------------------------------------------------------------------------------
 
-            if ($controller_path = App::require_this('controller', App::$route['controller'], App::$route['face']))
-            {
+            if ($controller_path = App::require_this('controller', App::$route['controller'], App::$route['face'])) {
                 #controller found!
                 require($controller_path);
                 $controller = new App::$route['controller'];
             }
         #-------------------------------------------------------------------------------------------------
             
-            if (!$controller) { trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> not found", E_USER_ERROR); }
+            if (!$controller) {
+                // check for some 'oddities'
+                if (App::$route['controller'] == 'favicon_ico_controller') {
+                    http_header(404, true);
+                }
+               
+                trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> not found", E_USER_ERROR);
+            }
 
         #-------------------------------------------------------------------------------------------------
 

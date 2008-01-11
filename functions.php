@@ -391,7 +391,7 @@ function random_string($length = 9, $allowed_characters = "abcdefghijkmnopqrstuv
     return $string;
 } 
 
-function http_header($code) {
+function http_header($code, $output_message_and_die = false) {
 $headers = array (
        100 => "HTTP/1.1 100 Continue",
        101 => "HTTP/1.1 101 Switching Protocols",
@@ -435,5 +435,10 @@ $headers = array (
    );
 
     header($headers[$code]);
+
+    if ($output_message_and_die) {
+        echo '<html><head></head><body><h1>'.$headers[$code].'</h1></body></html>';
+        die();
+    }
 }
 ?>
