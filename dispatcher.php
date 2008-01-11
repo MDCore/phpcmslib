@@ -55,11 +55,14 @@ class dispatcher
             
             if (!$controller) {
                 // check for some 'oddities'
-                if (App::$route['controller'] == 'favicon_ico_controller') {
+                switch(App::$route['controller']) {
+                case 'favicon_ico_controller':
+                    /*case 'robots_txt_controller': // I'm excluding robots.txt here. It _should_ exist as a good practice */
                     http_header(404, true);
+                    break;
+                default:
+                    trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> not found", E_USER_ERROR);
                 }
-               
-                trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> not found", E_USER_ERROR);
             }
 
         #-------------------------------------------------------------------------------------------------
