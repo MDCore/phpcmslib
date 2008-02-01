@@ -447,10 +447,14 @@ class AR implements SeekableIterator
 
             $ro = singularize($name); $ro = new $ro;
             $link = singularize($this->has_many_through($name)); $link = new $link;
-            $ro->find_by_sql('
+            $sql_ro = '
                 SELECT '.$ro->dsn['database'].'.'.$ro->schema_table.'.* 
                 FROM '.$ro->dsn['database'].'.'.$ro->schema_table. ' INNER JOIN '.$link->dsn['database'].'.'.$link->schema_table.'
-                WHERE '.$link->dsn['database'].'.'.$link->schema_table.'.'.foreign_keyize($this->model_name).' = \''.$this->values[$this->primary_key_field].'\'');
+                ON '.$ro->dsn['database'].'.'.$link->schema_table.'.'.foreign_keyize(singularize($ro->schema_table)).'
+                     = '.$ro->dsn['database'].'.'.$ro->schema_table.'.'.$ro->primary_key_field.' 
+                WHERE '.$link->dsn['database'].'.'.$link->schema_table.'.'.foreign_keyize($this->model_name).' = \''.$this->values[$this->primary_key_field].'\'';
+            $ro->find_by_sql($sql_ro);
+            $this->last_sql_query = $sql_ro;
             return $ro;
         }
         if ($this->through_model($name)) {
@@ -1332,7 +1336,6 @@ class AR implements SeekableIterator
             }
             return false;
         }
-
         return true;
     }
 

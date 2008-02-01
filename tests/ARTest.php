@@ -399,10 +399,10 @@ class ARTest extends PHPUnit_Framework_TestCase {
     /**
      * @todo Implement testHas_many_through().
      */
-    public function testHas_many_through() {
+    public function testHas_many_through_returns_correct_records() {
         // Remove the following lines when you implement this test.
         $this->markTestIncomplete(
-          'This test has not been implemented yet.'
+          "This test has not been implemented yet. There was previously a bug in __get's HMT sql query that should have been test covered"
         );
     }
 

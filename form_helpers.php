@@ -339,66 +339,61 @@ class forms
 
         #a select with no options and no matching field in the record and a has_one or has_many_through in the model
         if (isset($element_description['model'])) {$fk_model = $element_description['model'];} else {$fk_model = strtolower(tableize($element_description[0]));}
-        if ( ($element_description[1] == 'select' || $element_description[1] == 'multi_select') && !isset($record->$fk_model) )
-        {
-            #check for has_one or belongs_to
-                if ($element_description[1] == 'select') {
-                    if (class_exists($fk_model)) {
-                        $options_object = new $fk_model;
-                    } else {
-                        trigger_error("<i>$fk_model</i> model class does not exist.", E_USER_ERROR); 
-                    }
-
-                    if (!($primary_model_object->has_one($fk_model) || $primary_model_object->belongs_to($fk_model))) {
-                        trigger_error("Relationship to  <i>".$fk_model."</i> not found", E_USER_ERROR); 
-                    }
-                    
-                }
-
-            $db_field_name = foreign_keyize(strtolower($element_description[0])); #todo. this should only foreign_keyize IF model is not set
-            #debug($fk_model);debug($db_field_name);
-            $field_name = $default_model."[$db_field_name]";
+        if ( ($element_description[1] == 'select' || $element_description[1] == 'multi_select') && !isset($record->$fk_model) ) {
 
             if ($element_description['field']) {$field = $element_description['field'];} else {$field = null;}
             if ($element_description['show_all_option']) {$show_all_option = $element_description['show_all_option'];} else { $show_all_option = null; }
-            if ($element_description['criteria']) { $criteria = $element_description['criteria']; } else { $criteria = ''; }
+            if ($element_description['criteria']) { $criteria = $element_description['criteria']; } else { $criteria = 'all'; }
             if ($element_description['additional_sql_options']) { $additional_sql_options = $element_description['additional_sql_options']; } else { $criteria = null; }
-            if ($element_description['order by']) { $criteria .= 'ORDER BY '.$element_description['order by']; }
+            if ($element_description['order by']) { $additional_sql_options['ORDER BY'] = $element_description['order by']; }
 
-            if ($criteria == '') { $criteria = 'all'; }
-            $options = $options_object->find($criteria, $additional_sql_options)->as_select_options($record->$db_field_name, $field, $show_all_option);
-            $element_description['options'] = $options;
+            //taken care of a few lines above $db_field_name = foreign_keyize(strtolower($element_description[0])); #todo. this should only foreign_keyize IF model is not set
+            #debug($fk_model);debug($db_field_name);
 
-            #multi select ?
-            if( $primary_model_object->has_many_through(pluralize($fk_model)) ) {
-                #multi select
-                $fk_model_object = new $fk_model;
-                $join_model_object_name = $primary_model_object->has_many_through(pluralize($fk_model));
-                #todo only if the through is not set.. maybe ?
-                    $table_name = array(pluralize($fk_model), pluralize($default_model));sort($table_name);$table_name = implode('_',$table_name);
-                $join_model_object = new $join_model_object_name;
-                
-                $db_field_name = foreign_keyize($fk_model);
+            /* select */
+            switch ($element_description[1]) {
+            case 'select':
+                if (class_exists($fk_model)) {
+                    $options_object = new $fk_model;
+                } else {
+                    trigger_error("<i>$fk_model</i> model class does not exist.", E_USER_ERROR); 
+                }
 
-                $field_name = $join_model_object_name."[$db_field_name]"; #BUG is the prefix the table or the model ???
+                if (!($primary_model_object->has_one($fk_model) || $primary_model_object->belongs_to($fk_model))) {
+                    trigger_error("Relationship to  <i>".$fk_model."</i> not found", E_USER_ERROR); 
+                }
 
-                if ($element_description['field']) {$field = $element_description['field'];} else {$field = null;}
-                if ($element_description['show_all_option']) {$show_all_option = $element_description['show_all_option'];} else {$show_all_option = null;}
-                $criteria = '';
-                if ($element_description['criteria']) {$criteria = $element_description['criteria'];}
-                if ($element_description['order by']) {$criteria .= 'ORDER BY '.$element_description['order by'];}
+                $field_name = $default_model."[$db_field_name]";
 
-                $options = $fk_model_object->as_array($field, $criteria);
-                $value_criteria = "WHERE ".foreign_keyize($default_model). " = '".$record->id."'";
-                $values =  $join_model_object->as_array(foreign_keyize($fk_model), $value_criteria);#get the values from the db with a primary_model->as_array;
-
-                $element_description[0] = pluralize($element_description[0]);
+                $options = $options_object->find($criteria, $additional_sql_options)->as_select_options($record->$db_field_name, $field, $show_all_option);
                 $element_description['options'] = $options;
-                $element_description['value'] = array_values($values);
-                
-            }
-            elseif (!(array_key_exists('options', $element_description))) {
-                trigger_error("Relationship to  <i>".$fk_model."</i> not found", E_USER_WARNING); 
+                break;
+
+            /* multi select */
+            case 'multi_select':
+                if( $primary_model_object->has_many_through(pluralize($fk_model)) ) {
+                    #multi select
+                    $options_object = new $fk_model;
+
+                    $join_model_object_name = $primary_model_object->has_many_through(pluralize($fk_model));
+                    $join_model_object = new $join_model_object_name;
+                    
+                    $db_field_name = foreign_keyize($fk_model);
+
+                    $field_name = $join_model_object_name."[$db_field_name]";
+
+                    $options = $options_object->find($criteria, $additional_sql_options)->as_array($field);
+                    $value_criteria = "WHERE ".foreign_keyize($default_model). " = '".$record->id."'";
+                    $values =  $join_model_object->find($value_criteria)->as_array(foreign_keyize($fk_model)); #get the values from the db with a primary_model->as_array;
+
+                    $element_description[0] = pluralize($element_description[0]); //todo why ?
+                    $element_description['options'] = $options;
+                    $element_description['value'] = array_values($values);
+                    
+                } elseif (!(array_key_exists('options', $element_description))) {
+                    trigger_error("Relationship to  <i>".$fk_model."</i> not found", E_USER_WARNING); 
+                }
+                break;
             }
         }
         
