@@ -21,12 +21,13 @@ class schema_interregator
                 {
                     switch ($error_code)
                     {
+                        /* this table name might just not exist yet */
                         case -18:
                             $message = "$table_name table not found"; break;
                         default:
                             $message = '('.$error_code.') '.$table_schema->getMessage();
+                            trigger_error($message, E_USER_WARNING);
                     }
-                    trigger_error($message, E_USER_WARNING);
                 }
                 else
                 {
