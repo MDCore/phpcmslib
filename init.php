@@ -21,7 +21,7 @@ if (isset($use_PEAR_in_vendor) && $use_PEAR_in_vendor) {
 
 /* PEAR Libraries */
 require_once('MDB2.php');
-if (!isset($uses_nested_set) | (isset($uses_nested_set) && $uses_nested_set == true)) {
+if ((isset($uses_nested_set) && $uses_nested_set == true)) {
     require_once('DB/NestedSet.php');
 }
 
