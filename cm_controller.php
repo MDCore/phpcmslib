@@ -192,18 +192,22 @@ class cm_controller extends action_controller {
     public function cm_update($redirect_on_success = true) {
         $edit_id = $_GET['edit_id'];
 
+        if (method_exists($this, 'before_update')) { $this->before_update(); } #todo clean this up.... should be in model, maybe
+
         #print_r($_GET);print_r($_POST);print_r($_FILES);
         if (isset($_POST[$this->primary_model])) {
             $primary_model_object = new $this->primary_model;
-            $update_record_id = $primary_model_object
+            $primary_model_object
                 ->find($edit_id)
-                ->update_attributes($_POST[$this->primary_model])
-                ->update();
+                ->update_attributes($_POST[$this->primary_model]);
+            if ($primary_model_object->is_valid()) {
+                $update_record_id = $primary_model_object->update();
             /*print_r($primary_model_object); print_r($update_record_id);die();*/
             /* sanity checking; it better be updating and not saving! */
                 if ($update_record_id != $edit_id) {
                     trigger_error("Update of {$this->primary_model} failed. $update_record_id != $edit_id.", E_USER_ERROR);die();
                 }
+            } else { $update_record_id = false; }
         }
         else {
             $no_primary_to_save = true;
@@ -241,6 +245,8 @@ class cm_controller extends action_controller {
                 }
             }
             $this->handle_new_files($edit_id, true);
+
+            if (method_exists($this, 'after_update')) { $this->after_update(); } #todo clean this up.... should be in model, maybe
 
             if ($redirect_on_success) {
                 redirect_with_parameters(url_to(array('action' => 'list')), "flash=".proper_nounize($this->list_type). " updated");
