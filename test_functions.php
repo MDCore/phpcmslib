@@ -3,7 +3,7 @@
  * todo this code is copied verbatim from the migration code in system admin! Clean that up
  */
 
-class test
+class test_functions
 {
     public function default_setup()
     {

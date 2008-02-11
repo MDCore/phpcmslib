@@ -20,15 +20,8 @@ class Application {
 
         global $environment; #pull in the environment from the config
         
-        /* check for running from shell, for tests */
-        if (isset($_SERVER['SHELL']) && !is_null($_SERVER['SHELL'])) {
-            //todo, fix this hack
-            if (isset($GLOBALS['argv']) && isset($GLOBALS['argv'][1])) {
-                $environment = $GLOBALS['argv'][1];
-            } else {
-                //should be test, maybe ?
-                $environment = 'development';    
-            }
+        if (defined('TEST_MODE')) {
+            $environment = 'test';
         }
         
         /* slurp config/application.php settings */
@@ -38,7 +31,6 @@ class Application {
         if (!App::$booting) {
             $environment = $_SESSION[APP_NAME]['application']['environment'];
         }
-
         Environment::load($environment, $path_to_root);
 
         /* load the schema definition */
@@ -46,7 +38,7 @@ class Application {
         if (!isset($schema_definition) || $schema_definition == null) { trigger_error('Schema definition not set', E_USER_WARNING);  }
         App::$schema_definition = $schema_definition;
 
-        App::load_models(); 
+        App::load_models($path_to_root); 
 
         /* load the layouts, controllers and views for ALL faces */
         if (App::$booting) {
@@ -78,14 +70,13 @@ class Application {
         }
     }
 
-    static function load_models() {
+    static function load_models($path_to_root) {
         if (App::$booting) { App::find_these('models'); }
 
         if (App::$reloading) { echo "<li>Loading models<ul>"; }
         if (isset($_SESSION[APP_NAME]['application']['models'])) {
             foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model) {
                 if (App::$reloading) {echo "<li>loading <strong>$model_name</strong> ($model)</li>"; }
-                global $path_to_root;
                 if (!App::$skip_model_require) { require($model); }
             }
         }

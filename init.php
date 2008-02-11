@@ -6,7 +6,9 @@ session_start();
 if (!isset($path_to_root)) {$path_to_root = '.';}
 
 /* load the application config */
-require($path_to_root.'/config/application.php');
+if (!defined('TEST_MODE')) {
+    require($path_to_root.'/config/application.php');
+}
 
 /* 
  * PEAR in /vendor
@@ -58,7 +60,7 @@ if (!isset($only_require_libraries)) {
     App::init($path_to_root);
 
     // set the custom error handler
-    if ($environment != '') {
+    if ($environment != '' && !defined('TEST_MODE')) {
         set_error_handler('framework_error_handler');
         set_exception_handler('framework_exception_handler');
     }
