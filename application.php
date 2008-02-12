@@ -1,6 +1,7 @@
 <?
 class Application {
     static $booting;static $reloading;
+    static $running_from_shell = false;
     static $models;
     static $schema_definition = null;
     static $env;
@@ -104,7 +105,7 @@ class Application {
         if ($handle = opendir(App::$env->root.'/'.$path)) {
             $files = Array();
             while (false != ($file_name = readdir($handle))) {
-                $layout = $file_name;
+                //redundant line $layout = $file_name;
                 $file = App::$env->root.'/'.$path.'/'.$file_name;
                 
                 if (is_file($file)) {

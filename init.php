@@ -6,8 +6,11 @@ session_start();
 if (!isset($path_to_root)) {$path_to_root = '.';}
 
 /* load the application config */
+require($path_to_root.'/config/application.php');
+
+/* force test mode */
 if (!defined('TEST_MODE')) {
-    require($path_to_root.'/config/application.php');
+    $environment = 'test';
 }
 
 /* 
