@@ -4,7 +4,7 @@
  */
 
 class pedantic_app_controller_Framework_TestCase extends PHPUnit_Framework_TestCase {
-    public $controller_name = array();
+    public $controller_name = null;
 
     function __construct() {
         $controller_name = str_replace('_tests', '', get_class($this));
@@ -13,13 +13,15 @@ class pedantic_app_controller_Framework_TestCase extends PHPUnit_Framework_TestC
         require_once($file_name);
         $this->controller_name = $controller_name;
     }
+
     protected function setUp()
     {
         $this->default_setup();
+        session_destroy();
     }
-
     public function default_setup()
     {
+        ob_start();
         require_once(app::$env->root.'/vendor/pedantic/lib/schema_interregator.php');
         require_once(app::$env->root.'/vendor/pedantic/system_admin/schema_migration.php');
         $sys = new schema_migration;
@@ -75,6 +77,7 @@ class pedantic_app_controller_Framework_TestCase extends PHPUnit_Framework_TestC
             }
             update_schema_version($migration_file['version']);
         }
+        ob_end_clean();
     }
 }
 class pedantic_app_TestRunner 
@@ -83,7 +86,7 @@ class pedantic_app_TestRunner
     public static $test_files = array();
     public static $face;
 
-    function init($path_to_root, $face)
+    function init_face($path_to_root, $face)
     {
         //autodetect the face and load the face controller
         require_once ("$path_to_root/$face/controllers/face_controller.php");
@@ -98,11 +101,27 @@ class pedantic_app_TestRunner
         pedantic_app_TestRunner::$test_files = $test_files;
         pedantic_app_TestRunner::$face = $face;
     }
+    function init_models($path_to_root)
+    {
+        $part = 'models';
+        /* load all of the controller and view tests */
+        $test_files[$part] = find_part_tests($part);
+        foreach($test_files[$part] as $test_file) {
+            require($test_file);
+        }
+        pedantic_app_TestRunner::$test_files = $test_files;
+    }
 }
 
-function find_part_tests($face, $part)
+function find_part_tests($part, $face = null)
 {
-    $path = App::$env->root."/$face/test/$part/";
+    if ($face) {
+        /* face-specific parts */
+        $path = App::$env->root."/$face/test/$part/";
+    } else {
+        /* app-general parts */
+        $path = App::$env->root."/test/$part/";
+    }
     if ($handle = opendir($path)) {
         $files = Array();
         while (false != ($file_name = readdir($handle))) {

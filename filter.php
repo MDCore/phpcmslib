@@ -21,16 +21,18 @@ class filter
 
     function get_filter_values()
     {
-        foreach(array_keys($_GET) as $getvar)
-        {
-            if (substr($getvar, 0, 7) == 'filter_')
+        if (isset($_GET)) {
+            foreach(array_keys($_GET) as $getvar)
             {
-                $filter_field = substr($getvar, 7);
-                $filter_value = $_GET[$getvar];
-                if ($filter_value != '')
+                if (substr($getvar, 0, 7) == 'filter_')
                 {
-                    $this->has_filter_values = true;
-                    $this->filter_values[] = Array('name' => $filter_field, 'value' => $filter_value);
+                    $filter_field = substr($getvar, 7);
+                    $filter_value = $_GET[$getvar];
+                    if ($filter_value != '')
+                    {
+                        $this->has_filter_values = true;
+                        $this->filter_values[] = Array('name' => $filter_field, 'value' => $filter_value);
+                    }
                 }
             }
         }
