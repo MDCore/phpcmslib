@@ -8,11 +8,6 @@ if (!isset($path_to_root)) {$path_to_root = '.';}
 /* load the application config */
 require($path_to_root.'/config/application.php');
 
-/* force test mode */
-if (!defined('TEST_MODE')) {
-    $environment = 'test';
-}
-
 /* 
  * PEAR in /vendor
  * If the shared-host doesn't install PEAR libraries, this adds the vendor/PEAR path
