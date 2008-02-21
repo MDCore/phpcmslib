@@ -12,7 +12,7 @@
 class action_controller {
     public $has_rendered = false;
     public $layout = null;
-    public $face = "site";
+    public $face = "site", $controller = null, $view = null;
     public $virtual = false;
     public $rendered_content = null; /* todo should this be private */
 
@@ -90,7 +90,16 @@ class action_controller {
             }
         }
     }
-    public function render() {
+    public function render($route_param = null) {
+        $this->parse_route_parameter($route_param, true); // allow passing in a different route collection or view to render 
+
+        /* if the $route_param is JUST a view then execute that method too. That way one
+         * can just call render->(view_name) and it will execute the action and render the action's view
+         */
+        if (!is_array($route_param) && !is_null($route_param)) {
+            $this->$route_param();
+        }
+        
         if (isset($this->layout) && $this->layout) {
             $this->render_layout();
         }
@@ -166,42 +175,15 @@ class action_controller {
 
     }
     function render_view($route_param = null) {
-        $route = array(
-            'face' => $this->face,
-            'controller' => $this->controller_name
-        );
-        if (is_array($route_param)) {
-            /* it is an array so overwrite all the array options of the route with the ones in the passed route. e.g.
-             *     if I'm passing array('controller' => 'customers') set the route's controller to customers instead of the default
-             */
-            foreach ($route_param as $route_part => $value) {
-                $route[$route_part] = $route_param[$route_part];
-            }
-        }
-        elseif (!is_null($route_param)) {
-            /* if a string is passed it is aview to be rendered in the current controller */
-            $route['view'] = $route_param;
-        }
-        else {
-            /*  I'm only seting the view here and not in the route initialization because either you use the default route or you pass
-             *  in a partial route _including_ a view. if you pass in a partial route without a view it's likely to be a 
-             *  mistake: you are expecting the app::routes' action to be used. 
-             *  Obviously if there is an important, useful, logical case to be made against this then we change this.
-             */
-            $route['view'] = App::$route['action'];
-        }
-
-        if (!isset($route['view'])) { 
-            trigger_error('no view to render',  E_USER_ERROR); die();
-        }
+        $route = $this->parse_route_parameter($route_param); // allow passing in a different route collection or view to render 
 
         global $path_to_root;
         
         # set up the view_parameters
             if ($this->view_parameters) {foreach ($this->view_parameters as $variable => $value) { $$variable = $value; } }
 
-        $view_url = $path_to_root.'/'.$route['face'].'/views/'.$route['controller'].'/'.$route['view'].'.php';
-        #debug($view_url);
+        $view_url = $path_to_root.'/'.$route['face'].'/views/'.$route['controller'].'/'.$route['action'].'.php';
+        //debug($view_url);
         require ($view_url);
 
         return true;
@@ -248,6 +230,49 @@ class action_controller {
             #raise an exception!
         }
 
+    }
+
+    private function parse_route_parameter($route_param = null, $update_controller_route = false) {
+        $route = array(
+            'face' => $this->face,
+            'controller' => $this->controller_name
+        );
+        if (is_array($route_param)) {
+            /* it is an array so overwrite all the array options of the route with the ones in the
+             * passed route. e.g.if I'm passing array('controller' => 'customers') set the route's 
+             * controller to customers instead of the default
+             */
+            foreach ($route_param as $route_part => $value) {
+                $route[$route_part] = $route_param[$route_part];
+            }
+        }
+        elseif (!is_null($route_param)) {
+            /* if a string is passed it is a view to be rendered in the current controller */
+            $route['action'] = $route_param;
+        }
+        elseif ($this->action != null) {
+            $route['action'] = $this->action;
+        }
+        else {
+            /*  I'm only setting the view here and not in the route initialization because either 
+             *  you use the default route or you passin a partial route _including_ a view. if you 
+             *  pass in a partial route without a view  it's likely to be a  mistake: you are 
+             *  expecting the app::routes' action to be used. Obviously if there is an important, 
+             *  useful, logical case to be made against this then we change this.
+             */
+            $route['action'] = App::$route['action'];
+        }
+
+        if (!isset($route['action'])) { 
+            trigger_error('no view to render',  E_USER_ERROR); die();
+        }
+
+        if ($update_controller_route) {
+            $this->face = $route['face'];
+            $this->controller = $route['controller'];
+            $this->action = $route['action'];
+        }
+        return $route;
     }
 
     /*
