@@ -238,6 +238,12 @@ class action_controller {
             'controller' => $this->controller_name
         );
         if (is_array($route_param)) {
+            /* route param might be called with an ACTION or a VIEW. Convert VIEW to ACTION (there's a life lesson right there.) */
+            if (isset($route_param['view'])) {
+                $route_param['action'] = $route_param['view'];
+                unset($route_param['view']);
+            }
+
             /* it is an array so overwrite all the array options of the route with the ones in the
              * passed route. e.g.if I'm passing array('controller' => 'customers') set the route's 
              * controller to customers instead of the default
