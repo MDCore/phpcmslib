@@ -238,7 +238,6 @@ class cm_controller extends action_controller {
                         }
                     }
                     {
-                        unset($collection['_add_record']); #currently used to add a comment each time
                         #todo duplicate the meta-model code from cm_save
                         $meta_model = new $meta_model($collection); $meta_model->save();
                     }
@@ -762,8 +761,7 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
 
         $record = $this->model_object;
         #automatically populate the model_object with the foreign keys
-            foreach($this->foreign_keys as $key => $value)
-            {
+            foreach($this->foreign_keys as $key => $value) {
                 $record->$key = $value;
             }
 

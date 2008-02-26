@@ -169,6 +169,7 @@ class forms
     }
 
     function partial($name) {
+        /* this whole partial handling is a HACK! action_controller should be rendering the partial. not this way. Ugh! */
         $base_url = App::$route;
 
         if (!is_array($name)) {
