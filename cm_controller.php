@@ -769,7 +769,9 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
         if (isset($form_fields)) {
             forms::form(array_merge(array($this->primary_model, &$record), $form_fields));
         }
-        if ($this->draw_form_buttons) {forms::form_buttons('save',false);}
+        if ($this->draw_form_buttons) {
+            forms::form_buttons('save',false);
+        }
         ?></form><?
     }
 
