@@ -1,8 +1,7 @@
 <?
 class filter
 {
-    function init($primary_model, $filters)
-    {
+    function init($primary_model, $filters) {
         $this->primary_model = $primary_model;
         #clean up the filters array
         foreach ($filters as $filter)
