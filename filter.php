@@ -18,8 +18,7 @@ class filter
         $this->get_filter_values();
     }
 
-    function get_filter_values()
-    {
+    function get_filter_values() {
         if (isset($_GET)) {
             foreach(array_keys($_GET) as $getvar)
             {
