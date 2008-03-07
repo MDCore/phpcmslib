@@ -4,7 +4,7 @@
 /* beachhead.php CLIENT_NAME PROJECT_NAME */
 
 /* --- configuration ------------------------------------- */
-$public_html = '/home/gavin/public_html';
+//$public_html = '/home/gavin/public_html';
 $personal_repository_url = 'git://windserver/';
 //$personal_repository_path = '/home/gavin/dev/.repos';
 $pedantic_repository = $personal_repository_url.'pedantic';
@@ -19,7 +19,7 @@ $submodules = array(
 $client = $argv[1]; if (is_null($client) || $client == '') { echo 'No client specified'; die(); }
 $project_name = $argv[2]; if (is_null($project_name) || $project_name == '') { echo 'No project name specified'; die(); }
 
-$project_directory = $public_html.'/'.$client.'/'.$project_name;
+$project_directory = './'.$client.'/'.$project_name;
 
 /* does this directory already exist ? fail! */
 if (file_exists($project_directory)) {
