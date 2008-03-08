@@ -31,11 +31,12 @@ require("action_controller.php");
 require("action_view_helpers.php");
 require("environment.php");
 require("application.php");
+require("functions.php");
+require('string_helpers.php');
 require('form_helpers.php');
 require("asset_helpers.php");
 require("ajax_helpers.php");
 
-require("functions.php");
 
 /* cm classes */
 //todo: only load this on cm
