@@ -32,10 +32,12 @@ class tasks_beachhead
         307 => 'Configuring config/application.php',
         308 => 'Configuring config/environments/development.php',
         309 => 'Creating the database',
-        310 => 'Complete',
+        310 => 'Commiting auto-configuration',
+        311 => 'Complete',
         /* commit messages */
         400 => 'Initial import\r\n\r\nImport by beachhead.',
         401 => 'Setting up submodules\r\n\r\nSetup by beachhead.',
+        402 => 'Auto-configuration\r\n\r\nConfig by beachhead.',
 
     );
     public $error_no = 0;
@@ -153,8 +155,8 @@ class tasks_beachhead
             }
         }
 
-        /* final commit */
-        exec("cd {$this->project_path} ; git commit -a -m '".$this->strings['401']."'", $output);
+        /* submodule commit */
+        exec("cd {$this->project_path} ; git commit -a -m '".$this->strings['402']."'", $output);
         if ($op) {
             $this->show_output($output); unset($output);
             echo "\r\n".$this->strings[305]."\r\n";
@@ -203,11 +205,18 @@ class tasks_beachhead
             )
         );
 
+        exec("cd {$this->project_path} ; git commit -a -m '".$this->strings['401']."'", $output);
+        if ($op) {
+            $this->show_output($output); unset($output);
+            echo "\r\n".$this->strings[310]."\r\n";
+        }
+        
+        /* creating the database */
         if ($op) {
             echo $this->strings[309]."\r\n";
             echo "\r\n\r\n";
         }
-        
+
         /* this checks that the class has not already been declared. This was
          * happening in a phpunit --repeat n scenario.
          */
@@ -232,7 +241,7 @@ class tasks_beachhead
         }
 
         if ($op) {
-            echo "\r\n".$this->strings[310];
+            echo "\r\n".$this->strings[311];
         }
         return true;
     }
