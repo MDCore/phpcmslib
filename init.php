@@ -1,12 +1,12 @@
 <?
-#todo clean up this file. messy
 //error_reporting(E_ALL);
-session_start();
 
 if (!isset($path_to_root)) {$path_to_root = '.';}
 
 /* load the application config */
-require($path_to_root.'/config/application.php');
+if (!isset($only_require_libraries)) {
+    require($path_to_root.'/config/application.php');
+}
 
 /* 
  * PEAR in /vendor
@@ -44,18 +44,17 @@ require("cm_controller.php");
 require("filter.php");
 require("cm_paging.php");
 
-
-/* extra vendor stuff */
-require($path_to_root.'/vendor/phpmailer/class.phpmailer.php');
-
 /*
- * only_require_libraries is used by the unit testing to prevent the application from starting (well... someday)
+ * phpmailer was required here but that is not part of lib so I kicked it out. 
+ * Require it in config if necessary.
  */
-if (!isset($only_require_libraries)) { 
+
+if (!isset($only_require_libraries)) {
     // before application init callback
     if (isset($before_application_start)) { $before_application_start(); }
 
     // application init
+    session_start();
     App::init($path_to_root);
 
     // set the custom error handler

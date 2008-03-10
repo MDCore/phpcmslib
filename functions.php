@@ -1,7 +1,9 @@
 <?php    
-require('string_helpers.php');
+/* todo:
+ * - find a place use this define, maybe
+ * - remove the reliance on AR.php
+ */
 
-/* todo use this define, maybe */
 define('RELATED_PAGE_PARAMETERS_TO_SKIP', '/_id$/,/^sort/,/^filter_/,/^fk$/');
 
 #this method does a redirect with standard parameters stripped
@@ -381,5 +383,13 @@ $headers = array (
         echo '<html><head></head><body><h1>'.$headers[$code].'</h1></body></html>';
         die();
     }
+}
+
+function replace_keywords_in_file($filename, $keyword_array) {
+    $source = file_get_contents($filename);
+    foreach($keyword_array as $keyword => $value) {
+        $source = str_replace($keyword, $value, $source);
+    }
+    file_put_contents($filename, $source);
 }
 ?>

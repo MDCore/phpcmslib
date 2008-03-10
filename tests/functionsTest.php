@@ -1,30 +1,12 @@
 <?php
-// Call functions_test::main() if this source file is executed directly.
-if (!defined('PHPUnit_MAIN_METHOD')) { define('PHPUnit_MAIN_METHOD', 'functions_test::main');
-}
-
-require_once 'PHPUnit/Framework.php';
-
-require_once '../functions.php';
-
-/**
- * Test class for functions.php.
+/* requires
+ * we need to require everything we need here because allTests.php is not run when
+ * executing phpunit <testClass>
  */
-class functions_test extends PHPUnit_Framework_TestCase {
-    /**
-     * Runs the test methods of this class.
-     *
-     * @access public
-     * @static
-     */
+require_once '../functions.php';
+require_once '../AR.php';
 
-    public static function main() {
-        require_once 'PHPUnit/TextUI/TestRunner.php';
-
-        $suite  = new PHPUnit_Framework_TestSuite('functions_test');
-        $result = PHPUnit_TextUI_TestRunner::run($suite);
-    }
-
+class functionsTest extends PHPUnit_Framework_TestCase {
     public function __construct()
     {
     }
@@ -323,10 +305,5 @@ class functions_test extends PHPUnit_Framework_TestCase {
         $this->assertEquals($expected, $result);
     }
 
-}
-
-// Call functions_test::main() if this source file is executed directly.
-if (PHPUnit_MAIN_METHOD == 'functions_test::main') {
-    functions_test::main();
 }
 ?>

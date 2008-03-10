@@ -1,11 +1,16 @@
 <?
-if (!isset($path_to_root)) {
-    $path_to_root = "../../../..";
-}
+/* todo
+ * check for a parameter passed, a target migration
+ * ask on remigrate! NB
+*/
 
-require($path_to_root.'/vendor/pedantic/lib/init.php');
-require($path_to_root.'/vendor/pedantic/lib/schema_interregator.php');
-require($path_to_root.'/vendor/pedantic/lib/schema_migration.php');
+$path_to_lib = dirname(__FILE__).'/../..';
+$path_to_root = $path_to_lib.'/../../..');
+
+require($path_to_lib.'/init.php');
+require($path_to_lib.'/schema_interregator.php');
+require($path_to_lib.'/schema_migration.php');
+
 
 /* check for shell */
 if (isset($_SERVER['SHELL']) && !is_null($_SERVER['SHELL'])) {
@@ -33,7 +38,4 @@ $sys->running_from_shell = App::$running_from_shell;
     if (!App::$running_from_shell) {
         require($path_to_root.'/vendor/pedantic/lib/tasks/migrate/migrate_html_layout.php');
     }
-
-#todo also check for a parameter passed, a target migration. 
-
 ?>

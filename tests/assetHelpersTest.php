@@ -1,18 +1,14 @@
 <?php
-// Call functions_test::main() if this source file is executed directly.
-if (!defined('PHPUnit_MAIN_METHOD')) { define('PHPUnit_MAIN_METHOD', 'functions_test::main');
-}
+/* requires
+ * we need to require everything we need here because allTests.php is not run when
+ * executing phpunit <testClass>
+ */
+require_once '../asset_helpers.php';
+require_once '../string_helpers.php';
+require_once '../functions.php';
+require_once '../application.php';
 
-require_once 'PHPUnit/Framework.php';
- 
-class asset_helpers_test extends PHPUnit_Framework_TestCase {
-
-    public static function main() {
-        require_once 'PHPUnit/TextUI/TestRunner.php';
-
-        $suite  = new PHPUnit_Framework_TestSuite('functions_test');
-        $result = PHPUnit_TextUI_TestRunner::run($suite);
-    }
+class assetHelpersTest extends PHPUnit_Framework_TestCase {
 
     public function __construct()
     {
@@ -112,10 +108,5 @@ class asset_helpers_test extends PHPUnit_Framework_TestCase {
         }
         $this->fail('Invalid asset type not caught');
     }
-}
-
-// Call functions_test::main() if this source file is executed directly.
-if (PHPUnit_MAIN_METHOD == 'functions_test::main') {
-    functions_test::main();
 }
 ?>

@@ -1,30 +1,11 @@
 <?php
-// Call string_helpers_test::main() if this source file is executed directly.
-if (!defined('PHPUnit_MAIN_METHOD')) { define('PHPUnit_MAIN_METHOD', 'string_helpers_test::main');
-}
-
-require_once 'PHPUnit/Framework.php';
-
+/* requires
+ * we need to require everything we need here because allTests.php is not run when
+ * executing phpunit <testClass>
+ */
 require_once '../string_helpers.php';
 
-/**
- * Test class for functions.php.
- */
-class string_helpers_test extends PHPUnit_Framework_TestCase {
-    /**
-     * Runs the test methods of this class.
-     *
-     * @access public
-     * @static
-     */
-
-    public static function main() {
-        require_once 'PHPUnit/TextUI/TestRunner.php';
-
-        $suite  = new PHPUnit_Framework_TestSuite('string_helpers_test');
-        $result = PHPUnit_TextUI_TestRunner::run($suite);
-    }
-
+class stringHelpersTest extends PHPUnit_Framework_TestCase {
     public function __construct() {
     }
     public function __destruct() {
@@ -78,10 +59,5 @@ class string_helpers_test extends PHPUnit_Framework_TestCase {
         
     }
 
-}
-
-// Call string_helpers_test::main() if this source file is executed directly.
-if (PHPUnit_MAIN_METHOD == 'string_helpers_test::main') {
-    string_helpers_test::main();
 }
 ?>
