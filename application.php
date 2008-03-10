@@ -36,7 +36,9 @@ class Application {
 
         /* load the schema definition */
         include $path_to_root.'/config/cache/schema_definition.php';
-        if (!isset($schema_definition) || $schema_definition == null) { trigger_error('Schema definition not set', E_USER_WARNING);  }
+        if (!isset($schema_definition) || !is_array($schema_definition)) {
+            trigger_error('Schema definition not set', E_USER_WARNING);
+        }
         App::$schema_definition = $schema_definition;
 
         App::load_models($path_to_root); 
