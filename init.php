@@ -3,6 +3,24 @@
 
 if (!isset($path_to_root)) {$path_to_root = '.';}
 
+/* core classes */
+require("AR.php");
+require("action_controller.php");
+require("action_view_helpers.php");
+require("environment.php");
+require("application.php");
+require("functions.php");
+require('string_helpers.php');
+require('form_helpers.php');
+require("asset_helpers.php");
+require("ajax_helpers.php");
+
+/* cm classes */
+//todo: only load this on cm
+require("cm_controller.php");
+require("filter.php");
+require("cm_paging.php");
+
 /* load the application config */
 if (!isset($only_require_libraries)) {
     require($path_to_root.'/config/application.php');
@@ -24,25 +42,6 @@ require_once('MDB2.php');
 if ((isset($uses_nested_set) && $uses_nested_set == true)) {
     require_once('DB/NestedSet.php');
 }
-
-/* core classes */
-require("AR.php");
-require("action_controller.php");
-require("action_view_helpers.php");
-require("environment.php");
-require("application.php");
-require("functions.php");
-require('string_helpers.php');
-require('form_helpers.php');
-require("asset_helpers.php");
-require("ajax_helpers.php");
-
-
-/* cm classes */
-//todo: only load this on cm
-require("cm_controller.php");
-require("filter.php");
-require("cm_paging.php");
 
 /*
  * phpmailer was required here but that is not part of lib so I kicked it out. 
