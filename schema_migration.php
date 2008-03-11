@@ -239,8 +239,14 @@ class schema_migration
         $this->db->createConstraint($table_name, $table_name.'_primary_key', $definition);
         echo "created table $table_name.<br />";
 
-        // rebuild the schema definition
+        // rebuild the schema definition and load it into memory
         $schema_interregator_results = schema_interregator::build_schema_definition();
+        global $path_to_root;
+        include $path_to_root.'/config/cache/schema_definition.php';
+        if (!isset($schema_definition) || !is_array($schema_definition)) {
+            trigger_error('Schema definition not set', E_USER_WARNING);
+        }
+        App::$schema_definition = $schema_definition;
 
         flush();
     }
