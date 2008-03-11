@@ -22,15 +22,15 @@ class tasks_beachhead
         101 => 'No project name specified',
         200 => 'Project directory %1 already exists',
         201 => 'Project directory %1 does not exist',
-        300 => 'cloning the pedantic application skeleton',
-        301 => 'switching to %1 branch',
+        300 => 'Cloning the pedantic application skeleton',
+        301 => 'Switching to %1 branch',
         302 => 'Creating repository',
         303 => 'Committing application',
         304 => 'Setting up the submodules',
-        305 => 'Preconfiguration',
-        306 => 'Configuring .htaccess',
-        307 => 'Configuring config/application.php',
-        308 => 'Configuring config/environments/development.php',
+        305 => 'Configuring:',
+        306 => '.htaccess',
+        307 => 'config/application.php',
+        308 => 'config/environments/development.php',
         309 => 'Creating the database',
         310 => 'Commiting auto-configuration',
         311 => 'Complete',
@@ -93,24 +93,16 @@ class tasks_beachhead
             echo $this->strings[300]."\r\n";
         }
         exec("git clone {$this->pedantic_repository}/app_skeleton.git {$this->project_path}", $output);
-        if ($op) {
-            $this->show_output($output); unset($output);
-        }
+
         if ($this->app_skeleton_branch != 'master') {
             if ($op) {
                 echo sprintf($this->strings[301], $this->app_skeleton_branch)."\r\n";
             }
             exec("cd {$this->project_path} ; git checkout {$this->app_skeleton_branch} ; cd ../.. ", $output);
-            if ($op) {
-                $this->show_output($output); unset($output);
-            }
         }
 
         /* kill the git dir */
         exec("rm -rf {$this->project_path}/.git", $output);
-        if ($op) {
-            $this->show_output($output); unset($output);
-        }
 
         /* check that the project_path exists */
         if (!file_exists($this->project_path)) {
@@ -120,25 +112,19 @@ class tasks_beachhead
 
         /* init a new repository */
         if ($op) {
-            echo "\r\n".$this->strings[302]."\r\n";
+            echo $this->strings[302]."\r\n";
         }
         exec("cd {$this->project_path} ; git init", $output);
-        if ($op) {
-            $this->show_output($output); unset($output);
-        }
 
         /* commit */
         if ($op) {
-            echo "\r\n".$this->strings[303]."\r\n";
+            //echo $this->strings[303]."\r\n";
         }
         exec("cd {$this->project_path} ; git add . ; git commit -m '".$this->strings['400']."'", $output);
-        if ($op) {
-            $this->show_output($output); unset($output);
-        }
 
         /* set up the vendor exports */
         if ($op) {
-            echo "\r\n".$this->strings[304]."\r\n";
+            echo $this->strings[304]."\r\n";
         }
         foreach ($this->submodules as $submodule) {
             $repository = $submodule['repository']; 
@@ -149,17 +135,12 @@ class tasks_beachhead
             }
 
             exec("cd {$this->project_path} ; git submodule add -b $branch {$this->personal_repository_url}$repository $path", $output, $return_status);
-
-            if ($op) {
-                $this->show_output($output); unset($output);
-            }
         }
 
         /* submodule commit */
         exec("cd {$this->project_path} ; git commit -a -m '".$this->strings['402']."'", $output);
         if ($op) {
-            $this->show_output($output); unset($output);
-            echo "\r\n".$this->strings[305]."\r\n";
+            echo $this->strings[305];
         }
         $project_url = $this->public_html_url.$client.'/'.$project;
         /* customize the new skeleton for this project */
@@ -168,8 +149,7 @@ class tasks_beachhead
         *    URL_TO_DEV_SITE
          */
         if ($op) {
-            echo "\r\n";
-            echo "\r\n".$this->strings[306]."\r\n";
+            echo $this->strings[306].", ";
         }
         replace_keywords_in_file($this->project_path.'/.htaccess',
             array('URL_TO_DEV_SITE' => $project_url)
@@ -181,7 +161,7 @@ class tasks_beachhead
         *   PASSWORD_SALT
         */
         if ($op) {
-            echo $this->strings[307]."\r\n";
+            echo $this->strings[307].", ";
         }
         replace_keywords_in_file($this->project_path.'/config/application.php',
             array(
@@ -211,14 +191,12 @@ class tasks_beachhead
 
         exec("cd {$this->project_path} ; git commit -a -m '".$this->strings['401']."'", $output);
         if ($op) {
-            $this->show_output($output); unset($output);
-            echo "\r\n".$this->strings[310]."\r\n";
+            //echo "\r\n".$this->strings[310]."\r\n";
         }
         
         /* creating the database */
         if ($op) {
             echo $this->strings[309]."\r\n";
-            echo "\r\n\r\n";
         }
 
         /* this checks that the class has not already been declared. This was

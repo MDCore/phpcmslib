@@ -38,10 +38,10 @@ body {
             </div><?
         }
     }
+?>
     <p><?=proper_nounize(APP_NAME);?> schema has been migrated to version <?=$migration['version'];?></p><?
 
-    echo $schema_interrregator_results;
-    #successfully completed
+    echo $schema_interregator_results;
     ?><script type="text/javascript">document.title='<?=proper_nounize(APP_NAME);?> | migration complete';</script>
 </body>
 </html>
