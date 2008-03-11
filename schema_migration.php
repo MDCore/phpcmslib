@@ -85,8 +85,9 @@ class schema_migration
             break;
         }
         $this->update_schema_version($migration['version']);
-        #rebuild the schema definition
-            $schema_interregator_results = schema_interregator::build_schema_definition();
+
+        // rebuild the schema definition
+        //$schema_interregator_results = schema_interregator::build_schema_definition();
     }
 
     function update_schema_version($version) {
@@ -156,95 +157,92 @@ class schema_migration
     function table() {
         $arguments = func_get_args();
 
-        #pull the table and schema from args
-            $table_name = $arguments[0];
-            $schema_definition = $arguments[1];
-            //var_dump($table_name);
-        
-            $AR = new AR;
-            $manager = $this->db->loadModule('Manager');
-            $mdb2_table = array();
-            // add the primary key
-                $mdb2_table['id'] = array('type' => 'integer', 'notnull' => true, 'autoincrement' => true);
+        //pull the table and schema from args
+        $table_name = $arguments[0];
+        $schema_definition = $arguments[1];
+        //var_dump($table_name);
+    
+        $AR = new AR;
+        $manager = $this->db->loadModule('Manager');
+        $mdb2_table = array();
+        // add the primary key
+        $mdb2_table['id'] = array('type' => 'integer', 'notnull' => true, 'autoincrement' => true);
 
-            /* convert our compact schema definition syntax into the mdb2 syntax */
-            foreach ($schema_definition as $field) {
-                if (is_array($field)) { /* this is a specified field and not a shorcut */
-                    $field_name = $field[0];
+        /* convert our compact schema definition syntax into the mdb2 syntax */
+        foreach ($schema_definition as $field) {
+            if (is_array($field)) { /* this is a specified field and not a shorcut */
+                $field_name = $field[0];
+                $type = $field[1];
+                #convert our type names to mdb2 type names
+                switch ($field[1]) {
+                case 'string':
+                    $type = 'text';
+                    $field[2]['length'] = 255;
+                    break;
+                case 'text':
+                    $type = 'clob'; break;
+                case 'datetime':
+                    $type = 'timestamp'; break;
+                case 'foreign_key':
+                    $type = 'integer';
+                    $field_name = foreign_keyize($field_name);
+                    break;
+                default:
                     $type = $field[1];
-                    #convert our type names to mdb2 type names
-                        switch ($field[1]) {
-                            case 'string':
-                                $type = 'text';
-                                $field[2]['length'] = 255;
-                                break;
-                            case 'text':
-                                $type = 'clob'; break;
-                            case 'datetime':
-                                $type = 'timestamp'; break;
-                            case 'foreign_key':
-                                $type = 'integer';
-                                $field_name = foreign_keyize($field_name);
-                                break;
-                            default:
-                                $type = $field[1];
-                        }
+                }
 
-                    $mdb2_table[$field_name] = array('type' => $type);
+                $mdb2_table[$field_name] = array('type' => $type);
 
-                    #deal with the additional options
-                    if (sizeof($field) > 2) {
-                        $as = $field[2];
-                            if (isset($as['default'])) { $mdb2_table[$field_name]['default'] = $as['default']; }
-                            if (isset($as['length'])) { $mdb2_table[$field_name]['length'] = $as['length']; }
-                            if (isset($as['not_null'])) { $mdb2_table[$field_name]['notnull'] = 1; }
-                    }
-                } else {
-                    #some shortcuts
-                    switch ($field) {
-                        case 'timestamps':
-                            #create the timestamps fields
-                            $mdb2_table['created_on'] = array('type' => 'timestamp', 'notnull' => true);
-                            $mdb2_table['updated_on'] = array('type' => 'timestamp', 'notnull' => true);
-                    }
+                //deal with the additional options
+                if (sizeof($field) > 2) {
+                    $as = $field[2];
+                    if (isset($as['default'])) { $mdb2_table[$field_name]['default'] = $as['default']; }
+                    if (isset($as['length'])) { $mdb2_table[$field_name]['length'] = $as['length']; }
+                    if (isset($as['not_null'])) { $mdb2_table[$field_name]['notnull'] = 1; }
+                }
+            } else {
+                #some shortcuts
+                switch ($field) {
+                case 'timestamps':
+                    #create the timestamps fields
+                    $mdb2_table['created_on'] = array('type' => 'timestamp', 'notnull' => true);
+                    $mdb2_table['updated_on'] = array('type' => 'timestamp', 'notnull' => true);
                 }
             }
+        }
 
-            //var_dump($mdb2_table);
-            //drop the table
-            try {
-                $result = $manager->dropTable($table_name); AR::error_check($result);
-                echo "dropped table $table_name<br />";
-            }
-            catch (Exception $e) {
-                #print_r($e);
-            }
-            #create the table
-            echo "creating table $table_name. ";
-            $result = $manager->createTable($table_name, $mdb2_table); AR::error_check($result);
+        //var_dump($mdb2_table);
+        //drop the table
+        try {
+            $result = $manager->dropTable($table_name); AR::error_check($result);
+            echo "dropped table $table_name<br />";
+        }
+        catch (Exception $e) {
+            #print_r($e);
+        }
+        #create the table
+        echo "creating table $table_name. ";
+        $result = $manager->createTable($table_name, $mdb2_table); AR::error_check($result);
 
-            $definition = array(
-                'primary' => true,
-                'fields' => array(
-                    'id' => array()
-                )
-            );
+        $definition = array(
+            'primary' => true,
+            'fields' => array(
+                'id' => array()
+            )
+        );
 
-            //reset the auto_increment
-            $sql_pk = "ALTER TABLE {$this->db->database_name}.$table_name AUTO_INCREMENT=1";
-            $result = $this->db->query($sql_pk); AR::error_check($result);
+        //reset the auto_increment
+        $sql_pk = "ALTER TABLE {$this->db->database_name}.$table_name AUTO_INCREMENT=1";
+        $result = $this->db->query($sql_pk); AR::error_check($result);
 
-            //add the pk constraint
-            $this->db->createConstraint($table_name, $table_name.'_primary_key', $definition);
-            echo "created table $table_name.<br />";
+        //add the pk constraint
+        $this->db->createConstraint($table_name, $table_name.'_primary_key', $definition);
+        echo "created table $table_name.<br />";
 
-            #print_r($this->db);die();
-            #Set the PK in sql - not necessary... seems like setting PK to autoincrement does the job
-            /*
-            $sql_pk = "alter table {$this->db->database_name}.$table_name modify column `id` integer  not null auto_increment, add primary key(`id`)";
-            $result = $this->db->query($sql_pk); ar::error_check($result);
-             */
-            flush();
+        // rebuild the schema definition
+        $schema_interregator_results = schema_interregator::build_schema_definition();
+
+        flush();
     }
     
     /* TODO do it in 'html' then capture + save */
@@ -325,40 +323,40 @@ class schema_migration
         }
 
         #execute the schema creation
-                #todo allow overriding the table_name
-            if (substr($model_name, -10) == '_changelog') { $table_name = pluralize(substr($model_name, 0, strlen($model_name) -10)).'_changelog'; } else { $table_name = pluralize($model_name); }
-            if ($options && (isset($options['acts_as_nested_set']) || in_array('acts_as_nested_set', array_values($options)))) {
-                // append the nested_set schema stuff
-                $schema[] = array('ns_root_id', 'integer');
-                $schema[] = array('ns_parent_id', 'integer');
-                $schema[] = array('ns_left_id', 'integer');
-                $schema[] = array('ns_right_id', 'integer');
-                $schema[] = array('ns_node_order', 'integer');
-                $schema[] = array('ns_level', 'integer');
-            }
-            $this->table($table_name, $schema);
+        #todo allow overriding the table_name
+        if (substr($model_name, -10) == '_changelog') { $table_name = pluralize(substr($model_name, 0, strlen($model_name) -10)).'_changelog'; } else { $table_name = pluralize($model_name); }
+        if ($options && (isset($options['acts_as_nested_set']) || in_array('acts_as_nested_set', array_values($options)))) {
+            // append the nested_set schema stuff
+            $schema[] = array('ns_root_id', 'integer');
+            $schema[] = array('ns_parent_id', 'integer');
+            $schema[] = array('ns_left_id', 'integer');
+            $schema[] = array('ns_right_id', 'integer');
+            $schema[] = array('ns_node_order', 'integer');
+            $schema[] = array('ns_level', 'integer');
+        }
+        $this->table($table_name, $schema);
 
         #update app::schema_definition
-            $schema_definition = schema_interregator::pull_schema_for_model($model_name);
-            #var_dump($schema_definition); die();
-            App::$schema_definition[$model_name] = $schema_definition;
-        
-        #create a changelog model and schema, if this model has a changelog
-            if ($options && (isset($options['changelog']) || in_array('changelog', array_values($options)))) {
-                $changelog_schema = $schema;
-                $changelog_schema[] = array($model_name.'_id', 'integer');
-                $changelog_schema[] = array('revision', 'integer');
-                $changelog_schema[] = array('action', 'string', array('length' => 50));
+        $schema_definition = schema_interregator::pull_schema_for_model($model_name);
+        //var_dump($schema_definition); die();
+        App::$schema_definition[$model_name] = $schema_definition;
 
-                $this->create_model($model_name.'_changelog', $changelog_schema, null, $allow_overwrite);
-            }
+        #create a changelog model and schema, if this model has a changelog
+        if ($options && (isset($options['changelog']) || in_array('changelog', array_values($options)))) {
+            $changelog_schema = $schema;
+            $changelog_schema[] = array($model_name.'_id', 'integer');
+            $changelog_schema[] = array('revision', 'integer');
+            $changelog_schema[] = array('action', 'string', array('length' => 50));
+
+            $this->create_model($model_name.'_changelog', $changelog_schema, null, $allow_overwrite);
+        }
         #acts_as_nested_set: create the _locks table
-            if ($options && (isset($options['acts_as_nested_set']) || in_array('acts_as_nested_set', array_values($options)))) {
-                $aans_schema[] = array('lockID', 'string');
-                $aans_schema[] = array('lockTable', 'string');
-                $aans_schema[] = array('lockStamp', 'string');
-                $this->table(pluralize($model_name).'_locks', $aans_schema);
-            }
+        if ($options && (isset($options['acts_as_nested_set']) || in_array('acts_as_nested_set', array_values($options)))) {
+            $aans_schema[] = array('lockID', 'string');
+            $aans_schema[] = array('lockTable', 'string');
+            $aans_schema[] = array('lockStamp', 'string');
+            $this->table(pluralize($model_name).'_locks', $aans_schema);
+        }
     }
 }
 ?>

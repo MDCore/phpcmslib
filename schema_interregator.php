@@ -1,8 +1,7 @@
 <?
 class schema_interregator
 {
-    function pull_schema_for_model($model_name, $echo_progress = false)
-    {
+    function pull_schema_for_model($model_name, $echo_progress = false) {
         if (substr($model_name, 0, 1) != '_')  { /* don't try to interrogate or load models prefixed with _ */
             $model_object = new $model_name;
             if (!isset($model_object->virtual)) {
@@ -26,7 +25,7 @@ class schema_interregator
                         trigger_error($message, E_USER_WARNING);
                     }
                 } else {
-                    print_r($table_schema);
+                    //print_r($table_schema);
                 
                     foreach ($table_schema as $field) {
                         $fields_in_table[$field['name']] = array(
@@ -44,8 +43,7 @@ class schema_interregator
             }
         }
     }
-    function pull_schema_for_all_models()
-    {
+    function pull_schema_for_all_models() {
         $tables = null;
 
         foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model) {
@@ -62,11 +60,18 @@ class schema_interregator
         return $tables;           
     }
 
-    function generate_schema_source($schema)
-    {
+    function build_schema_definition() {
+        $schema = schema_interregator::pull_schema_for_all_models();
+        if ($schema == '') {
+            trigger_error("The schema could not be pulled from the database. This is most likely because there are no models for the application", E_USER_ERROR);
+        }
+        $source = schema_interregator::generate_schema_source($schema);
+        schema_interregator::write_schema_source($source);
+    }
+    function generate_schema_source($schema) {
         $source = null;
         $source = '$schema_definition = Array(';
-        if (!$schema) { return false; } #todo raise an exception
+        if (!$schema) { return false; } //todo raise an exception
         foreach ($schema as $model_name => $fields) {
             $source .= '\''.$model_name.'\' => Array('."\r\n\t";
             foreach ($fields as $field_name => $field_meta_data) {
@@ -86,32 +91,23 @@ class schema_interregator
         if (substr($source, -3) == ",\r\n") {$source = substr($source, 0, strlen($source)-3);}
         $source .= ");\r\n";
         return '<?'.$source.'?>';
-        #echo '<pre>'.$source.'</pre>';
+        //echo '<pre>'.$source.'</pre>';
     }
 
-    function write_schema_source($source, $filename = 'default')
-    {
-        if ($source == '') { return false; }
+    function write_schema_source($source, $filename = 'default') {
+        if ($source == '') {
+            return false;
+        }
         global $path_to_root;
 
         if ($filename == 'default') { $filename = '/config/cache/schema_definition.php'; }
         $filename = realpath($path_to_root).$filename;
         #echo $filename;
 
-        #touch($filename);
         if (!file_put_contents($filename, $source)) {
             trigger_error("<i>config/cache/schema_definition.php</i> could not be written to: please create this file manually and give the webserver write rights", E_USER_ERROR);
         }
     }
 
-    function build_schema_definition()
-    {
-        $schema = schema_interregator::pull_schema_for_all_models();
-        if ($schema == '') {
-            trigger_error("The schema could not be pulled from the database. This is most likely because there are no models for the application", E_USER_ERROR);
-        }
-        $source = schema_interregator::generate_schema_source($schema);
-        schema_interregator::write_schema_source($source);
-    }
 }
 ?>
