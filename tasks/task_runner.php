@@ -19,6 +19,7 @@ case 'beachhead':
     $beachhead->run($argv);
     break;
 case 'migrate':
+    require $path_to_lib.'/tasks/migrate/migrate.php';
     break;
 }
 
