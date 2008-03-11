@@ -204,6 +204,10 @@ class tasks_beachhead
                 'DEV_URL' => $project_url
             )
         );
+        
+        /* give everyone writes to change the schema def. Well, at least www user */
+        chmod($this->project_path.'/config/cache/schema_definition.php', 0777);
+        
 
         exec("cd {$this->project_path} ; git commit -a -m '".$this->strings['401']."'", $output);
         if ($op) {
