@@ -5,7 +5,7 @@
 */
 
 $path_to_lib = dirname(__FILE__).'/../..';
-$path_to_root = $path_to_lib.'/../../..');
+$path_to_root = $path_to_lib.'/../../..';
 
 require($path_to_lib.'/init.php');
 require($path_to_lib.'/schema_interregator.php');
