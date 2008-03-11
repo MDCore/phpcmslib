@@ -7,26 +7,26 @@ class schema_interregator
             $model_object = new $model_name;
             if (!isset($model_object->virtual)) {
                 $model_object->connect_to_db();
-                #load the appropriate mdb2 modules
+                //load the appropriate mdb2 modules
                     $model_object->db->loadModule('Reverse', null, true);
 
-                #using the magic of mdb2's Reverse module and the method tableInfo
+                //using the magic of mdb2's Reverse module and the method tableInfo
                 $table_name = $model_object->dsn['database'].'.'.$model_object->schema_table;
-                if ($echo_progress) { echo "writing schema of table <i>$table_name</i> for model <i>$model_name</i><br />"; }
                 $table_schema = $model_object->db->tableInfo($table_name, null);
                 $error_code = AR::error_check($table_schema, false);
                 #check if there were any errors pulling the schema
                 if ($error_code) {
                     switch ($error_code) {
-                        /* this table name might just not exist yet */
-                        case -18:
-                            $message = "$table_name table not found"; break;
-                        default:
-                            $message = '('.$error_code.') '.$table_schema->getMessage();
-                            trigger_error($message, E_USER_WARNING);
+                    /* this table name might just not exist yet, so don't die on this error */
+                    case -18:
+                        $message = "$table_name table not found";
+                        break;
+                    default:
+                        $message = '('.$error_code.') '.$table_schema->getMessage();
+                        trigger_error($message, E_USER_WARNING);
                     }
                 } else {
-                    #print_r($table_schema);
+                    print_r($table_schema);
                 
                     foreach ($table_schema as $field) {
                         $fields_in_table[$field['name']] = array(
@@ -37,6 +37,9 @@ class schema_interregator
                             );
                     }
                     return $fields_in_table;
+                    if ($echo_progress) {
+                        echo "writing schema of table <i>$table_name</i> for model <i>$model_name</i><br />";
+                    }
                 }
             }
         }
@@ -50,9 +53,11 @@ class schema_interregator
 
             $model_name = str_replace('.php', '', $model_name);
             $fields_in_table = schema_interregator::pull_schema_for_model($model_name, true);
-            if ($fields_in_table) { $tables[$model_name] = $fields_in_table; }
+            if ($fields_in_table) {
+                $tables[$model_name] = $fields_in_table;
+            }
         }
-        #echo '<pre>';print_r($tables);echo '</pre>';
+        //echo '<pre>';print_r($tables);echo '</pre>';
 
         return $tables;           
     }

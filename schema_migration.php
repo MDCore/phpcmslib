@@ -40,11 +40,9 @@ class schema_migration
     function load_migrations() {
         $path = App::$env->root.'/db/migrations';
 
-        if ($handle = opendir(App::$env->root.'/db/migrations'))
-        {
+        if ($handle = opendir(App::$env->root.'/db/migrations')) {
             $migrations = Array();
-            while (false != ($file = readdir($handle)))
-            {
+            while (false != ($file = readdir($handle))) {
                 $file = $path."/$file";
                 if (is_file($file))
                 {
@@ -52,16 +50,14 @@ class schema_migration
                 }
             }
             closedir($handle);
-        }
-        else
-        {
+        } else {
             #todo die on error
         }
 
-        #sort the array
+        //sort the array
             sort($migrations);
         
-        #build the meta-data
+        //build the meta-data
             for ( $i=0; $i < sizeof($migrations); $i++ )
             { 
                 $file_name = $this->file_name_from_full_path($migrations[$i]);
@@ -79,8 +75,7 @@ class schema_migration
 
     function run_migration($migration) {
         $sys = $this;
-        switch ($migration['extension'])
-        {
+        switch ($migration['extension']) {
         case 'sql':
             $sql_migration = file_get_contents($migration['filename']);
             $this->execute_many_sql_statements($sql_migration);
@@ -164,6 +159,7 @@ class schema_migration
         #pull the table and schema from args
             $table_name = $arguments[0];
             $schema_definition = $arguments[1];
+            //var_dump($table_name);
         
             $AR = new AR;
             $manager = $this->db->loadModule('Manager');
@@ -214,7 +210,7 @@ class schema_migration
                 }
             }
 
-            //var_dump($mdb2_table);die();
+            //var_dump($mdb2_table);
             //drop the table
             try {
                 $result = $manager->dropTable($table_name); AR::error_check($result);
