@@ -27,6 +27,7 @@ body {
 </style>
 </head>
 <body>
+<h1>Migrating...</h1>
     <p><?=proper_nounize(APP_NAME);?> schema is currently at version <?=$schema_version;?></p><?
 
     foreach ($sys->migrations as $migration)
@@ -39,7 +40,7 @@ body {
         }
     }
 ?>
-    <p><?=proper_nounize(APP_NAME);?> schema has been migrated to version <?=$migration['version'];?></p><?
+    <h2><?=proper_nounize(APP_NAME);?> schema has been migrated to version <?=$migration['version'];?></h2><?
 
     echo $schema_interregator_results;
     ?><script type="text/javascript">document.title='<?=proper_nounize(APP_NAME);?> | migration complete';</script>
