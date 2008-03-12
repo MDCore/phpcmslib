@@ -4,19 +4,20 @@
  * - do $_GET's when run from browser
  */
 
-var_dump($_GET);die();
-
 /* pull in the args */
-if (isset($_SERVER['shell']) {
+if (isset($_SERVER['SHELL'])) {
+
     /* running from the shell */
-    App::$running_from_shell = true;
     $task_name = $argv[1];
     $arguments = $argv;
+    $running_from_shell = true;
+
 } else {
+
     /* running from the browser */
-    App::$running_from_shell = false;
     $task_name = $_GET['task'];
-    $arguments = ($task_name, $_GET['remigrate']);
+    $arguments = array($task_name, $_GET['remigrate']);
+    $running_from_shell = true;
 }
 
 /*
@@ -42,6 +43,7 @@ case 'migrate':
     /* init */
     require $path_to_lib.'/init.php';
 
+    App::$running_from_shell = $running_from_shell;
     $_GET['remigrate'] = $argv[2];
     require $path_to_lib.'/schema_interregator.php' ;
     require $path_to_lib.'/schema_migration.php' ;
