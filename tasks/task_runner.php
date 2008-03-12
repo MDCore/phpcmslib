@@ -1,4 +1,3 @@
-#!/usr/bin/php
 <?
 /* pull in the args */
 $task_name = $argv[1];

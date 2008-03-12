@@ -4,8 +4,6 @@
  * ask on remigrate! NB
 */
 
-
-
 /* check for shell */
 if (isset($_SERVER['SHELL']) && !is_null($_SERVER['SHELL'])) {
 } else {
