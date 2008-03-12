@@ -1,15 +1,19 @@
 <?
 class dispatcher
 {
-    public function path_from_collection(&$collection)
-    {
-        #print_r($collection);#die();
+    public function path_from_collection(&$collection) {
+        //print_r($collection);#die();
 
-        #get the path, and remove the path from $collection
+        //get the path, and remove the path from $collection
         if (sizeof($collection) > 0)
         {
             $path = array_keys($collection);
-            if ($path[0] != 'qs') { $path = $path[0];unset($collection[$path]); } else { $path = null; }
+            if ($path[0] != 'qs') {
+                $path = $path[0];
+                unset($collection[$path]);
+            } else {
+                $path = null;
+            }
             unset($collection['qs']);
             
             if ($path == 'index_html') {$path = 'default';}
@@ -18,12 +22,13 @@ class dispatcher
 
     }
 
-    public function process(&$collection = null)
-    {
-        if (!$collection) { $collection = &$_GET; }
+    public function process(&$collection = null) {
+        if (!$collection) {
+            $collection = &$_GET;
+        }
         $path = $this->path_from_collection($collection);
         
-        #build the route
+        /* build the route */
             App::$route = route_from_path($path);
 
         #-------------------------------------------------------------------------------------------------
