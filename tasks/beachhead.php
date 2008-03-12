@@ -1,6 +1,6 @@
 <?
 /* --- Usage ------------------------------------- */
-/* beachhead CLIENT_NAME PROJECT_NAME
+/* beachhead PATH
  *
  * Note: The assumption is that you are running this on a dev server. So it updates
  * the dev environment and uses the deve environment to create the database. That
@@ -10,7 +10,6 @@
 /*
  * TODO
  * - use MDB2 extended to create database
- * - run the first migrations
  * - account for remote repository failure or disconnection
  */
 
@@ -18,8 +17,8 @@ class tasks_beachhead
 {
     public $strings = array(
         0 => 'No error found',
-        100 => 'No client specified',
-        101 => 'No project name specified',
+        100 => 'No path specified',
+        101 => 'No project specified',
         200 => 'Project directory %1 already exists',
         201 => 'Project directory %1 does not exist',
         300 => 'Cloning the pedantic application skeleton',
@@ -43,16 +42,19 @@ class tasks_beachhead
     public $error_no = 0;
     public $output_progress = false;
 
-    public function run($argv) {
-        $client = $argv[2];
-        $project = $argv[3];
+    public function run($arguments) {
+        $path = array_keys($arguments); $path = $arguments[2];
+        $project = explode('/', str_replace('\\', '/', $path));
+        $project = $project[sizeof($project)-1];
 
-        $this->create_application($client, $project);
+        if (isset($arguments['root_url'])) {
+            $this->root_url = $arguments['root_url'];
+        }
+        $this->create_application($path, $project);
     }
     public function __construct() {
 /* --- configuration ------------------------------------- */
-        $this->public_html_path = '/home/gavin/public_html/';
-        $this->public_html_url = '~gavin/';
+        $this->root_url = '/';
         $this->personal_repository_url = 'git://windserver/';
         $this->pedantic_repository = $this->personal_repository_url.'pedantic';
         $this->app_skeleton_branch = 'master';
@@ -63,24 +65,24 @@ class tasks_beachhead
 
     }
 
-    public function create_application($client = null, $project = null) {
+    public function create_application($path = null, $project = null) {
 
-        /* check the client and project */
-        if (is_null($client) || $client == '') {
-            $this->error(100); //'No client specified'
+        /* check the path and project */
+        if (is_null($path) || $path == '') {
+            $this->error(100); //'No path specified'
             return false;
         }
         if (is_null($project) || $project == '') {
-            $this->error(101); //No project name specified
+            $this->error(101); //No project specified
             return false;
         }
 
         $op = $this->output_progress;
 
         /* generate the filename / URL friendly project_name */
-        $this->project_name = str_replace('.', '_', $client.'_'.$project);
+        $this->project_name = str_replace('.', '_', $project);
 
-        $this->project_path = $this->public_html_path.$client.'/'.$project;
+        $this->project_path = $path;
 
         /* does this directory already exist ? fail! */
         if (file_exists($this->project_path)) {
@@ -142,7 +144,12 @@ class tasks_beachhead
         if ($op) {
             echo $this->strings[305];
         }
-        $project_url = $this->public_html_url.$client.'/'.$project;
+        $project_url = $this->root_url.'/'.$project;
+        $project_url = str_replace('//', '/', $project_url);
+        if ($project_url[0] == '/') {
+            $project_url = substr($project_url, 1);
+        }
+
         /* customize the new skeleton for this project */
         /*
         * .htaccess

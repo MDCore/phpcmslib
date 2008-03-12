@@ -1,7 +1,6 @@
 <?
 /* TODO
  * - ask on remigrate! NB
- * - check for a parameter passed, a target migration
 */
 
 $sys = new schema_migration;
@@ -15,10 +14,14 @@ if (!$sys->running_from_shell) {
     echo "\r\n";
 }
 
+if (isset($arguments['force_from'])) {
+    $force_from = $arguments['force_from'];
+}
+
 for($i = 0; $i < sizeof($sys->migrations); $i++) {
     $migration = $sys->migrations[$i];
 
-    if ($migration['version'] > $schema_version) {
+    if (($migration['version'] > $schema_version) || (isset($force_from) && $force_from <= $migration['version'])) {
         ob_start();
         $sys->run_migration($migration);
         $sys->migrations[$i]['result'] = ob_get_clean();
