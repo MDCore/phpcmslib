@@ -30,6 +30,7 @@ case 'migrate':
     require $path_to_lib.'/init.php';
 
     $_GET['remigrate'] = $argv[2];
+    App::$running_from_shell = false;
     require $path_to_lib.'/schema_interregator.php' ;
     require $path_to_lib.'/schema_migration.php' ;
     require $path_to_lib.'/tasks/migrate/migrate.php';

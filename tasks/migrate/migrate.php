@@ -1,26 +1,13 @@
 <?
-/* todo
- * check for a parameter passed, a target migration
- * ask on remigrate! NB
+/* TODO
+ * - ask on remigrate! NB
+ * - check for a parameter passed, a target migration
 */
-
-/* check for shell */
-if (isset($_SERVER['SHELL']) && !is_null($_SERVER['SHELL'])) {
-} else {
-    $path_to_lib = dirname(__FILE__).'/../..';
-    $path_to_root = $path_to_lib.'/../../..';
-
-    require($path_to_lib.'/init.php');
-    require($path_to_lib.'/schema_interregator.php');
-    require($path_to_lib.'/schema_migration.php');
-
-    App::$running_from_shell = false;
-}
 
 $sys = new schema_migration;
 $sys->running_from_shell = App::$running_from_shell;
 
-#get the latest migration number
+//get the latest migration number
 $schema_version = $sys->get_latest_schema_number();
 
 for($i = 0; $i < sizeof($sys->migrations); $i++) {
@@ -33,8 +20,8 @@ for($i = 0; $i < sizeof($sys->migrations); $i++) {
     }
 }
 
-    #successfully completed, output the results
-    if (!App::$running_from_shell) {
-        require($path_to_root.'/vendor/pedantic/lib/tasks/migrate/migrate_html_layout.php');
-    }
+//successfully completed, output the results
+if (!isset(App::$running_from_shell) || !App::$running_from_shell) {
+    require($path_to_root.'/vendor/pedantic/lib/tasks/migrate/migrate_html_layout.php');
+}
 ?>
