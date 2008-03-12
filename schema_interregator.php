@@ -46,14 +46,18 @@ class schema_interregator
     function pull_schema_for_all_models() {
         $tables = null;
 
-        foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model) {
-            $fields_in_table = null;
+        if (sizeof($_SESSION[APP_NAME]['application']['models']) > 0) {
+            foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model) {
+                $fields_in_table = null;
 
-            $model_name = str_replace('.php', '', $model_name);
-            $fields_in_table = schema_interregator::pull_schema_for_model($model_name, true);
-            if ($fields_in_table) {
-                $tables[$model_name] = $fields_in_table;
+                $model_name = str_replace('.php', '', $model_name);
+                $fields_in_table = schema_interregator::pull_schema_for_model($model_name, true);
+                if ($fields_in_table) {
+                    $tables[$model_name] = $fields_in_table;
+                }
             }
+        } else {
+            trigger_error("The schema could not be pulled from the database. This is most likely because there are no models for the application", E_USER_ERROR);
         }
         //echo '<pre>';print_r($tables);echo '</pre>';
 
@@ -62,11 +66,10 @@ class schema_interregator
 
     function build_schema_definition() {
         $schema = schema_interregator::pull_schema_for_all_models();
-        if ($schema == '') {
-            trigger_error("The schema could not be pulled from the database. This is most likely because there are no models for the application", E_USER_ERROR);
+        if ($schema != '') {
+            $source = schema_interregator::generate_schema_source($schema);
+            schema_interregator::write_schema_source($source);
         }
-        $source = schema_interregator::generate_schema_source($schema);
-        schema_interregator::write_schema_source($source);
     }
     function generate_schema_source($schema) {
         $source = null;
