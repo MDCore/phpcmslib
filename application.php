@@ -24,6 +24,9 @@ class Application {
         if (defined('TEST_MODE')) {
             $environment = 'test';
         }
+        /*if (isset($_SERVER['SHELL'])) {
+            $environment = 'development';
+        }*/
         
         /* slurp config/application.php settings */
             global $default_face; if ($default_face) { App::$default_face = $default_face; }
