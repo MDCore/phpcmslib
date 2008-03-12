@@ -5,9 +5,15 @@ class dispatcher
         //print_r($collection);#die();
 
         //get the path, and remove the path from $collection
-        if (sizeof($collection) > 0)
-        {
+        if (sizeof($collection) > 0) {
             $path = array_keys($collection);
+            /* qs in the querystring is basically a dummy entry. It's how I know
+             * when the real querystring begins. That is why it get's unset here;
+             * because the page being requested is stored (as $path) if it exists.
+             * The querystring ($_GET) is then restored to a pristine state.
+             * Where and why does $_GET get all these weird values? /.htaccess is
+             * where. It's basically for the pretty URL's
+             */
             if ($path[0] != 'qs') {
                 $path = $path[0];
                 unset($collection[$path]);
