@@ -1,34 +1,18 @@
 <?
 /* TODO
- * - fix bug with running migrate from shell (it won't work at all, app env not loading!?!?
- * - do $_GET's when run from browser
+ * none at the moment
  */
 
-/* pull in the args */
-if (isset($_SERVER['SHELL'])) {
-
-    /* running from the shell */
-    $task_name = $argv[1];
-    $arguments = $argv;
-    $running_from_shell = true;
-
-} else {
-
-    /* running from the browser */
-    $task_name = $_GET['task'];
-    $arguments = array($task_name, $_GET['remigrate']);
-    $running_from_shell = true;
-}
-
-/*
- * getting arguments, later
-for ($i = 1; $i < sizeof($argv); $i++) {
-}*/
+/* NOTE
+ * This script should be shell/web agnostic.
+ */
 
 $path_to_lib = dirname(__FILE__).'/..';
 $path_to_root = $path_to_lib.'/../../..';
 
+/* $task_name and $arguments come from the shell or web task script */
 switch ($task_name) {
+
 case 'beachhead':
     /* init */
     $only_require_libraries = true; /* this doesn't need (or want) config or environment */
@@ -39,6 +23,7 @@ case 'beachhead':
     $beachhead->output_progress = true;
     $beachhead->run($arguments);
     break;
+
 case 'migrate':
     /* init */
     require $path_to_lib.'/init.php';
@@ -50,5 +35,4 @@ case 'migrate':
     require $path_to_lib.'/tasks/migrate/migrate.php';
     break;
 }
-
 ?>
