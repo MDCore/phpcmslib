@@ -5,6 +5,8 @@
  */
 require_once '../functions.php';
 require_once '../AR.php';
+require_once '../application.php';
+require_once '../environment.php';
 
 class functionsTest extends PHPUnit_Framework_TestCase {
     public function __construct()
@@ -20,6 +22,14 @@ class functionsTest extends PHPUnit_Framework_TestCase {
      * @access protected
      */
     protected function setUp() {
+        App::$env = new Environment;
+        App::$default_face = 'site';
+        App::$env->url = 'http://test.com';
+        App::$route = array(
+            'face' => 'cm',
+            'controller' => 'products_controller',
+            'action' => 'products_list',
+        );
     }
 
     /**
@@ -29,6 +39,9 @@ class functionsTest extends PHPUnit_Framework_TestCase {
      * @access protected
      */
     protected function tearDown() {
+        App::$env = null;
+        App::$default_face = null;
+        App::$route = null;
     }
 
     /*
@@ -253,16 +266,105 @@ class functionsTest extends PHPUnit_Framework_TestCase {
         $this->markTestIncomplete();
     }
 
-    public function testUrlTo()
-    {
-        $this->markTestIncomplete();
-        #test passing each section alone and getting an expected result. had to fix a bug coz I didn't include "id" in the sameness comparison
+    public function test_url_to_basic() {
+        $path = array(
+            'face' => 'cm',
+            'controller' => 'products',
+            'action' => 'products_list',
+        );
+
+        $expected_path = 'http://test.com';
+        $result = url_to($path);
+        $this->assertEquals($result, $expected_path, 'url != base when route + target the same');
+
+        /* test base url off */
+        $expected_path = '';
+        $result = url_to($path, false);
+        $this->assertEquals($result, $expected_path, 'base url off is not returning emptystring');
+
+        /* test explicit path on */
+        $expected_path = 'http://test.com/cm/products/products_list';
+        $result = url_to($path, true, true);
+        $this->assertEquals($result, $expected_path, 'explicitpath is not being returned correctly');
     }
 
-    public function testRouteFromPath()
-    {
-        $this->markTestIncomplete();
+    public function test_url_to_advanced() {
+        App::$route = array(
+            'face' => 'cm',
+            'controller' => 'users_controller',
+            'action' => 'cm_list',
+            'id' => '',
+        );
+        $path = array(
+            'face' => 'site'
+        );
+
+        /* tests default face */
+        $expected_path = 'http://test.com/';
+        $result = url_to($path);
+        $this->assertEquals($result, $expected_path);
     }
+
+    public function test_route_from_path() {
+        App::$env = new Environment;
+        App::$env->url = 'http://test.com';
+
+        /* pass nothing */
+        $expected_path = array(
+            'face' => 'cm',
+            'controller' => 'default_controller',
+            'action' => '',
+            'id' => '',
+        );
+        $path = '';
+        $result = route_from_path($path);
+        $this->assertEquals($result, $expected_path);
+
+        /* pass string without slashes */
+        $expected_path = array(
+            'face' => 'cm',
+            'controller' => 'cats_controller',
+            'action' => '',
+            'id' => '',
+        );
+        $path = 'cats';
+        $result = route_from_path($path);
+        $this->assertEquals($result, $expected_path);
+
+        /* pass string with a slash */
+        $expected_path = array(
+            'face' => 'cm',
+            'controller' => 'dogs_controller',
+            'action' => 'cats',
+            'id' => '',
+        );
+        $path = 'dogs/cats';
+        $result = route_from_path($path);
+        $this->assertEquals($result, $expected_path);
+
+        /* pass string with 2 slashes */
+        $expected_path = array(
+            'face' => 'cm',
+            'controller' => 'dogs_controller',
+            'action' => 'cats',
+            'id' => 'mice',
+        );
+        $path = 'dogs/cats/mice';
+        $result = route_from_path($path);
+        $this->assertEquals($result, $expected_path);
+
+        /* pass string with differnt action */
+        $expected_path = array(
+            'face' => 'site',
+            'controller' => 'default_controller',
+            'action' => '',
+            'id' => '',
+        );
+        $path = 'site';
+        $result = route_from_path($path);
+        $this->assertEquals($result, $expected_path);
+    }
+
     public function testAsHiddens1()
     {
         $input = array('cat' => array(

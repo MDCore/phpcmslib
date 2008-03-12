@@ -204,47 +204,73 @@ function url_to($path, $include_base = true, $explicit_path = false) {
     //$url = App::$env->url;
 
     if (is_array($path)) { $target = $path; } else { $target = route_from_path($path); }
-    if (!isset($target['face'])) { $target['face'] = App::$route['face']; }
-    if (!isset($target['controller'])) { $target['controller'] = App::$controller->controller_name; }
+
+    //echo '<!--'; var_dump(App::$route); echo "\r\n====\r\n"; var_dump($path); echo "\r\n====\r\n"; var_dump($target); echo '-->';
+
+    /* only set the controller if the face is unchanged. */
+    if (!isset($target['face'])) {
+        $target['face'] = App::$route['face'];
+        if (!isset($target['controller'])) {
+            // why controller->controller_name $target['controller'] = App::$controller->controller_name;
+            $target['controller'] = App::$route['controller'];
+        }
+    }
+    /* clean up the controller name */
     $target['controller'] = str_replace('_controller', '', $target['controller']);
 
-    #echo "<!--";print_r($target);echo "-->";
+    //echo '<!--'; var_dump(App::$route); echo "\r\n====\r\n"; var_dump($path); echo "\r\n====\r\n"; var_dump($target); echo '-->';
     
-    #route's are the same so just send bank emptystring
-        $app_route_controller = str_replace('_controller', '', App::$route['controller']);
-        if (!$explicit_path) {
-            if ($target['face'] == App::$route['face'] && $target['controller'] == $app_route_controller && $target['action'] == App::$route['action'] && $target['id'] == App::$route['id']) { return ''; }
-        }
-
-    #base URL
-        if ($include_base) {
-            $url = App::$env->url;
-        }
-        $url .= '/';
-
-    #if the default face is the same as the target face leave the face out
-        if ($target['face'] != App::$default_face || $explicit_path) { $url .= $target['face'].'/'; }
-        
-    #append the controller path
-        $url .= $target['controller']; 
-
-    # warn if action is specified without target
-        if ((!isset($target['action']) | $target['action'] == '') && (isset($target['id']) && $target['id'] != '')) {
-            trigger_error('id specified in route without action', E_USER_WARNING); 
-        }
-
-    #no specified action?  let the controller decide
-        if (isset($target['action']) && $target['action'] != '') {
-            $url .= '/'.$target['action'];
-            if (isset($target['id']) && $target['id'] != '') 
-            {
-                $url .= '/'.$target['id'];
+    /* route's are the same so just send back emptystring */
+    $app_route_controller = str_replace('_controller', '', App::$route['controller']);
+    if (!$explicit_path) {
+        if ($target['face'] == App::$route['face'] && $target['controller'] == $app_route_controller && $target['action'] == App::$route['action'] && $target['id'] == App::$route['id']) {
+            if ($include_base) {
+                return App::$env->url;
+            } else {
+                return '';
             }
         }
+    }
+
+    /* base URL */
+    if ($include_base) {
+        $url = App::$env->url;
+    }
+    $url .= '/';
+
+    //echo '<!--'; var_dump(App::$route); echo "\r\n====\r\n"; var_dump($path);echo "\r\n====\r\n"; var_dump($url); echo '-->';
+
+    /* if the default face is the same as the target face leave the face out */
+    if ($target['face'] != App::$default_face || $explicit_path) {
+        $url .= $target['face'].'/';
+    }
+        
+    /* append the controller path */
+    $url .= $target['controller']; 
+
+    /* warn if action is specified without target */
+    if ((!isset($target['action']) | $target['action'] == '') && (isset($target['id']) && $target['id'] != '')) {
+        trigger_error('id specified in route without action', E_USER_WARNING); 
+    }
+
+    /* no specified action?  let the controller decide */
+    if (isset($target['action']) && $target['action'] != '') {
+        $url .= '/'.$target['action'];
+        if (isset($target['id']) && $target['id'] != '') 
+        {
+            $url .= '/'.$target['id'];
+        }
+    }
 
     return $url;
 }
 
+/* calling route from path with:
+ * a string without slashes e.g. 'cats' will return:
+ *      'cats_controller' in the array
+ * a string with a slash e.g. 'dog/cats' will return:
+ *      'dogs_controller' and 'cats' view
+ */
 function route_from_path($path) {
     #default route
     $result = array(
