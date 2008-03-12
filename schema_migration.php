@@ -1,4 +1,7 @@
 <?
+/* TODO
+ * - convert to strings array
+ */
 class schema_migration
 {
     public $running_from_shell = false;
@@ -11,27 +14,24 @@ class schema_migration
     function get_latest_schema_number() {
         $sql = "SELECT version from schema_info";
         $result = $this->db->query($sql); 
-        #check if the table exists
+        //check if the table exists
         if (MDB2_ERROR_NOSUCHTABLE == AR::error_check($result, false))
         {
-            #create the table and reselect
+            //create the table and reselect
             $this->create_schema_info_table();
             $result = $this->db->query($sql); 
             AR::error_check($result);
         }
         else
         {
-            #die on the error
+            //die on the error
             AR::error_check($result);
         }
 
         $result = $result->fetchRow();
-        if ($result && ! isset($_GET['remigrate']))
-        {
+        if ($result && ! isset($_GET['remigrate'])) {
             $schema_version = $result->version;
-        }
-        else
-        {
+        } else {
             $schema_version = 0;
         }
 
@@ -52,7 +52,7 @@ class schema_migration
             }
             closedir($handle);
         } else {
-            #todo die on error
+            //todo die on error
         }
 
         //sort the array
@@ -63,7 +63,7 @@ class schema_migration
             { 
                 $file_name = $this->file_name_from_full_path($migrations[$i]);
                 $version = explode('_', $file_name); $version = $version[0]; 
-                $description = str_replace('_', ' ', str_replace($this->file_extension_from_file_name($file_name), '', substr($file_name, strlen($version)+1)));
+                $description = str_replace('_', ' ', str_replace('.'.$this->file_extension_from_file_name($file_name), '', substr($file_name, strlen($version)+1)));
                 $migrations[$i] = array(
                     'version' => (int)$version,
                     'filename' => $migrations[$i],
@@ -76,6 +76,11 @@ class schema_migration
 
     function run_migration($migration) {
         $sys = $this;
+        if (!$this->running_from_shell) {
+        } else {
+            echo 'Processing migration "'.$migration['description']. '" (version '.$migration['version'].')';
+            echo "\r\n";
+        }
         switch ($migration['extension']) {
         case 'sql':
             $sql_migration = file_get_contents($migration['filename']);
@@ -86,15 +91,20 @@ class schema_migration
             break;
         }
         $this->update_schema_version($migration['version']);
-
-        // rebuild the schema definition
-        //$schema_interregator_results = schema_interregator::build_schema_definition();
     }
 
     function update_schema_version($version) {
-        $sql = "UPDATE schema_info set version='$version'";
-        $AR = new AR;
+        /* delete the current record */
+        $sql = "DELETE FROM {$this->db->database_name}.schema_info";
+        /* add a new record */
         $result = $this->db->query($sql); AR::error_check($result);
+        $sql = "INSERT INTO {$this->db->database_name}.schema_info (version) VALUES ('$version')";
+        $result = $this->db->query($sql); AR::error_check($result);
+
+        if (!$this->running_from_shell) {
+        } else {
+            echo "Updated schema to version $version\r\n";
+        }
     }
     function execute_many_sql_statements($sql_statements) {
         $sql_statements = explode(';',$sql_statements);
@@ -103,7 +113,11 @@ class schema_migration
             $sql = trim($sql);
             if ($sql != '')
             {
-                if (!$this->running_from_shell) {echo "<div><i>executing:</i><br />"; echo $sql;echo '</div>';}
+                if (!$this->running_from_shell) {
+                    echo "<div><i>executing:</i><br />";
+                    echo $sql;echo '</div>';
+                } else {
+                }
                 $AR = new AR;
                 $result = $this->db->query($sql); AR::error_check($result);
             }
@@ -123,25 +137,24 @@ class schema_migration
         return $file_name;
     }
     function create_schema_info_table() {
-        if (!$this->running_from_shell) {echo "creating schema_info table<br />";}
+        echo 'creating schema_info table';
+        if (!$this->running_from_shell) {
+            echo '<br />';
+        } else {
+            echo "\r\n";
+        }
 
         $this->table('schema_info', array(
             array('version', 'integer', array('not_null' => true, 'default' => 0))
             )
         );
-
-        /* add the schema info row */
-        $schema_info_data = array('version' => '0');
-        $this->db->loadModule('Extended');
-        $result = $this->db->autoExecute('schema_info', $schema_info_data, MDB2_AUTOQUERY_INSERT);
-        AR::error_check($result);
     }
 
-    function pull_table_schema($table_name) { #stolen somewhat from schema_interregator
+    function pull_table_schema($table_name) { //stolen somewhat from schema_interregator
         $this->db->loadModule('Reverse', null, true);
         $table_schema = $this->db->tableInfo($table_name, null);
         $error_code = AR::error_check($table_schema, false);
-        #check if there were any errors pulling the schema
+        //check if there were any errors pulling the schema
         if ($error_code) 
         {
             switch ($error_code)
@@ -174,7 +187,7 @@ class schema_migration
             if (is_array($field)) { /* this is a specified field and not a shorcut */
                 $field_name = $field[0];
                 $type = $field[1];
-                #convert our type names to mdb2 type names
+                //convert our type names to mdb2 type names
                 switch ($field[1]) {
                 case 'string':
                     $type = 'text';
@@ -202,10 +215,10 @@ class schema_migration
                     if (isset($as['not_null'])) { $mdb2_table[$field_name]['notnull'] = 1; }
                 }
             } else {
-                #some shortcuts
+                //some shortcuts
                 switch ($field) {
                 case 'timestamps':
-                    #create the timestamps fields
+                    //create the timestamps fields
                     $mdb2_table['created_on'] = array('type' => 'timestamp', 'notnull' => true);
                     $mdb2_table['updated_on'] = array('type' => 'timestamp', 'notnull' => true);
                 }
@@ -216,13 +229,17 @@ class schema_migration
         //drop the table
         try {
             $result = $manager->dropTable($table_name); AR::error_check($result);
-            echo "dropped table $table_name<br />";
+            echo "Dropped table $table_name... ";
+            /*if (!$this->running_from_shell) {
+                echo '<br />';
+            } else {
+                echo "\r\n";
+            }*/ 
         }
         catch (Exception $e) {
-            #print_r($e);
+            //print_r($e);
         }
-        #create the table
-        echo "creating table $table_name. ";
+        //create the table
         $result = $manager->createTable($table_name, $mdb2_table); AR::error_check($result);
 
         $definition = array(
@@ -238,7 +255,13 @@ class schema_migration
 
         //add the pk constraint
         $this->db->createConstraint($table_name, $table_name.'_primary_key', $definition);
-        echo "created table $table_name.<br />";
+
+        echo "created table $table_name";
+        if (!$this->running_from_shell) {
+            echo '<br />';
+        } else {
+            echo "\r\n";
+        }
 
         // rebuild the schema definition and load it into memory
         $schema_interregator_results = schema_interregator::build_schema_definition();
@@ -248,6 +271,12 @@ class schema_migration
             trigger_error('Schema definition not set', E_USER_WARNING);
         }
         App::$schema_definition = $schema_definition;
+        echo "Rebuilt schema definition";
+        if (!$this->running_from_shell) {
+            echo '<br />';
+        } else {
+            echo "\r\n";
+        }
 
         flush();
     }
@@ -255,7 +284,7 @@ class schema_migration
     /* TODO do it in 'html' then capture + save */
     function create_model($model_name, $schema = null, $options = null, $allow_overwrite = false) {
         global $path_to_root;
-        #by default these models extend AR. extending something else means some hand-coding. convention over configuration
+        //by default these models extend AR. extending something else means some hand-coding. convention over configuration
 
         /*
          * options
@@ -266,14 +295,14 @@ class schema_migration
          */
 
         if (!$this->allow_model_overwrite_override) { /* testing bypasses the file creation */
-            #create the file if required
+            //create the file if required
             $filename = realpath($path_to_root)."/models/$model_name.php";
 
-            #check if the file exists
+            //check if the file exists
             $file_exists = (file_exists($filename));
             if ( ($file_exists && $allow_overwrite) || !$file_exists || ($file_exists && (filesize($filename) == 0) ) )
             {
-                #generate the source
+                //generate the source
                 /* header */
                 $source = '<'."?\r\n/* This file was automatically generated by pedantic_lib "/*on ".strftime(SQL_INSERT_DATE_TIME_FORMAT, time())*/."*/\r\n";
                 $source .= "\r\nclass $model_name extends ";
@@ -290,7 +319,7 @@ class schema_migration
                 {
                     foreach ($options as $option => $value)
                     {
-                        #breaking it down so that we can re_use options to specify things that are not just properties of the class
+                        //breaking it down so that we can re_use options to specify things that are not just properties of the class
                         switch ($option)
                         {
                         case 'extends':
@@ -309,28 +338,24 @@ class schema_migration
                 }
                 $source .= "}\r\n".'?'.'>';
 
-                #echo $filename;die();
+                //echo $filename;die();
 
-                if (!file_put_contents($filename, $source))
-                {
+                if (!file_put_contents($filename, $source)) {
                     trigger_error("The model file could not be created please: please create these files manually as empty files in order to use this functionality", E_USER_ERROR);
-                }
-                else
-                {
-                    if (!isset($_SESSION[APP_NAME]['application']['models']["$model_name.php"]))
-                    {
-                        #pop this model into the session
+                } else {
+                    if (!isset($_SESSION[APP_NAME]['application']['models']["$model_name.php"])) {
+                        //pop this model into the session
                         $_SESSION[APP_NAME]['application']['models']["$model_name.php"] = $filename;
-                        #load it
+                        //load it
                         require($path_to_root."/models/$model_name.php");
                     }
                 }
-                #print_r($_SESSION[APP_NAME]);die();
+                //print_r($_SESSION[APP_NAME]);die();
             }
         }
 
-        #execute the schema creation
-        #todo allow overriding the table_name
+        //execute the schema creation
+        //todo allow overriding the table_name
         if (substr($model_name, -10) == '_changelog') { $table_name = pluralize(substr($model_name, 0, strlen($model_name) -10)).'_changelog'; } else { $table_name = pluralize($model_name); }
         if ($options && (isset($options['acts_as_nested_set']) || in_array('acts_as_nested_set', array_values($options)))) {
             // append the nested_set schema stuff
@@ -343,12 +368,12 @@ class schema_migration
         }
         $this->table($table_name, $schema);
 
-        #update app::schema_definition
+        //update app::schema_definition
         $schema_definition = schema_interregator::pull_schema_for_model($model_name);
         //var_dump($schema_definition); die();
         App::$schema_definition[$model_name] = $schema_definition;
 
-        #create a changelog model and schema, if this model has a changelog
+        //create a changelog model and schema, if this model has a changelog
         if ($options && (isset($options['changelog']) || in_array('changelog', array_values($options)))) {
             $changelog_schema = $schema;
             $changelog_schema[] = array($model_name.'_id', 'integer');
@@ -357,7 +382,7 @@ class schema_migration
 
             $this->create_model($model_name.'_changelog', $changelog_schema, null, $allow_overwrite);
         }
-        #acts_as_nested_set: create the _locks table
+        //acts_as_nested_set: create the _locks table
         if ($options && (isset($options['acts_as_nested_set']) || in_array('acts_as_nested_set', array_values($options)))) {
             $aans_schema[] = array('lockID', 'string');
             $aans_schema[] = array('lockTable', 'string');
