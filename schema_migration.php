@@ -38,9 +38,10 @@ class schema_migration
         return $schema_version;
     }
     function load_migrations() {
-        $path = App::$env->root.'/db/migrations';
+        global $path_to_root;
+        $path = $path_to_root.'/db/migrations';
 
-        if ($handle = opendir(App::$env->root.'/db/migrations')) {
+        if ($handle = opendir($path_to_root.'/db/migrations')) {
             $migrations = Array();
             while (false != ($file = readdir($handle))) {
                 $file = $path."/$file";

@@ -10,6 +10,9 @@ for ($i = 1; $i < sizeof($argv); $i++) {
 $only_require_libraries = true;
 $path_to_lib = dirname(__FILE__).'/..';
 require $path_to_lib.'/init.php';
+$path_to_root = $path_to_lib.'/../../..';
+
+/* todo, the environment?!?!? */
 
 switch ($task_name) {
 case 'beachhead':
@@ -19,6 +22,9 @@ case 'beachhead':
     $beachhead->run($argv);
     break;
 case 'migrate':
+    $_GET['remigrate'] = $argv[2];
+    require $path_to_lib.'/schema_interregator.php' ;
+    require $path_to_lib.'/schema_migration.php' ;
     require $path_to_lib.'/tasks/migrate/migrate.php';
     break;
 }

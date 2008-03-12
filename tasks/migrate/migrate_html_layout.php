@@ -35,6 +35,7 @@ body {
         if ($migration['version'] > $schema_version)
         {
             ?><div class="migration"><span class="description">version <?=$migration['version']?> - <i><?=$migration['description'];?></i></span>
+            <p><?=$migration['result'];?></p>
             <span class="success">successfully migrated to version <?=$migration['version'];?></span>&nbsp;
             </div><?
         }
