@@ -10,6 +10,14 @@
 $path_to_lib = dirname(__FILE__).'/..';
 $path_to_root = $path_to_lib.'/../../..';
 
+
+/* check if running directly from lib. The beachhead does this */
+if (!isset($task_name) || $task_name == '') {
+    $task_name = $argv[1];
+    $arguments = $argv;
+    $running_from_shell = true;
+}
+
 /* $task_name and $arguments come from the shell or web task script */
 switch ($task_name) {
 
@@ -34,5 +42,7 @@ case 'migrate':
     require $path_to_lib.'/schema_migration.php' ;
     require $path_to_lib.'/tasks/migrate/migrate.php';
     break;
+default:
+    die('No task specified or unknown task');
 }
 ?>
