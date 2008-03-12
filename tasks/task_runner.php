@@ -4,8 +4,21 @@
  * - do $_GET's when run from browser
  */
 
+var_dump($_GET);die();
+
 /* pull in the args */
-$task_name = $argv[1];
+if (isset($_SERVER['shell']) {
+    /* running from the shell */
+    App::$running_from_shell = true;
+    $task_name = $argv[1];
+    $arguments = $argv;
+} else {
+    /* running from the browser */
+    App::$running_from_shell = false;
+    $task_name = $_GET['task'];
+    $arguments = ($task_name, $_GET['remigrate']);
+}
+
 /*
  * getting arguments, later
 for ($i = 1; $i < sizeof($argv); $i++) {
@@ -23,14 +36,13 @@ case 'beachhead':
     require $path_to_lib.'/tasks/beachhead.php';
     $beachhead = new tasks_beachhead;
     $beachhead->output_progress = true;
-    $beachhead->run($argv);
+    $beachhead->run($arguments);
     break;
 case 'migrate':
     /* init */
     require $path_to_lib.'/init.php';
 
     $_GET['remigrate'] = $argv[2];
-    App::$running_from_shell = true;
     require $path_to_lib.'/schema_interregator.php' ;
     require $path_to_lib.'/schema_migration.php' ;
     require $path_to_lib.'/tasks/migrate/migrate.php';
