@@ -15,13 +15,22 @@
 
 class tasks_beachhead
 {
+    /* defaults */
+    public $root_url = '/';
+    public $app_skeleton_repository = 'app_skeleton.git';
+    public $app_skeleton_branch = 'master';
+    public $submodules = array(
+        'lib' => array('repository' => 'lib.git', 'branch' => 'version_3', 'path' => 'vendor/pedantic/lib')
+        );
+
     public $strings = array(
         0 => 'No error found',
         100 => 'No path specified',
         101 => 'No project specified',
+        102 => 'No repository URL specified',
         200 => 'Project directory %1 already exists',
         201 => 'Project directory %1 does not exist',
-        300 => 'Cloning the pedantic application skeleton',
+        300 => 'Cloning the application skeleton',
         301 => 'Switching to %1 branch',
         302 => 'Creating repository',
         303 => 'Committing application',
@@ -43,29 +52,10 @@ class tasks_beachhead
     public $output_progress = false;
 
     public function run($arguments) {
-        $path = array_keys($arguments); $path = $arguments[2];
+        $path = $arguments[2];
+        $repository_url = $arguments[3];
         $project = explode('/', str_replace('\\', '/', $path));
         $project = $project[sizeof($project)-1];
-
-        if (isset($arguments['root_url'])) {
-            $this->root_url = $arguments['root_url'];
-        }
-        $this->create_application($path, $project);
-    }
-    public function __construct() {
-/* --- configuration ------------------------------------- */
-        $this->root_url = '/';
-        $this->personal_repository_url = 'git://windserver/';
-        $this->pedantic_repository = $this->personal_repository_url.'pedantic';
-        $this->app_skeleton_branch = 'master';
-        $this->submodules = array(
-            'lib' => array('repository' => 'pedantic/lib.git', 'branch' => 'version_3', 'path' => 'vendor/pedantic/lib')
-        );
-/* --- configuration ------------------------------------- */
-
-    }
-
-    public function create_application($path = null, $project = null) {
 
         /* check the path and project */
         if (is_null($path) || $path == '') {
@@ -76,6 +66,26 @@ class tasks_beachhead
             $this->error(101); //No project specified
             return false;
         }
+        if (is_null($repository_url) || $repository_url == '') {
+            $this->error(102); //No repository url specified
+            return false;
+        } else {
+            $this->repository_url = $repository_url;
+        }
+        /* validate the repository url */
+        if (substr($this->repository_url, -1, 1) != '/') {
+            $this->repository_url .= '/';
+        }
+        /* check for additional arguments */
+        if (isset($arguments['root_url'])) {
+            $this->root_url = $arguments['root_url'];
+        }
+        return $this->create_application($path, $project);
+    }
+    public function __construct() {
+    }
+
+    private function create_application($path, $project) {
 
         $op = $this->output_progress;
 
@@ -90,11 +100,11 @@ class tasks_beachhead
             return false;
         }
 
-        /* expert the skeleton */
+        /* export the skeleton */
         if ($op) {
             echo $this->strings[300]."\r\n";
         }
-        exec("git clone {$this->pedantic_repository}/app_skeleton.git {$this->project_path}", $output);
+        exec("git clone {$this->repository_url}{$this->app_skeleton_repository} {$this->project_path}", $output);
 
         if ($this->app_skeleton_branch != 'master') {
             if ($op) {
@@ -124,7 +134,7 @@ class tasks_beachhead
         }
         exec("cd {$this->project_path} ; git add . ; git commit -m '".$this->strings['400']."'", $output);
 
-        /* set up the vendor exports */
+        /* set up the submodules in vendor */
         if ($op) {
             echo $this->strings[304]."\r\n";
         }
@@ -136,7 +146,9 @@ class tasks_beachhead
                 $branch = 'master';
             }
 
-            exec("cd {$this->project_path} ; git submodule add -b $branch {$this->personal_repository_url}$repository $path", $output, $return_status);
+            //echo("cd {$this->project_path} ; git submodule add -b $branch {$this->repository_url}$repository $path\r\n");
+            exec("cd {$this->project_path} ; git submodule add {$this->repository_url}$repository $path", $output, $return_status);
+            exec("cd {$this->project_path}/$path ; git checkout $branch", $output, $return_status);
         }
 
         /* submodule commit */

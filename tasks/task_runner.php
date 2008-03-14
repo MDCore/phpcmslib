@@ -65,8 +65,8 @@ case 'migrate':
 case 'help':
 ?>
 usage:
-beachhead <path> [--root_url=ROOT_URL]              Create a new project
-migrate [--remigrate] [--force_from=REVISION]       Run migrations
+beachhead <path> <repository_url> [--root_url=ROOT_URL]     Create a new project
+migrate [--remigrate] [--force_from=REVISION]               Run migrations
 <?
     break;
 default:

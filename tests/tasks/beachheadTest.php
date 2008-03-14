@@ -12,9 +12,8 @@ require_once '../AR.php';
 require_once '../tasks/beachhead.php';
 
 class tasks_beachheadTest extends PHPUnit_Framework_TestCase {
-    public $root_path = '/tmp';
-    public $client = 'bob_client';
-    public $project = 'bob_project';
+    public $project_dir = '/tmp/bob_client/bob_project';
+    public $repository_url = 'file:///home/gavin/public_html/pedantic';
     public function __construct() {
         $this->dsn = array(
             'phptype' => 'mysql',
@@ -27,43 +26,42 @@ class tasks_beachheadTest extends PHPUnit_Framework_TestCase {
     }
 
     protected function setUp() {
-        if (file_exists($this->root_path.'/'.$this->client)) {
-            //system("rm -rf {$this->root_path}/$this->client");
+        if (file_exists($this->project_dir)) {
+            system("rm -rf {$this->project_dir}");
         }
     }
     protected function tearDown() {
-        if (file_exists($this->root_path.'/'.$this->client)) {
-            //system("rm -rf {$this->root_path}/$this->client");
+        if (file_exists($this->project_dir)) {
+            system("rm -rf {$this->project_dir}");
         }
     }
 
-    public function test_create_application() {
+    public function test_new_app() {
+        $arguments = array(null, 'beachhead', $this->project_dir, $this->repository_url);
 
         $tb = new tasks_beachhead;
-        /* modify the public_html folder to use tmp */
-        $tb->public_html_path = $this->root_path.'/';
+        $tb->submodules['lib']['repository'] = 'lib'; /* not pulling from a bare repo */
+        $tb->app_skeleton_repository = 'app_skeleton'; /* not pulling from a bare repo */
+        $result = $tb->run($arguments);
 
-        $project_dir = $this->root_path.'/'.$this->client.'/'.$this->project;
-        $result = $tb->create_application($this->client, $this->project);
-
-        $this->assertTrue($result, $tb->error());
-        $this->assertTrue(file_exists($project_dir), 'Project directory does not exist');
-        $this->assertTrue(file_exists($project_dir.'/vendor/pedantic/lib'), 'pedantic/lib does not exist');
-        $this->assertTrue(file_exists($project_dir.'/vendor/pedantic/lib/AR.php'), 'pedantic/lib was not checkout out correctly');
+        $this->assertTrue($result, $tb->error);
+        $this->assertTrue(file_exists($this->project_dir), 'Project directory does not exist');
+        $this->assertTrue(file_exists($this->project_dir.'/vendor/pedantic/lib'), 'pedantic/lib does not exist');
+        $this->assertTrue(file_exists($this->project_dir.'/vendor/pedantic/lib/AR.php'), 'pedantic/lib was not checkout out correctly');
     }
-    public function test_create_application_dir_exists() {
-        $new_client = "catsatonthemat";
-        $new_project = "catproject";
-        exec("rm -rf /tmp/catsatonthemat");
-        exec("mkdir /tmp/catsatonthemat");
-        exec("mkdir /tmp/catsatonthemat/catproject");
+    public function test_new_app_dir_exists() {
+        $project_dir = '/tmp/catsatonthemat';
+        $arguments = array(null, 'beachhead', $project_dir, $this->repository_url);
+
+        /* create the project_dir */
+        exec("rm -rf $project_dir");
+        exec("mkdir $project_dir");
 
         $tb = new tasks_beachhead;
-        /* modify the public_html folder to use tmp */
-        $tb->public_html_path = $this->root_path.'/';
+        $tb->submodules['lib']['repository'] = 'lib'; /* not pulling from a bare repo */
+        $tb->app_skeleton_repository = 'app_skeleton'; /* not pulling from a bare repo */
+        $result = $tb->run($arguments);
 
-        $project_dir = $this->root_path.'/'.$new_client.'/'.$new_project;
-        $result = $tb->create_application($new_client, $new_project);
         $this->assertFalse($result, 'project was created despite existing project directory');
     }
 
