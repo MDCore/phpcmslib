@@ -45,7 +45,7 @@ if ((isset($uses_nested_set) && $uses_nested_set == true)) {
 
 /*
  * phpmailer was required here but that is not part of lib so I kicked it out. 
- * Require it in config if necessary.
+ * Require it in config/application if necessary.
  */
 
 if (!isset($only_require_libraries)) {
@@ -56,12 +56,13 @@ if (!isset($only_require_libraries)) {
     session_start();
     App::init($path_to_root);
 
-    // set the custom error handler
-    if ($environment != '' && !defined('TEST_MODE')) {
-        set_error_handler('framework_error_handler');
-        set_exception_handler('framework_exception_handler');
+    if (!$running_from_shell) {
+        // set the custom error handler
+        if ($environment != '' && !defined('TEST_MODE')) {
+            set_error_handler('framework_error_handler');
+            set_exception_handler('framework_exception_handler');
+        }
     }
-
 
 }
 ?>
