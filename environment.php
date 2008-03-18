@@ -1,18 +1,30 @@
 <?
 class Environment
- {
+{
     public $mail_send_method = 'sendmail';
     public $run_cron_jobs = true;
 
-    function load($environment, $path_to_root) {
-        #load this environment
+    function load($environment, $path_to_root)
+    {
+        /* override the environment in certain cases */
+        if (defined('TEST_MODE')) {
+            $environment = 'test';
+        }
+
+        /* force shell to use development environment */
+        if (isset($_SERVER['SHELL']) && 
+            ($environment == 'must_match' || $environment == 'auto')
+           ) {
+            $environment = 'development';
+        }
+
         if ($environment == 'auto' | $environment == 'must_match') {
-            #find_environments
+            //find_environments
             foreach (Environment::find_environments($path_to_root) as $env) {
                 if (App::$reloading) {
                     echo "<ul><li>Testing environment <i>$env</i></li>";
                 }
-                require_once($path_to_root."/config/environments/".$env.'.php');
+                require_once $path_to_root."/config/environments/".$env.'.php';
                 $env_object = new $env;
                 if (isset($env_object->urls)) {
                     if (App::$reloading) {
@@ -52,11 +64,12 @@ class Environment
                 echo "</ul>";
             }
         }
-        require_once($path_to_root."/config/environments/".$environment.'.php'); $_SESSION[APP_NAME]['application']['environment'] = $environment;
+        include_once $path_to_root."/config/environments/".$environment.'.php'; $_SESSION[APP_NAME]['application']['environment'] = $environment;
         App::$env = new $environment;
     }
 
-    function find_environments($path_to_root) {
+    function find_environments($path_to_root) 
+    {
         $environment = null;
         if (App::$reloading) {
             echo "<li>parsing environments folder</ul>";
