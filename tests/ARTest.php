@@ -15,12 +15,15 @@
  */
 require_once '../string_helpers.php';
 require_once '../functions.php';
-/* homemade mocking */
 require_once '../AR.php';
 require_once '../application.php';
-require_once 'mocks/models.php';
+
 require_once 'MDB2.php' ;
 require_once 'DB/NestedSet.php' ;
+
+/* homemade mocking */
+require_once 'mocks/models.php';
+
 
 /**
  * Test class for AR.

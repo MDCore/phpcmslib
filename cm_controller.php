@@ -19,20 +19,17 @@ class cm_controller extends action_controller {
     public $face = 'cm';
     public $default_action = 'cm_list';
 
-    #default configuration 
-        public $allow_edit = true, $allow_add = true, $allow_delete = true;
-        public $allow_filters = true, $allow_sort = true;
-        public $row_limit = 30;
-        public $show_record_selector = false;
-        public $field_length_range = array(30, 55);
+    //default configuration 
+    public $allow_edit = true, $allow_add = true, $allow_delete = true;
+    public $allow_filters = true, $allow_sort = true;
+    public $row_limit = 30;
+    public $show_record_selector = false;
+    public $field_length_range = array(30, 55);
 
     public $list_sort_field = null, $list_sort_type = null;
 
-    /** constructor
-     *
-     * @return void
-     */
-    function __construct() {
+    function __construct() 
+    {
         parent::__construct();
 
         #the face_controller should be virtual;
@@ -126,7 +123,8 @@ class cm_controller extends action_controller {
      *
      * @return void
      */
-    function __call($method_name, $params) {
+    function __call($method_name, $params) 
+    {
         global $path_to_root;
 
         $this->action = $method_name;
@@ -236,8 +234,7 @@ class cm_controller extends action_controller {
             if ($redirect_on_success) {
                 redirect_with_parameters(url_to(array('action' => 'list')), "flash=".proper_nounize($this->list_type). " updated");
             }
-        }
-        else {
+        } else {
             redirect_with_parameters(url_to(array('action' => 'edit')), "edit_id=".$edit_id."&flash=".$primary_model_object->validation_errors);
         }
     }
@@ -254,18 +251,16 @@ class cm_controller extends action_controller {
     {
         #debug('handling_save');print_r($_GET);print_r($_POST);print_r($_FILES);
         
-        if (method_exists($this, 'before_save')) { $this->before_save(); } #todo clean this up.... should be in model, maybe
+        if (method_exists($this, 'before_save')) { $this->before_save(); } //todo clean this up.... should be in model, maybe
         
         $collection = $_POST[$this->primary_model];
         if ( !$collection ) {
             $collection = $_POST;
             $has_meta_data = false;
-        }
-        else
-        {
+        } else {
             $has_meta_data = true;
         }
-        # save the form data for the primary model 
+        // save the form data for the primary model 
         $primary_model_object = new $this->primary_model;
         $primary_model_object->update_attributes($collection);
 
@@ -277,21 +272,18 @@ class cm_controller extends action_controller {
 
         $primary_record_id = $primary_model_object->save(); 
 
-        if ($primary_record_id) #might not have one if saving failed e.g. validation
-        {
+        if ($primary_record_id) { /* might not have one if saving failed e.g. validation */
             if ($has_meta_data) {
                 #deal with related tables
-                foreach ( $_POST as $meta_model => $collection )
-                {
-                    if ( $meta_model != $this->primary_model) {
-                        $collection[foreign_keyize($this->primary_model)] = $primary_record_id; #add the foreign key straight into the collection
+                foreach ($_POST as $meta_model => $collection) {
+                    if ($meta_model != $this->primary_model) {
+                        $collection[foreign_keyize($this->primary_model)] = $primary_record_id; //add the foreign key straight into the collection
 
                         if ($primary_model_object->through_model($meta_model)) {
                             $meta_model_object = new $meta_model;
-                            #$meta_model_object->delete("WHERE $fk_field = $edit_id"); #delete the records, to re-add them
+                            #$meta_model_object->delete("WHERE $fk_field = $edit_id"); //delete the records, to re-add them
                             $meta_model_object->save_multiple($collection);
-                        }
-                        else {
+                        } else {
                             $meta_model_object = new $meta_model($collection); 
                             if (!$meta_model_object->is_valid()) {
                                 #delete the primary_record
@@ -801,5 +793,152 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
     </div><?
     }
 
+    public function cm_view()
+    {
+        // is this function even in use anymore ?!!?
+        // todo refactor as quick viewing class, like the edit
+
+        $edit_id = $_GET['view_id'];
+        $record = $this->model_object->find($edit_id);
+        if ($record && $record->count > 0) {
+            //valid record
+        } else {
+            echo 'No '.humanize($this->primary_model).' found.';die();
+        }
+
+        if (!$view_page) {$view_page = $this->view_page;}
+        ?><h2>Viewing a<?
+        switch(strtolower(substr($this->list_type, 0, 1))) {case 'a': case 'e': case 'i': case 'o': case 'u': echo 'n';}
+        ?> <?=humanize($this->list_type)?></h2><?
+
+        require(App::$env->content_path.'/'.$view_page);
+        $this->render_inline();
+    }
+
+    public function cm_edit()
+    {
+        $this->render_inline();
+        if (!$this->allow_edit) {
+            echo 'Edit not allowed';
+            return true;
+        }
+
+        $edit_id = $_GET['edit_id'];
+        $record = $this->model_object->find($edit_id);
+
+        if ($record && $record->count > 0) {
+            //valid record
+        } else {
+            echo 'No '.humanize($this->primary_model).' found.';die();
+        }
+
+        # pull out id's and suchlike
+        $this->edit_page_title = str_replace('__id__', $edit_id, $this->edit_page_title); #todo fix this hack, replace with actual field names in some way
+        ?><h2><?=$this->edit_page_title;?></h2><?
+        ?><form method="post" enctype="multipart/form-data" action="<?=url_to(array('action' => 'update')).page_parameters('/^edit/')?>&edit_id=<?=$edit_id?>"><?
+
+        $form_fields = $this->form_fields;
+        if (isset($form_fields)) {
+            forms::form(array_merge(array($this->primary_model, &$record), $form_fields));
+        }
+        if ($this->draw_form_buttons) {forms::form_buttons();}
+        ?></form><?
+        $this->render_inline();
+    }
+
+    public function cm_add() {
+        $this->render_inline();
+        ?><h2><?=$this->add_page_title;?></h2><?
+
+        if (!$this->allow_add) {
+            echo 'Add is not allowed';
+            return true;
+        }
+
+        ?><form method="post" enctype="multipart/form-data" action="<?
+        $parameters_to_remove = $parameters = '';
+        if (isset($this->add_postback_parameters)) {
+            $parameters_to_remove .= ','.$this->add_postback_parameters['filters']; $parameters.= '&'.$this->add_postback_parameters['parameters'];
+        }
+
+        echo url_to(array('action' => 'save')).page_parameters($parameters_to_remove).$parameters;?>"><?
+            
+        if (isset($_POST) && sizeof($_POST) > 0 ) {
+            $this->model_object->update_attributes($_POST[$this->primary_model]);
+        }
+
+        $record = $this->model_object;
+        #automatically populate the model_object with the foreign keys
+            foreach($this->foreign_keys as $key => $value) {
+                $record->$key = $value;
+            }
+
+        $form_fields = $this->form_fields;
+        if (isset($form_fields)) {
+            forms::form(array_merge(array($this->primary_model, &$record), $form_fields));
+        }
+        if ($this->draw_form_buttons) {
+            forms::form_buttons('save',false);
+        }
+        ?></form><?
+    }
+
+#------------------------------#
+# default filter actions
+#------------------------------#
+
+    public function check_for_print() {
+        if (isset($_GET['print']) && $_GET['print'] == 'y') {
+            $this->layout = 'print';
+            define('PRINTING_MODE', true); #hackety hack hack ? 
+        }
+        
+    }
+
+    public function is_logged_in() {
+        if ( !isset($_SESSION[APP_NAME]['user_id']) || $_SESSION[APP_NAME]['user_id'] == '' ) {
+            if (isset($_POST['email'])) {
+                $email = $_POST['email'];
+                $password = $_POST['password'];
+                $user = new user;
+                $user_id = $user->is_valid_user( $email, $password );
+                if ( $user_id ) {
+                    $_SESSION[APP_NAME]['display_name'] = $user->display_name();
+                    $_SESSION[APP_NAME]['username'] = $email;
+                    $_SESSION[APP_NAME]['user_id'] = $user_id;
+
+                    /**
+                     * assigning login rights
+                     *
+                     * if the method exists it MUST return true or logging in was a failure.
+                     * assign_login_rights() must be a method of the face controller
+                     */
+                    if (method_exists($this, 'assign_login_rights')) {
+                        if ($this->assign_login_rights() !== true) {
+                            unset($_SESSION[APP_NAME]);
+                            $redirect = 'location: '.url_to(array('face' => 'cm')).'?flash='.urlencode('Unable to login. Please contact your system administrator.');
+                            header($redirect);
+                            die();
+                        }
+                    }
+
+                    #successful login! redirect to default. 
+                        header('location: '.url_to(array('face' => 'cm')));
+                }
+                else {
+                    $flash = "This email address and password combination was not found";$_GET['flash'] = $flash;
+                    App::$route['controller'] = 'default_controller';
+                    App::$route['action'] = 'login';
+                    global $view_parameters; $view_parameters['hide_menu'] = true;
+                }
+            }
+            else {
+                //$_GET['flash'] = null;
+                App::$route['controller'] = 'default_controller';
+                App::$route['action'] = 'login';
+                //not working for some reason $this->view_parameters['hide_menu'] = true;
+            }
+        }
+    }
 }
 ?>
