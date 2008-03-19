@@ -1,6 +1,8 @@
 <?php
 /* require new tests suites here */
 require_once 'ARTest.php';
+require_once 'actionControllerTest.php';
+require_once 'CMControllerTest.php';
 /* functions + helpers */
 require_once 'functionsTest.php';
 require_once 'stringHelpersTest.php';
@@ -15,6 +17,8 @@ class allTests
  
         /* add new test suites here */
         $suite->addTestSuite('ARTest');
+        $suite->addTestSuite('actionControllerTest');
+        $suite->addTestSuite('CMControllerTest');
         /* functions + helpers */
         $suite->addTestSuite('functionsTest');
         $suite->addTestSuite('stringHelpersTest');

@@ -96,6 +96,7 @@ class AR implements SeekableIterator
         unset($this->db);
         unset($this->values);
     }
+
     /** constructor
      *
      * @param array   $collection         a collection of values in the format [field name] => value with which to initialize this record   

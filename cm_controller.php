@@ -1,8 +1,19 @@
 <?
-class cm_controller extends action_controller {
-    public $before_controller_load_filter = 'is_logged_in';
-    public $before_controller_execute_filter = 'check_for_print';
+/**
+ * This file implements a CMS for Pedantic_Lib
+ *
+ * @category  PHP
+ * @package   Pedantic_Lib
+ * @author    Gavin van Lelyveld <gavin@pedantic.co.za>
+ * @copyright 2007 Gavin van Lelyveld
+ * @license   proprietary http://pedantic.co.za
+ * @link      http://pedantic.co.za
+ **/
 
+/* TODO
+ * - document properties of cm_controller (find out how)
+ */
+class cm_controller extends action_controller {
     public $is_controller = true;
     public $layout = 'default';
     public $face = 'cm';
@@ -17,6 +28,10 @@ class cm_controller extends action_controller {
 
     public $list_sort_field = null, $list_sort_type = null;
 
+    /** constructor
+     *
+     * @return void
+     */
     function __construct() {
         parent::__construct();
 
@@ -72,12 +87,6 @@ class cm_controller extends action_controller {
             $this->edit_link_title = 'Edit';
         }
         
-        //todo homogenize view title and edit_link_title
-        /* the title for the view action_link */
-        if (!isset($this->view_title)) {
-            $this->view_title = 'View';
-        }
-
         //setup some objects
         $this->model_object = new $this->primary_model; #instantiate an object of this model so we can interrogate it
         $this->filter_object = new filter;
@@ -94,14 +103,6 @@ class cm_controller extends action_controller {
                 'FROM'   => $this->schema_table
             );
         }
-
-        if ( isset( $this->view_page ) ) {
-            $this->allow_view = true;
-        }
-        else {
-            $this->view_page = tableize(pluralize($this->list_type)).'_view.php';
-        }
-
         if ($this->allow_filters ) {
             if ($this->filters) {
                 //setup the filter names
@@ -116,6 +117,15 @@ class cm_controller extends action_controller {
         if (!isset($this->foreign_key_title_prefix)) {$this->foreign_key_title_prefix = ' in ';}
     }
 
+    /** 
+     * handles calling the list, edit, add, view, save, update and delete pages by 
+     * by friendly names.
+     *
+     * @param string $method_name The name of the method that was called
+     * @param array  $params      The collection of method parameters that were part of the method call
+     *
+     * @return void
+     */
     function __call($method_name, $params) {
         global $path_to_root;
 
@@ -153,42 +163,18 @@ class cm_controller extends action_controller {
             }
     }
     
-    function related_page_anchor($related_page, $row) {
-        if (!isset($related_page['controller'])) {$related_page['controller'] = $related_page[0];}
-        
-        $target = array(
-            'controller' => $related_page['controller'],
-            'action'     => $related_page['action']
-        );
-        if (isset($related_page['id'])) { $target['id'] = $row->{$related_page['id']}; }
-        ?><td class="action_link"><a href="<?echo url_to($target);
-
-        if (isset($related_page['append_page_parameters'])) {
-            echo page_parameters($related_page['append_page_parameters']);
-        }
-        else {
-            echo '?p=y';
-        }
-
-        /*if (isset($related_page['fk']) || (isset($related_page['fk_title_field']))) { echo '?p=y'; }*/
-        if (isset($related_page['fk'])) {
-            if (!isset($related_page['fk_field'])) { $fk_field = $this->model_object->primary_key_field; } else { $fk_field = $related_page['fk_field']; }
-            ?>&amp;fk=<?=$related_page['fk'];?>~<? echo $row->$fk_field; 
-        }
-        if (isset($related_page['fk_title_field'])) { ?>&amp;fk_t=<? echo urlencode($row->{$related_page['fk_title_field']}); }
-
-        ?>"><?
-
-        if (isset($related_page['title'])) { echo $related_page['title']; } else echo htmlentities(proper_nounize($related_page['controller']));
-
-        ?></a></td><?
-
-    }
-
 #------------------------------#
 # Action Presets
 #------------------------------#
 
+    /** 
+     * Updates an existing record and related records, if applicable.
+     * If the controller has a before_update or after_update method those are called as applicable.
+     *
+     * @param boolean $redirect_on_success Default true. If this is true it redirects back to the list, else allows continued processing
+     *
+     * @return void
+     */
     public function cm_update($redirect_on_success = true) {
         $edit_id = $_GET['edit_id'];
 
@@ -256,6 +242,14 @@ class cm_controller extends action_controller {
         }
     }
 
+    /** 
+     * Saves an existing record and related records, if applicable.
+     * If the controller has a before_save or after_save method those are called as applicable.
+     *
+     * @param boolean $redirect_on_success Default true. If this is true it redirects back to the list, else allows continued processing
+     *
+     * @return void
+     */
     public function cm_save($redirect_on_success = true)
     {
         #debug('handling_save');print_r($_GET);print_r($_POST);print_r($_FILES);
@@ -322,9 +316,15 @@ class cm_controller extends action_controller {
         }
     }
 
-    public function cm_delete()
-    {
-        # delete these puppies
+    /** 
+     * Deletes a collection of records. The records are defined by a collection of ID's in $_POST['delete'].
+     * If the controller has a before_save or after_save method those are called as applicable.
+     * This has no redirect on success because this simple delete can be handled by AR
+     *
+     * @return void
+     */
+    public function cm_delete() {
+        // delete these puppies
             $sql_delete = "WHERE ".$this->primary_key_field." IN (";
             $records_deleted = 0;
             foreach ($_POST['delete'] as $delete_id)
@@ -337,38 +337,26 @@ class cm_controller extends action_controller {
             if (substr($sql_delete, -1, 1) == ',') { $sql_delete = substr($sql_delete, 0, -1); }
             $sql_delete .= ");";
     
-        # delete records
+        // delete records
             $ign = $this->model_object->delete($sql_delete);
 
-        #set message
+        // set message
             if ($records_deleted != 1) {$flash = proper_nounize(pluralize($this->list_type));} else {$flash = proper_nounize($this->list_type);}
             $flash = "Deleted $records_deleted ".$flash;
 
         redirect_with_parameters(url_to(array('action' => 'list')), "flash=$flash");
     }
 
-    public function handle_new_files($primary_record_id, $force_new = false)
-    {   
-        #print_r($_GET);print_r($_POST);print_r($_FILES);
-        #file uploads #todo get this working for meta_models
-        foreach ($_FILES as $model => $model_files)
-        {
-            $upload = new upload; 
-            foreach ($model_files['name'] as $field_name => $file)
-            {
-                $upload->load($model, $field_name, $primary_record_id, $force_new);
-                if ($upload->file_uploaded()) {$upload->save();}
-            }
-        }
-    }
-
 #------------------------------#
 # CM views
 #------------------------------#
 
-    public function cm_list()
-    {
-
+    /** 
+     * A list of records
+     *
+     * @return void
+     */
+    public function cm_list() {
         if (!isset($this->list_type)) {
             /* if the list_type property has not been set then something
              * has gone quite wrong. Probably your cm_controller __construct()
@@ -525,6 +513,132 @@ class cm_controller extends action_controller {
             ?></div><?
         }
         $this->render_inline();
+    }
+
+    /** 
+     * The edit page for a record
+     *
+     * @return void
+     */
+    public function cm_edit() {
+        $this->render_inline();
+        if (!$this->allow_edit) {
+            echo 'Edit not allowed';
+            return true;
+        }
+
+        $edit_id = $_GET['edit_id'];
+        $record = $this->model_object->find($edit_id);
+
+        if ($record && $record->count > 0) {
+            //valid record
+        } else {
+            echo 'No '.humanize($this->primary_model).' found.';die();
+        }
+
+        # pull out id's and suchlike
+        $this->edit_page_title = str_replace('__id__', $edit_id, $this->edit_page_title); #todo fix this hack, replace with actual field names in some way
+        ?><h2><?=$this->edit_page_title;?></h2><?
+        ?><form method="post" enctype="multipart/form-data" action="<?=url_to(array('action' => 'update')).page_parameters('/^edit/')?>&edit_id=<?=$edit_id?>"><?
+
+        $form_fields = $this->form_fields;
+        if (isset($form_fields)) {
+            forms::form(array_merge(array($this->primary_model, &$record), $form_fields));
+        }
+        if ($this->draw_form_buttons) {forms::form_buttons();}
+        ?></form><?
+        $this->render_inline();
+    }
+
+    /** 
+     * The add form for a new record
+     *
+     * @return void
+     */
+    public function cm_add() {
+        $this->render_inline();
+        ?><h2><?=$this->add_page_title;?></h2><?
+
+        if (!$this->allow_add) {
+            echo 'Add is not allowed';
+            return true;
+        }
+
+        ?><form method="post" enctype="multipart/form-data" action="<?
+        $parameters_to_remove = $parameters = '';
+        if (isset($this->add_postback_parameters)) {$parameters_to_remove .= ','.$this->add_postback_parameters['filters']; $parameters.= '&'.$this->add_postback_parameters['parameters'];}
+
+        echo url_to(array('action' => 'save')).page_parameters($parameters_to_remove).$parameters;?>"><?
+            
+        if (isset($_POST) && sizeof($_POST) > 0 ) {
+            $this->model_object->update_attributes($_POST[$this->primary_model]);
+        }
+
+        $record = $this->model_object;
+        #automatically populate the model_object with the foreign keys
+            foreach($this->foreign_keys as $key => $value) {
+                $record->$key = $value;
+            }
+
+        $form_fields = $this->form_fields;
+        if (isset($form_fields)) {
+            forms::form(array_merge(array($this->primary_model, &$record), $form_fields));
+        }
+        if ($this->draw_form_buttons) {
+            forms::form_buttons('save',false);
+        }
+        ?></form><?
+    }
+
+#------------------------------#
+# various helper functions
+#------------------------------#
+
+    function related_page_anchor($related_page, $row) {
+        if (!isset($related_page['controller'])) {$related_page['controller'] = $related_page[0];}
+        
+        $target = array(
+            'controller' => $related_page['controller'],
+            'action'     => $related_page['action']
+        );
+        if (isset($related_page['id'])) { $target['id'] = $row->{$related_page['id']}; }
+        ?><td class="action_link"><a href="<?echo url_to($target);
+
+        if (isset($related_page['append_page_parameters'])) {
+            echo page_parameters($related_page['append_page_parameters']);
+        }
+        else {
+            echo '?p=y';
+        }
+
+        /*if (isset($related_page['fk']) || (isset($related_page['fk_title_field']))) { echo '?p=y'; }*/
+        if (isset($related_page['fk'])) {
+            if (!isset($related_page['fk_field'])) { $fk_field = $this->model_object->primary_key_field; } else { $fk_field = $related_page['fk_field']; }
+            ?>&amp;fk=<?=$related_page['fk'];?>~<? echo $row->$fk_field; 
+        }
+        if (isset($related_page['fk_title_field'])) { ?>&amp;fk_t=<? echo urlencode($row->{$related_page['fk_title_field']}); }
+
+        ?>"><?
+
+        if (isset($related_page['title'])) { echo $related_page['title']; } else echo htmlentities(proper_nounize($related_page['controller']));
+
+        ?></a></td><?
+
+    }
+
+    public function handle_new_files($primary_record_id, $force_new = false)
+    {   
+        #print_r($_GET);print_r($_POST);print_r($_FILES);
+        #file uploads #todo get this working for meta_models
+        foreach ($_FILES as $model => $model_files)
+        {
+            $upload = new upload; 
+            foreach ($model_files['name'] as $field_name => $file)
+            {
+                $upload->load($model, $field_name, $primary_record_id, $force_new);
+                if ($upload->file_uploaded()) {$upload->save();}
+            }
+        }
     }
 
     public function list_header() {
@@ -687,150 +801,5 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
     </div><?
     }
 
-    public function cm_view()
-    {
-        // is this function even in use anymore ?!!?
-        // todo refactor as quick viewing class, like the edit
-
-        $edit_id = $_GET['view_id'];
-        $record = $this->model_object->find($edit_id);
-        if ($record && $record->count > 0) {
-            //valid record
-        } else {
-            echo 'No '.humanize($this->primary_model).' found.';die();
-        }
-
-        if (!$view_page) {$view_page = $this->view_page;}
-        ?><h2>Viewing a<?
-        switch(strtolower(substr($this->list_type, 0, 1))) {case 'a': case 'e': case 'i': case 'o': case 'u': echo 'n';}
-        ?> <?=humanize($this->list_type)?></h2><?
-
-        require(App::$env->content_path.'/'.$view_page);
-        $this->render_inline();
-    }
-
-    public function cm_edit()
-    {
-        $this->render_inline();
-        if (!$this->allow_edit) {
-            echo 'Edit not allowed';
-            return true;
-        }
-
-        $edit_id = $_GET['edit_id'];
-        $record = $this->model_object->find($edit_id);
-
-        if ($record && $record->count > 0) {
-            //valid record
-        } else {
-            echo 'No '.humanize($this->primary_model).' found.';die();
-        }
-
-        # pull out id's and suchlike
-        $this->edit_page_title = str_replace('__id__', $edit_id, $this->edit_page_title); #todo fix this hack, replace with actual field names in some way
-        ?><h2><?=$this->edit_page_title;?></h2><?
-        ?><form method="post" enctype="multipart/form-data" action="<?=url_to(array('action' => 'update')).page_parameters('/^edit/')?>&edit_id=<?=$edit_id?>"><?
-
-        $form_fields = $this->form_fields;
-        if (isset($form_fields)) {
-            forms::form(array_merge(array($this->primary_model, &$record), $form_fields));
-        }
-        if ($this->draw_form_buttons) {forms::form_buttons();}
-        ?></form><?
-        $this->render_inline();
-    }
-
-    public function cm_add() {
-        $this->render_inline();
-        ?><h2><?=$this->add_page_title;?></h2><?
-
-        if (!$this->allow_add) {
-            echo 'Add is not allowed';
-            return true;
-        }
-
-        ?><form method="post" enctype="multipart/form-data" action="<?
-        $parameters_to_remove = $parameters = '';
-        if (isset($this->add_postback_parameters)) {$parameters_to_remove .= ','.$this->add_postback_parameters['filters']; $parameters.= '&'.$this->add_postback_parameters['parameters'];}
-
-        echo url_to(array('action' => 'save')).page_parameters($parameters_to_remove).$parameters;?>"><?
-            
-        if (isset($_POST) && sizeof($_POST) > 0 ) {
-            $this->model_object->update_attributes($_POST[$this->primary_model]);
-        }
-
-        $record = $this->model_object;
-        #automatically populate the model_object with the foreign keys
-            foreach($this->foreign_keys as $key => $value) {
-                $record->$key = $value;
-            }
-
-        $form_fields = $this->form_fields;
-        if (isset($form_fields)) {
-            forms::form(array_merge(array($this->primary_model, &$record), $form_fields));
-        }
-        if ($this->draw_form_buttons) {
-            forms::form_buttons('save',false);
-        }
-        ?></form><?
-    }
-
-#------------------------------#
-# default filter actions
-#------------------------------#
-
-    public function check_for_print() {
-        if (isset($_GET['print']) && $_GET['print'] == 'y') {
-            $this->layout = 'print';
-            define('PRINTING_MODE', true); #hackety hack hack ? 
-        }
-        
-    }
-
-    public function is_logged_in() {
-        if ( !isset($_SESSION[APP_NAME]['user_id']) || $_SESSION[APP_NAME]['user_id'] == '' ) {
-            if (isset($_POST['email'])) {
-                $email = $_POST['email'];
-                $password = $_POST['password'];
-                $user = new user;
-                $user_id = $user->is_valid_user( $email, $password );
-                if ( $user_id ) {
-                    $_SESSION[APP_NAME]['display_name'] = $user->display_name();
-                    $_SESSION[APP_NAME]['username'] = $email;
-                    $_SESSION[APP_NAME]['user_id'] = $user_id;
-
-                    /**
-                     * assigning login rights
-                     *
-                     * if the method exists it MUST return true or logging in was a failure.
-                     * assign_login_rights() must be a method of the face controller
-                     */
-                    if (method_exists($this, 'assign_login_rights')) {
-                        if ($this->assign_login_rights() !== true) {
-                            unset($_SESSION[APP_NAME]);
-                            $redirect = 'location: '.url_to(array('face' => 'cm')).'?flash='.urlencode('Unable to login. Please contact your system administrator.');
-                            header($redirect);
-                            die();
-                        }
-                    }
-
-                    #successful login! redirect to default. 
-                        header('location: '.url_to(array('face' => 'cm')));
-                }
-                else {
-                    $flash = "This email address and password combination was not found";$_GET['flash'] = $flash;
-                    App::$route['controller'] = 'default_controller';
-                    App::$route['action'] = 'login';
-                    global $view_parameters; $view_parameters['hide_menu'] = true;
-                }
-            }
-            else {
-                //$_GET['flash'] = null;
-                App::$route['controller'] = 'default_controller';
-                App::$route['action'] = 'login';
-                //not working for some reason $this->view_parameters['hide_menu'] = true;
-            }
-        }
-    }
 }
 ?>

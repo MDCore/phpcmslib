@@ -1,4 +1,7 @@
 <?
+/* TODO
+ * - document the filter process, inside pedantic_lib_docs and here
+ */
 class dispatcher
 {
     public function path_from_collection(&$collection) {

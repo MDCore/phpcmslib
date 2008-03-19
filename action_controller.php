@@ -1,14 +1,9 @@
 <?
 /*
- * #TODO check if this is still true documentation
- * This is the order of execution for the application's controller flow:
- * - before_controller_load_filter (before the controller in that face is loaded)
- * - before_controller_execute_filter (before the controller in that face is called)
- * - before_controller_execute_filter (before the action / action in that controller is executed)
- * - before_filter (in controller)
- * - after_filter ( in controller)
- * - after_controller_filter (after controller executes its actions / renders the action)
+ * #TODO
+ * - remove render_partial. Partials are second class? why not just use views?
  */
+
 class action_controller {
     public $has_rendered = false;
     public $layout = null;
@@ -287,6 +282,7 @@ class action_controller {
     function render_inline() {
         $this->action_rendered_inline = true;
     }
+
     function __construct() {
         $controller_name = get_class($this);$controller_name = str_replace('_controller', '', $controller_name);
         $this->controller_name = $controller_name;
