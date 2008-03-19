@@ -7,19 +7,18 @@
 define('RELATED_PAGE_PARAMETERS_TO_SKIP', '/_id$/,/^sort/,/^filter_/,/^fk$/');
 
 #this method does a redirect with standard parameters stripped
-function redirect_with_parameters($url, $additional_parameters = '', $return_url = false) {
+function redirect_with_parameters($url, $additional_parameters = '', $return_url = false)
+{
     $url .= page_parameters('/^p$/,/^edit/,/^delete$/').'&'.$additional_parameters;
-    if (!$return_url)
-    {
+    if (!$return_url) {
         header("Location: $url");die();
-    }
-    else
-    {
+    } else {
         return $url;
     }
 }
 
-function SQL_implode($sql_array, $prepend_phrases = true) {
+function SQL_implode($sql_array, $prepend_phrases = true)
+{
     $result = ''; 
     foreach(AR::$sql_phrases as $phrase => $join_text)
     {
@@ -200,10 +199,13 @@ if (!function_exists('property_exists')) {
   }
 }
 
-function url_to($path, $include_base = true, $explicit_path = false) {
-    //$url = App::$env->url;
-
-    if (is_array($path)) { $target = $path; } else { $target = route_from_path($path); }
+function url_to($path, $include_base = true, $explicit_path = false)
+{
+    if (is_array($path)) {
+        $target = $path; 
+    } else {
+        $target = route_from_path($path); 
+    }
 
     //echo '<!--'; var_dump(App::$route); echo "\r\n====\r\n"; var_dump($path); echo "\r\n====\r\n"; var_dump($target); echo '-->';
 
@@ -222,13 +224,9 @@ function url_to($path, $include_base = true, $explicit_path = false) {
     
     /* route's are the same so just send back emptystring */
     $app_route_controller = str_replace('_controller', '', App::$route['controller']);
-    if (!$explicit_path) {
+    if (!$explicit_path && !$include_base) {
         if ($target['face'] == App::$route['face'] && $target['controller'] == $app_route_controller && $target['action'] == App::$route['action'] && $target['id'] == App::$route['id']) {
-            if ($include_base) {
-                return App::$env->url;
-            } else {
-                return '';
-            }
+            return '';
         }
     }
 
@@ -238,7 +236,7 @@ function url_to($path, $include_base = true, $explicit_path = false) {
     }
     $url .= '/';
 
-    //echo '<!--'; var_dump(App::$route); echo "\r\n====\r\n"; var_dump($path);echo "\r\n====\r\n"; var_dump($url); echo '-->';
+    //echo '<!--'; var_dump(App::$route); echo "\r\n====\r\n"; var_dump($path);echo "\r\n====\r\n"; var_dump($target); echo '-->';
 
     /* if the default face is the same as the target face leave the face out */
     if ($target['face'] != App::$default_face || $explicit_path) {

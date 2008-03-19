@@ -270,22 +270,59 @@ class functionsTest extends PHPUnit_Framework_TestCase {
         $path = array(
             'face' => 'cm',
             'controller' => 'products',
+            'action' => 'dogs',
+        );
+        $expected_path = 'http://test.com/cm/products/dogs';
+        $result = url_to($path);
+        $this->assertEquals($expected_path, $result, 'correct path is not being returned');
+
+        $path = array(
+            'face' => 'site',
+            'controller' => 'products',
+            'action' => 'dogs',
+        );
+        $expected_path = 'http://test.com/site/products/dogs';
+        $result = url_to($path);
+        $this->assertNotEquals($expected_path, $result, 'default face is still included');
+        $expected_path = 'http://test.com/products/dogs';
+        $result = url_to($path);
+        $this->assertEquals($expected_path, $result);
+
+        $path = array(
+            'face' => 'site',
+            'controller' => 'rupert',
+            'action' => 'the_bear',
+            'id' => 'rocks',
+        );
+        $expected_path = 'http://test.com/rupert/the_bear/rocks';
+        $result = url_to($path);
+        $this->assertEquals($expected_path, $result);
+
+    }
+    public function test_url_to_parameters() {
+        /* default parameter options */
+        $path = array(
+            'face' => 'cm',
+            'controller' => 'products',
             'action' => 'products_list',
         );
-
-        $expected_path = 'http://test.com';
+        $expected_path = 'http://test.com/cm/products/products_list';
         $result = url_to($path);
-        $this->assertEquals($result, $expected_path, 'url != base when route + target the same');
+        $this->assertEquals($expected_path, $result, 'correct path is not being returned');
+
+        $expected_path = '';
+        $result = url_to($path);
+        $this->assertNotEquals($expected_path, $result, "url is '' when route + target are the same even though include_base is true");
 
         /* test base url off */
         $expected_path = '';
         $result = url_to($path, false);
-        $this->assertEquals($result, $expected_path, 'base url off is not returning emptystring');
+        $this->assertEquals($expected_path, $result, 'base url off is not returning emptystring');
 
         /* test explicit path on */
         $expected_path = 'http://test.com/cm/products/products_list';
         $result = url_to($path, true, true);
-        $this->assertEquals($result, $expected_path, 'explicitpath is not being returned correctly');
+        $this->assertEquals($expected_path, $result, 'explicit path is not being returned correctly');
     }
 
     public function test_url_to_advanced() {
@@ -302,7 +339,7 @@ class functionsTest extends PHPUnit_Framework_TestCase {
         /* tests default face */
         $expected_path = 'http://test.com/';
         $result = url_to($path);
-        $this->assertEquals($result, $expected_path);
+        $this->assertEquals($expected_path, $result);
     }
 
     public function test_route_from_path() {
