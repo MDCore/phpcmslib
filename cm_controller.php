@@ -8,16 +8,17 @@ class cm_controller extends action_controller {
     public $face = 'cm';
     public $default_action = 'cm_list';
 
-    #default configuration 
-        public $allow_edit = true, $allow_add = true, $allow_delete = true;
-        public $allow_filters = true, $allow_sort = true;
-        public $row_limit = 30;
-        public $show_record_selector = false;
-        public $field_length_range = array(30, 55);
+    //default configuration 
+    public $allow_edit = true, $allow_add = true, $allow_delete = true;
+    public $allow_filters = true, $allow_sort = true;
+    public $row_limit = 30;
+    public $show_record_selector = false;
+    public $field_length_range = array(30, 55);
 
     public $list_sort_field = null, $list_sort_type = null;
 
-    function __construct() {
+    function __construct() 
+    {
         parent::__construct();
 
         #the face_controller should be virtual;
@@ -116,7 +117,8 @@ class cm_controller extends action_controller {
         if (!isset($this->foreign_key_title_prefix)) {$this->foreign_key_title_prefix = ' in ';}
     }
 
-    function __call($method_name, $params) {
+    function __call($method_name, $params) 
+    {
         global $path_to_root;
 
         $this->action = $method_name;
@@ -153,7 +155,8 @@ class cm_controller extends action_controller {
             }
     }
     
-    function related_page_anchor($related_page, $row) {
+    function related_page_anchor($related_page, $row) 
+    {
         if (!isset($related_page['controller'])) {$related_page['controller'] = $related_page[0];}
         
         $target = array(
@@ -189,7 +192,8 @@ class cm_controller extends action_controller {
 # Action Presets
 #------------------------------#
 
-    public function cm_update($redirect_on_success = true) {
+    public function cm_update($redirect_on_success = true)
+    {
         $edit_id = $_GET['edit_id'];
 
         if (method_exists($this, 'before_update')) { $this->before_update(); } #todo clean this up.... should be in model, maybe
@@ -250,8 +254,7 @@ class cm_controller extends action_controller {
             if ($redirect_on_success) {
                 redirect_with_parameters(url_to(array('action' => 'list')), "flash=".proper_nounize($this->list_type). " updated");
             }
-        }
-        else {
+        } else {
             redirect_with_parameters(url_to(array('action' => 'edit')), "edit_id=".$edit_id."&flash=".$primary_model_object->validation_errors);
         }
     }
@@ -260,18 +263,16 @@ class cm_controller extends action_controller {
     {
         #debug('handling_save');print_r($_GET);print_r($_POST);print_r($_FILES);
         
-        if (method_exists($this, 'before_save')) { $this->before_save(); } #todo clean this up.... should be in model, maybe
+        if (method_exists($this, 'before_save')) { $this->before_save(); } //todo clean this up.... should be in model, maybe
         
         $collection = $_POST[$this->primary_model];
         if ( !$collection ) {
             $collection = $_POST;
             $has_meta_data = false;
-        }
-        else
-        {
+        } else {
             $has_meta_data = true;
         }
-        # save the form data for the primary model 
+        // save the form data for the primary model 
         $primary_model_object = new $this->primary_model;
         $primary_model_object->update_attributes($collection);
 
@@ -283,21 +284,18 @@ class cm_controller extends action_controller {
 
         $primary_record_id = $primary_model_object->save(); 
 
-        if ($primary_record_id) #might not have one if saving failed e.g. validation
-        {
+        if ($primary_record_id) { /* might not have one if saving failed e.g. validation */
             if ($has_meta_data) {
                 #deal with related tables
-                foreach ( $_POST as $meta_model => $collection )
-                {
-                    if ( $meta_model != $this->primary_model) {
-                        $collection[foreign_keyize($this->primary_model)] = $primary_record_id; #add the foreign key straight into the collection
+                foreach ($_POST as $meta_model => $collection) {
+                    if ($meta_model != $this->primary_model) {
+                        $collection[foreign_keyize($this->primary_model)] = $primary_record_id; //add the foreign key straight into the collection
 
                         if ($primary_model_object->through_model($meta_model)) {
                             $meta_model_object = new $meta_model;
-                            #$meta_model_object->delete("WHERE $fk_field = $edit_id"); #delete the records, to re-add them
+                            #$meta_model_object->delete("WHERE $fk_field = $edit_id"); //delete the records, to re-add them
                             $meta_model_object->save_multiple($collection);
-                        }
-                        else {
+                        } else {
                             $meta_model_object = new $meta_model($collection); 
                             if (!$meta_model_object->is_valid()) {
                                 #delete the primary_record
@@ -336,7 +334,7 @@ class cm_controller extends action_controller {
             }
             if (substr($sql_delete, -1, 1) == ',') { $sql_delete = substr($sql_delete, 0, -1); }
             $sql_delete .= ");";
-    
+
         # delete records
             $ign = $this->model_object->delete($sql_delete);
 
@@ -751,7 +749,9 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
 
         ?><form method="post" enctype="multipart/form-data" action="<?
         $parameters_to_remove = $parameters = '';
-        if (isset($this->add_postback_parameters)) {$parameters_to_remove .= ','.$this->add_postback_parameters['filters']; $parameters.= '&'.$this->add_postback_parameters['parameters'];}
+        if (isset($this->add_postback_parameters)) {
+            $parameters_to_remove .= ','.$this->add_postback_parameters['filters']; $parameters.= '&'.$this->add_postback_parameters['parameters'];
+        }
 
         echo url_to(array('action' => 'save')).page_parameters($parameters_to_remove).$parameters;?>"><?
             
