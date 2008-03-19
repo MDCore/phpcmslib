@@ -121,6 +121,7 @@ class schema_migration
                 $AR = new AR;
                 $result = $this->db->query($sql); AR::error_check($result);
             }
+            $this->rebuild_schema_definition();
         }
     }
     function file_extension_from_file_name($filename) {
@@ -263,6 +264,10 @@ class schema_migration
             echo "\r\n";
         }
 
+        $this->rebuild_schema_definition();
+    }
+    function rebuild_schema_definition()
+    {
         // rebuild the schema definition and load it into memory
         $schema_interregator_results = schema_interregator::build_schema_definition();
         global $path_to_root;
@@ -279,10 +284,12 @@ class schema_migration
         }
 
         flush();
+
     }
     
     /* TODO do it in 'html' then capture + save */
-    function create_model($model_name, $schema = null, $options = null, $allow_overwrite = false) {
+    function create_model($model_name, $schema = null, $options = null, $allow_overwrite = false)
+    {
         global $path_to_root;
         //by default these models extend AR. extending something else means some hand-coding. convention over configuration
 

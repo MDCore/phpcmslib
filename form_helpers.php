@@ -1,4 +1,8 @@
 <?
+/* TODO
+ * - refactor draw_element
+ * - cleanup this while class!!!
+ */
 class forms
 {
     function name_to_id($name)
@@ -13,10 +17,10 @@ class forms
 
         $page = App::$controller;
         $result = '';
-        # 
+
         if ( $page->action == 'edit' )
         {
-            #preview this sucker
+            //preview this sucker
             $upl = new upload;
             $upl->load($value['model'], $value['field_name'], $value['record_id']);
             if ($upl->file_exists())
@@ -30,7 +34,7 @@ class forms
         }
         else
         {
-            #
+            //
             $result .="<input onchange=\"new_attachment(this);\" id=\"".$name."\" type=\"file\" name=\"$name\"";
             $result .= self::parse_attributes( $attributes );
             $result .=" />";
@@ -115,7 +119,7 @@ class forms
 
         if ($value && $value != 0) {$value = strftime(DATE_FORMAT, strtotime((string)$value));} else { $value = ''; }
         $result .= '<input readonly="readonly" type="text" name="'.$name.'" value="'.$value.'" ';
-        # auto id
+        // auto id
             if (!$attributes || ($attributes && !$attributes['id'])) { $id = $name; $result .= 'id="'.$name.'" '; } else {$id = $attributes['id'];}
 
 
@@ -136,13 +140,14 @@ class forms
     return $result;
     }
 
-    function input($name, $value = null, $attributes = null) {
-        #attributes includes id, readonly etc.. whatever is in there get's set
+    function input($name, $value = null, $attributes = null)
+    {
+        //attributes includes id, readonly etc.. whatever is in there get's set
         $result = '';
-        #default attributes
-            # id
+        //default attributes
+            // id
                 if (!isset($attributes['id'])) { $attributes['id'] = $name; }
-            # type
+            // type
                 if (!isset($attributes['type'])) { $attributes['type'] = 'text'; }
 
                 $result .= '<input name="'.$name.'" value="'.stripslashes($value).'" ';
@@ -153,11 +158,12 @@ class forms
     return $result;
     }
 
-    function textarea($name, $value = null, $attributes = null) {
-        #attributes includes id, readonly etc.. whatever is in there get's set
+    function textarea($name, $value = null, $attributes = null) 
+    {
+        //attributes includes id, readonly etc.. whatever is in there get's set
         $result = '';
-        #default attributes
-            # id
+        //default attributes
+            // id
                 if (!isset($attributes['id'])) { $attributes['id'] = 'name'; }
 
                 $result .= '<textarea id="'.$name.'" name="'.$name.'" ';
@@ -168,7 +174,8 @@ class forms
     return $result;
     }
 
-    function partial($name) {
+    function partial($name) 
+    {
         /* this whole partial handling is a HACK! action_controller should be rendering the partial. not this way. Ugh! */
         $base_url = App::$route;
 
@@ -192,7 +199,8 @@ class forms
         require($path);
     }
 
-    function parse_attributes( $attributes ) {
+    function parse_attributes( $attributes ) 
+    {
         $result = '';
         if ($attributes) {
             foreach ($attributes as $option => $option_value)
@@ -221,21 +229,23 @@ class forms
         
         $page = App::$controller;
         $arguments = func_get_args();
-        if (sizeof($arguments) == 1) {$arguments = $arguments[0];} #arguments are being passed as an array 
+        if (sizeof($arguments) == 1) {$arguments = $arguments[0];} //arguments are being passed as an array 
 
-        # arg 0 is the default model
-        # arg 1 is the record
-        # arg 2... should be arrays for the elements
+        /*
+         * arg 0 is the default model
+         * arg 1 is the record
+         * arg 2... should be arrays for the elements
+         */
             
         $default_model = $arguments[0];
         $record = $arguments[1];
         for ($i=2;$i<sizeof($arguments);$i++)
         {
             $arg = $arguments[$i];
-            if (is_array($arg)) # it's a form element
+            if (is_array($arg)) // it's a form element
             {
                 $draw_element = true; 
-                #is there an 'only' option ?
+                //is there an 'only' option ?
                 if ( array_key_exists( 'only', $arg ) )
                 {
                     $only = $arg['only'];    
@@ -248,7 +258,7 @@ class forms
 
                 if ( $draw_element ) 
                 {
-                    #is it a partial or a form element ?
+                    //is it a partial or a form element ?
                     if ( array_key_exists( 'partial', $arg ) )
                     {
                         self::partial($arg['partial']);
@@ -261,13 +271,13 @@ class forms
             }                
             else
             {
-                #spit it out as is
+                //spit it out as is
                 echo $arg;
             }
         }
-        #foreign key(s)
+        //foreign key(s)
         foreach ($this->foreign_keys as $key => $value) {
-            if ($page->primary_model == $default_model) #only make hiddens for FK's when building a form for this page
+            if ($page->primary_model == $default_model) //only make hiddens for FK's when building a form for this page
             {
 
                 $prefix = pluralize($this->primary_model).'.';
@@ -284,51 +294,50 @@ class forms
 
     function draw_element( $element_description, $default_model, $record )
     {
-        #todo this method badly needs some refactoring
         
-        # form element definition
-        # 0 = display_name
-        # 1 = element type e.g. input, select
-        # named values are dealt with. everything else is passed on as the attributes array
-        #
-        # named values:
-        #   name
-        #   value
-        #   options ( for select )
+        /*
+         * form element definition
+         * 0 = display_name
+         * 1 = element type e.g. input, select
+         * named values are dealt with. everything else is passed on as the attributes array
+         *
+         * named values:
+         *  name
+         *  value
+         *  options ( for select )
+         */
 
-        $field_name = $db_field_name = null; $visible = true; #some inits
+        $field_name = $db_field_name = null; $visible = true; //some inits
         $page = App::$controller;
         $primary_model_object = new $default_model;
-        #print_r($element_description);
+        //print_r($element_description);
         if ( sizeof( $element_description ) == 1 || !isset($element_description[1]))
         {
-            #default settings:
-            # input type=text with this as title and field_name
+            //default settings:
+            // input type=text with this as title and field_name
             $element_description[1] = 'input'; 
 
-            #check for other special cases
-            if ($element_description[0]  == 'password')
-            {
+            //check for other special cases
+            if ($element_description[0]  == 'password') {
                 $db_field_name = 'password_md5'; 
                 $field_name = "$default_model"."[$db_field_name]";
-                #$element_description['type'] = "password"; not setting to password ebcause it is never shown. plain text entry is better
+                //$element_description['type'] = "password"; not setting to password ebcause it is never shown. plain text entry is better
                 $element_description['value'] = '';
                 if ( $page->action == 'edit' ) {$element_description['note'] = '(leave blank to leave password unchanged)';}
             }
         }
-        #convert type of hidden to type input attrib type=hidden
-        if ( $element_description[1] == 'hidden' )
-        {
+        //convert type of hidden to type input attrib type=hidden
+        if ($element_description[1] == 'hidden') {
             $element_description[1] = 'input'; 
             $element_description['type'] = 'hidden';
             $visible = false;
         }
-        # convert a type of "strign" to "input=text"
+        // convert a type of "strign" to "input=text"
         if (isset($element_description[1]) && $element_description[1] == 'string') {$element_description[1] = 'input'; $element_description['type'] = 'text';}
-        # convert a type of "text" to "textarea"
+        // convert a type of "text" to "textarea"
         if (isset($element_description[1]) && $element_description[1] == 'text') {$element_description[1] = 'textarea';}
 
-        #upload and edit ? pass upload identifier array as value
+        //upload and edit ? pass upload identifier array as value
         if (isset($element_description[1]) && $element_description[1] == 'upload' && $page->action == 'edit')
         {
             $element_description['value'] = array(
@@ -336,11 +345,13 @@ class forms
                 'field_name' => $element_description[0],
                 'record_id' => $record->id
             );
-        }
+        }  
 
-        #a select with no options and no matching field in the record and a has_one or has_many_through in the model
-        if (isset($element_description['model'])) {$fk_model = $element_description['model'];} else {$fk_model = strtolower(tableize($element_description[0]));}
-        if ( ($element_description[1] == 'select' || $element_description[1] == 'multi_select') && !isset($record->$fk_model) ) {
+        /* find the options for the select */
+        if (isset($element_description['model'])) {$fk_model = $element_description['model'];} else { $fk_model = strtolower(tableize($element_description[0])); }
+        if ( ($element_description[1] == 'select' || $element_description[1] == 'multi_select')
+            && !isset($record->$fk_model)  /* this checks whether or not the field_name is a property or not. If it is a property then it skips this section */
+        ) {
 
             if ($element_description['field']) {$field = $element_description['field'];} else {$field = null;}
             if ($element_description['show_all_option']) {$show_all_option = $element_description['show_all_option'];} else { $show_all_option = null; }
@@ -348,9 +359,9 @@ class forms
             if (isset($element_description['additional_sql_options'])) { $additional_sql_options = $element_description['additional_sql_options']; } else { $additional_sql_options = null; }
             if ($element_description['order by']) { $additional_sql_options['ORDER BY'] = $element_description['order by']; }
 
-            $db_field_name = foreign_keyize(strtolower($element_description[0])); #todo. this should only foreign_keyize IF model is not set.. todo: why? (06/feb/2008)
+            $db_field_name = foreign_keyize(strtolower($element_description[0])); //todo. this should only foreign_keyize IF model is not set.. todo: why? (06/feb/2008)
 
-            #debug($fk_model);debug($db_field_name);
+            //debug($fk_model);debug($db_field_name);
 
             /* select */
             switch ($element_description[1]) {
@@ -374,7 +385,7 @@ class forms
             /* multi select */
             case 'multi_select':
                 if( $primary_model_object->has_many_through(pluralize($fk_model)) ) {
-                    #multi select
+                    //multi select
                     $options_object = new $fk_model;
 
                     $join_model_object_name = $primary_model_object->has_many_through(pluralize($fk_model));
@@ -386,7 +397,7 @@ class forms
 
                     $options = $options_object->find($criteria, $additional_sql_options)->as_array($field);
                     $value_criteria = "WHERE ".foreign_keyize($default_model). " = '".$record->id."'";
-                    $values =  $join_model_object->find($value_criteria)->as_array(foreign_keyize($fk_model)); #get the values from the db with a primary_model->as_array;
+                    $values =  $join_model_object->find($value_criteria)->as_array(foreign_keyize($fk_model)); //get the values from the db with a primary_model->as_array;
 
                     $element_description[0] = pluralize($element_description[0]); //todo why ?
                     $element_description['options'] = $options;
@@ -399,67 +410,51 @@ class forms
             }
         }
         
-        #field_name and db_field_name
-        if (!$field_name && !$db_field_name) # if not set by a special case
-        {
-            if (array_key_exists('name', $element_description))
-            {
+        //field_name and db_field_name
+        if (!$field_name && !$db_field_name) { // if not set by a special case
+            if (array_key_exists('name', $element_description)) {
                 $field_name = $element_description['name'];
-                #pull the model and db_field_name out
+                //pull the model and db_field_name out
                 $bpos = strpos($field_name, '[');
-                if ($bpos > 0)
-                {
+                if ($bpos > 0) {
                     $field_model = substr($field_name, 0, $bpos-1);
                     $db_field_name = substr($db_field_name, $bpos+1, -1);
-                }
-                else
-                {
+                } else {
                     $db_field_name = $field_name;
                     $field_model = $default_model;
                 }
-            }
-            else
-            {
-                $db_field_name = strtolower(tableize($element_description[0])); # I'm strtolowering because I'm going to assume that if you don't specificy a specific name for the field then it should be all lowered automatically
+            } else {
+                $db_field_name = strtolower(tableize($element_description[0])); // I'm strtolowering because I'm going to assume that if you don't specificy a specific name for the field then it should be all lowered automatically
 
                 $field_name = $default_model.'['.$db_field_name.']';
                 $field_model = $default_model;
             }
         }
-        #value
-            if (array_key_exists('value', $element_description))
-            {
-                $value = $element_description['value'];
+        //value
+        if (array_key_exists('value', $element_description)) {
+            $value = $element_description['value'];
+        } else {
+            //if (($page->action == 'edit') && $db_field_name)
+            if ($db_field_name) { $value = $record->$db_field_name;     
             }
-            else
-            {
-                #if (($page->action == 'edit') && $db_field_name)
-                if ($db_field_name)
-                {
-                    $value = $record->$db_field_name;     
-                }
-            }
-
-        if (array_key_exists('options', $element_description))
-        {
-            $options = $element_description['options'];
         }
-        else
-        {
+
+        if (array_key_exists('options', $element_description)) {
+            $options = $element_description['options'];
+        } else {
             $options = null;
         }
 
-        #convert element_description to attributes, by removing all the non-attribute stuff
+        //convert element_description to attributes, by removing all the non-attribute stuff
             $attributes = $element_description;
             foreach(array(0, 1, 'name', 'options', 'value', 'note', 'only', 'show_all_option', 'order_by','criteria', 'field', 'model', 'label') as $key){unset($attributes[$key]);}
 
         $element_function = $element_description[1];
         $element_html = self::$element_function($field_name, $value, $attributes, $options);
 
-        #if this is a visible element then draw it inside a labelled container, else just draw the element (generally a hidden)
-        if ( $visible )
-        {
-            #determine the validation requirements for this field
+        //if this is a visible element then draw it inside a labelled container, else just draw the element (generally a hidden)
+        if ($visible) {
+            //determine the validation requirements for this field
             $model_object = new $default_model;
 
             if (isset($element_description['label'])) {
@@ -471,7 +466,8 @@ class forms
             echo self::form_element($label, $model_object->requirements($db_field_name), $field_name, $element_html, $element_description['note']);
         }
         else
-        { #e.g. a hidden
+        {
+            //e.g. a hidden
             echo $element_html;
         }
     }
