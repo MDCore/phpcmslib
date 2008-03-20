@@ -28,6 +28,9 @@ class cm_controller extends action_controller {
 
     public $list_sort_field = null, $list_sort_type = null;
 
+    public $before_controller_load_filter = 'is_logged_in';
+    public $before_controller_execute_filter = 'check_for_print';
+
     function __construct() 
     {
         parent::__construct();
