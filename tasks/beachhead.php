@@ -100,6 +100,8 @@ class tasks_beachhead
 
         /* generate the filename / URL friendly project_name */
         $this->project_name = str_replace('.', '_', $project);
+        $this->project_name = str_replace('/', '_', $project);
+        $this->project_name = str_replace('\\', '_', $project);
 
         $this->project_path = $path;
 
