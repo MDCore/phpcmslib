@@ -514,12 +514,20 @@ class ARTest extends PHPUnit_Framework_TestCase {
         );
     }
 
-    public function testSave_bad_data() {
+    public function testSave_keeps_slashes() {
         $collection = array('name' => "new name's");
         $customer = new customer($collection);
         $this->assertEquals(5001, $customer->save());
         $customer = new customer();
         $customer->find(5001);
+        $this->assertEquals("new name's", $customer->name);
+
+        $collection = array('name' => "new name's");
+        $customer = new customer();
+        $customer->update_attributes($collection);
+        $this->assertEquals(5002, $customer->save());
+        $customer = new customer();
+        $customer->find(5002);
         $this->assertEquals("new name's", $customer->name);
     }
 

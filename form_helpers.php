@@ -442,7 +442,8 @@ class forms
             $value = $element_description['value'];
         } else {
             //if (($page->action == 'edit') && $db_field_name)
-            if ($db_field_name) { $value = $record->$db_field_name;     
+            if ($db_field_name) {
+                $value = htmlentities($record->$db_field_name);
             }
         }
 

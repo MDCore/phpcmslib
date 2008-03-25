@@ -189,7 +189,7 @@ class cm_controller extends action_controller {
             $primary_model_object = new $this->primary_model;
             $primary_model_object
                 ->find($edit_id)
-                ->update_attributes($_POST[$this->primary_model]);
+                ->update_attributes($_POST[$this->primary_model], true, true);
             if ($primary_model_object->is_valid()) {
                 $update_record_id = $primary_model_object->update();
             /*print_r($primary_model_object); print_r($update_record_id);die();*/
@@ -220,17 +220,15 @@ class cm_controller extends action_controller {
                             $meta_model_object = new $meta_model; 
                             $meta_model_object
                                 ->find(" WHERE $fk_field = $edit_id")
-                                ->update_attributes($collection);
+                                ->update_attributes($collection, true, true);
                             if (!$meta_model_object->is_valid()) {
                                 redirect_with_parameters(url_to(array('action' => 'edit')), "edit_id=".$edit_id."&flash=".$meta_model_object->validation_errors);die();
                             }
                             $meta_model_object->update();
                         }
                     }
-                    {
-                        #todo duplicate the meta-model code from cm_save
-                        $meta_model = new $meta_model($collection); $meta_model->save();
-                    }
+                    #todo duplicate the meta-model code from cm_save
+                    $meta_model = new $meta_model($collection); $meta_model->save();
                 }
             }
             $this->handle_new_files($edit_id, true);
@@ -260,7 +258,7 @@ class cm_controller extends action_controller {
         if (method_exists($this, 'before_save')) { $this->before_save(); } //todo clean this up.... should be in model, maybe
         
         $collection = $_POST[$this->primary_model];
-        if ( !$collection ) {
+        if (!$collection) {
             $collection = $_POST;
             $has_meta_data = false;
         } else {
@@ -268,7 +266,7 @@ class cm_controller extends action_controller {
         }
         // save the form data for the primary model 
         $primary_model_object = new $this->primary_model;
-        $primary_model_object->update_attributes($collection);
+        $primary_model_object->update_attributes($collection, true, true); /* with value changes, clean */
 
         if (!$primary_model_object->is_valid()) {
             $_GET['flash'] = $primary_model_object->validation_errors; 
@@ -569,7 +567,7 @@ class cm_controller extends action_controller {
         echo url_to(array('action' => 'save')).page_parameters($parameters_to_remove).$parameters;?>"><?
             
         if (isset($_POST) && sizeof($_POST) > 0 ) {
-            $this->model_object->update_attributes($_POST[$this->primary_model]);
+            $this->model_object->update_attributes($_POST[$this->primary_model], true, true);
         }
 
         $record = $this->model_object;
@@ -687,7 +685,8 @@ class cm_controller extends action_controller {
                 $method = substr($field, 0, strlen($field)-2);
                 $list_field_descriptors[$field] = array('call_method', $method);
             }
-            // ok... TODO fix this.. now that this uses mdb2. where is my schema introspection on appstart ?
+            // ok... TODO fix this.. now that this uses mdb2 schema introspection.
+            // Problem is that these field names might be different to the schema field names.
             elseif ((stristr($this->list_field_descriptors[$field], ' date') != false) or strtolower($this->list_field_descriptors[$field]) == 'date') {
                 $list_field_descriptors[$field] = array('date');
             }
@@ -758,10 +757,10 @@ class cm_controller extends action_controller {
                     echo strftime(TIME_FORMAT, strtotime((string)$row->$field));
                     break;
                 case 'split': 
-                    echo split_on_word(stripslashes($row->$field), $this_field_descriptor[1], true);
+                    echo htmlentities(split_on_word(stripslashes($row->$field), $this_field_descriptor[1], true));
                     break;
                 default:
-                    echo stripslashes($row->$field);
+                    echo htmlentities(stripslashes($row->$field));
                 }
             }
             ?></td><?

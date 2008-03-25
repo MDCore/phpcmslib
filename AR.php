@@ -895,9 +895,11 @@ class AR implements SeekableIterator
             if (preg_match('/date/', $field) && $value != '' && $value != 0 && $value != null) {
                 $value = strftime(SQL_INSERT_DATE_FORMAT, strtotime($value));
             }
-            if (!get_magic_quotes_gpc()) { 
+            /*
+             * removed because I"m handling the slashes more intelligently
+            * if (!get_magic_quotes_gpc()) { 
                 $value = addslashes($value);
-            }
+            }*/
             return true; 
         }
     }
@@ -1015,12 +1017,13 @@ class AR implements SeekableIterator
      *
      * @param array   $collection         a collection of values in the format [field name] => value with which to initialize this record   
      * @param boolean $with_value_changes default 'true'. This allows bypassing the value_changes (??) call
+     * @param boolean $clean_the_data     default 'false'. Remove slashencoding; for data coming from $_GET and $_POST. May expand to better cleaning in the future
      *
      * @return AR returns $this
      */
-    public function update_attributes($collection = null, $with_value_changes = false) 
+    public function update_attributes($collection = null, $with_value_changes = false, $clean_the_data = false) 
     {
-        if ( !$collection ) { // if no row is passed then set the current row in results
+        if (!$collection) { // if no row is passed then set the current row in results
             if ($this->results && !MDB2::isError($this->results)) {
                 $collection = $this->results->fetchRow();
                 $with_value_changes = false;
@@ -1036,6 +1039,9 @@ class AR implements SeekableIterator
         if ( $collection ) {  // it's possible no collection was set with the DB lookup: checking again.
             //set row variables to properties
             foreach ($collection as $field => $value) {
+                if ($clean_the_data) {
+                    $value = stripslashes($value);
+                }
                 if ($with_value_changes) {
                     //apply value changes to this field and value
                     $value_change_result = $this->write_value_changes($field, $value);

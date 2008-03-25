@@ -416,4 +416,14 @@ function replace_keywords_in_file($filename, $keyword_array) {
     }
     file_put_contents($filename, $source);
 }
+
+function clean_dirty_collection($collection) {
+    if (!is_array($collection)) { 
+        return $collection;
+    }
+    foreach ($collection as $name => $value) {
+        $collection[$name] = stripslashes($value);
+    }
+    return $collection;
+}
 ?>
