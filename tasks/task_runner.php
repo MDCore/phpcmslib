@@ -64,9 +64,22 @@ case 'migrate':
     break;
 case 'help':
 ?>
+Beachhead : Create a new project
+=========
 usage:
-beachhead <path> <repository_url> [--root_url=ROOT_URL]     Create a new project
-migrate [--remigrate] [--force_from=REVISION]               Run migrations
+beachhead <path> <repository_url>
+[--root_url=ROOT_URL]           The default root URL is '/'.
+[--project=PROJECT_NAME]        The default project name is the last directory in 
+                                the path parameter.
+
+Migrate : Run migrations
+=======
+migrate
+[--remigrate]                   Run all migrations from the beginning. WARNING this
+                                is dangerous!
+[--force_from=REVISION]         The default process is to run any new migrations
+                                starting after the number stored in the schema_info
+                                table. This runs from an arbitrary migration number.
 <?
     break;
 default:

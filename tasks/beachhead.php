@@ -9,6 +9,9 @@
 
 /*
  * TODO
+ * - Don't require the --project and --url arguments for a simple project creation.
+ *   Rather check the project path for a leading / or ~ against the PWD and decide
+ *   what to do from there.
  * - use MDB2 extended to create database
  * - account for remote repository failure or disconnection
  */
@@ -54,8 +57,14 @@ class tasks_beachhead
     public function run($arguments) {
         $path = $arguments[2];
         $repository_url = $arguments[3];
-        $project = explode('/', str_replace('\\', '/', $path));
-        $project = $project[sizeof($project)-1];
+
+        /* get the project argument */
+        if (isset($arguments['project'])) {
+            $project = $arguments['project'];
+        } else {
+            $project = explode('/', str_replace('\\', '/', $path));
+            $project = $project[sizeof($project)-1];
+        }
 
         /* check the path and project */
         if (is_null($path) || $path == '') {
@@ -148,7 +157,7 @@ class tasks_beachhead
 
             //echo("cd {$this->project_path} ; git submodule add -b $branch {$this->repository_url}$repository $path\r\n");
             exec("cd {$this->project_path} ; git submodule add {$this->repository_url}$repository $path", $output, $return_status);
-            exec("cd {$this->project_path}/$path ; git checkout $branch", $output, $return_status);
+            exec("cd {$this->project_path}/$path ; git checkout -b $branch origin/$branch", $output, $return_status);
         }
 
         /* submodule commit */
@@ -156,8 +165,11 @@ class tasks_beachhead
         if ($op) {
             echo $this->strings[305];
         }
+        
+        /* sort out the project url */
         $project_url = $this->root_url.'/'.$project;
         $project_url = str_replace('//', '/', $project_url);
+
         if ($project_url[0] == '/') {
             $project_url = substr($project_url, 1);
         }
