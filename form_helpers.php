@@ -43,6 +43,10 @@ class forms
     return $result;
     }
 
+    /*
+     * usage:
+     * array('categories', 'multi_select'),
+     */
     function multi_select( $name, $values = null, $attributes = null, $options = null )
     {
         $result = '';
@@ -383,23 +387,26 @@ class forms
                 break;
 
             /* multi select */
+            /* NOTE: fk_model comes through already pluralized for multi-selects. It makes sense that way */
             case 'multi_select':
-                if( $primary_model_object->has_many_through(pluralize($fk_model)) ) {
+                if( $primary_model_object->has_many_through($fk_model) ) {
                     //multi select
-                    $options_object = new $fk_model;
+                    $options_object = singularize($fk_model);
+                    $options_object = new $options_object;
 
-                    $join_model_object_name = $primary_model_object->has_many_through(pluralize($fk_model));
-                    $join_model_object = new $join_model_object_name;
+                    $join_model_object_name = $primary_model_object->has_many_through($fk_model);
+                    $join_model_object = singularize($join_model_object_name);
+                    $join_model_object = new $join_model_object;
                     
-                    $db_field_name = foreign_keyize($fk_model);
+                    $db_field_name = foreign_keyize(singularize($fk_model));
 
                     $field_name = $join_model_object_name."[$db_field_name]";
 
                     $options = $options_object->find($criteria, $additional_sql_options)->as_array($field);
                     $value_criteria = "WHERE ".foreign_keyize($default_model). " = '".$record->id."'";
-                    $values =  $join_model_object->find($value_criteria)->as_array(foreign_keyize($fk_model)); //get the values from the db with a primary_model->as_array;
+                    $values =  $join_model_object->find($value_criteria)->as_array(foreign_keyize(singularize($fk_model))); //get the values from the db with a primary_model->as_array;
 
-                    $element_description[0] = pluralize($element_description[0]); //todo why ?
+                    $element_description[0] = $element_description[0];
                     $element_description['options'] = $options;
                     $element_description['value'] = array_values($values);
                     
