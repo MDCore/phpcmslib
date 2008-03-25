@@ -28,9 +28,12 @@ class cm_controller extends action_controller {
 
     public $list_sort_field = null, $list_sort_type = null;
 
+    /*
+     * now in /cm/face_controller
+     
     public $before_controller_load_filter = 'is_logged_in';
     public $before_controller_execute_filter = 'check_for_print';
-
+     */
     function __construct() 
     {
         parent::__construct();
@@ -794,64 +797,6 @@ if ($(this).html() != 'Show filters') { $(this).html('Show filters'); } else { $
         <input type="button" onclick="window.location ='<?=page_parameters('/^filter_/,/^page_no$/')?>'" value="Clear filters" />
         </form>
     </div><?
-    }
-    
-#------------------------------#
-# default filter actions
-#------------------------------#
-
-    public function check_for_print() {
-        if (isset($_GET['print']) && $_GET['print'] == 'y') {
-            $this->layout = 'print';
-            define('PRINTING_MODE', true); #hackety hack hack ? 
-        }
-        
-    }
-
-    public function is_logged_in() {
-        if ( !isset($_SESSION[APP_NAME]['user_id']) || $_SESSION[APP_NAME]['user_id'] == '' ) {
-            if (isset($_POST['email'])) {
-                $email = $_POST['email'];
-                $password = $_POST['password'];
-                $user = new user;
-                $user_id = $user->is_valid_user( $email, $password );
-                if ( $user_id ) {
-                    $_SESSION[APP_NAME]['display_name'] = $user->display_name();
-                    $_SESSION[APP_NAME]['username'] = $email;
-                    $_SESSION[APP_NAME]['user_id'] = $user_id;
-
-                    /**
-                     * assigning login rights
-                     *
-                     * if the method exists it MUST return true or logging in was a failure.
-                     * assign_login_rights() must be a method of the face controller
-                     */
-                    if (method_exists($this, 'assign_login_rights')) {
-                        if ($this->assign_login_rights() !== true) {
-                            unset($_SESSION[APP_NAME]);
-                            $redirect = 'location: '.url_to(array('face' => 'cm')).'?flash='.urlencode('Unable to login. Please contact your system administrator.');
-                            header($redirect);
-                            die();
-                        }
-                    }
-
-                    #successful login! redirect to default. 
-                        header('location: '.url_to(array('face' => 'cm')));
-                }
-                else {
-                    $flash = "This email address and password combination was not found";$_GET['flash'] = $flash;
-                    App::$route['controller'] = 'default_controller';
-                    App::$route['action'] = 'login';
-                    global $view_parameters; $view_parameters['hide_menu'] = true;
-                }
-            }
-            else {
-                //$_GET['flash'] = null;
-                App::$route['controller'] = 'default_controller';
-                App::$route['action'] = 'login';
-                //not working for some reason $this->view_parameters['hide_menu'] = true;
-            }
-        }
     }
 }
 ?>
