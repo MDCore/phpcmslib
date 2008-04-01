@@ -50,8 +50,7 @@ class forms
     function multi_select( $name, $values = null, $attributes = null, $options = null )
     {
         $result = '';
-        if (sizeof($options)> 0 )
-        {
+        if (sizeof($options)> 0) {
             $element_name = $name; $element_name = str_replace( '[', '_', $element_name); $element_name = str_replace( ']', '_', $element_name);
             $result .= "<div id=\"".$element_name."_container\">"; 
             $result .= "<input name =\"".$name."[]\" class=\"checkbox\" type=\"checkbox\" id=\"".$element_name."_all\" onclick=\"
@@ -68,20 +67,21 @@ class forms
                 }
                 \" value=\"\" /> <strong>All</strong> <br /> ";
 
-            foreach ($options as $id => $value)
-            {
+            foreach ($options as $id => $value) {
                 $result .= "<input name =\"".$name."[]\" class=\"checkbox\" type=\"checkbox\" value=\"$id\" ";
-                if ($values && in_array($id, $values)) {$result .= "checked=\"checked\"";}
-                $result .=" onclick=\"if (this.checked == false) {".$element_name."_all.checked = false;}\"";
-                $result .="/> $value <br />  ";
+                if ($values && in_array($id, $values)) {
+                    $result .= "checked=\"checked\" ";
+                }
+                $result .= 'onclick="if (this.checked == false) {'.$element_name.'_all.checked = false;}"';
+                $result .= '/> '.htmlentities(stripslashes($value))."<br />\r\n";
             }
-            $result .="<input type=\"hidden\" name=\"".$name."[]\" checked=\"checked\" value=\"-1\" />";
+            $result .= '<input type="hidden" name="'.$name.'[]" checked="checked" value="-1" />';
             $result .= "</div>";
         }
         return $result;
     }
 
-    function select( $name, $value = null, $attributes = null, $options = null )
+    function select($name, $value = null, $attributes = null, $options = null)
     {
         /*
          * $options takes a either html source of options or one of these values:
@@ -382,7 +382,9 @@ class forms
 
                 $field_name = $default_model."[$db_field_name]";
 
-                $options = $options_object->find($criteria, $additional_sql_options)->as_select_options($record->$db_field_name, $field, $show_all_option);
+                $options = $options_object
+                    ->find($criteria, $additional_sql_options)
+                    ->as_select_options($record->$db_field_name, $field, $show_all_option);
                 $element_description['options'] = $options;
                 break;
 
@@ -402,7 +404,16 @@ class forms
 
                     $field_name = $join_model_object_name."[$db_field_name]";
 
-                    $options = $options_object->find($criteria, $additional_sql_options)->as_array($field);
+                    /* show the parent for acts_as_nested_set objects */
+                    if (!$options_object->acts_as_nested_set) {
+                        $options = $options_object
+                            ->find($criteria, $additional_sql_options)
+                            ->as_array($field);
+                    } else {
+                        $options_data = $options_object
+                            ->find($criteria, $additional_sql_options)
+                            ->as_array($field);
+                    }
                     $value_criteria = "WHERE ".foreign_keyize($default_model). " = '".$record->id."'";
                     $values =  $join_model_object->find($value_criteria)->as_array(foreign_keyize(singularize($fk_model))); //get the values from the db with a primary_model->as_array;
 
