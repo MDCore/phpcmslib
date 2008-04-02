@@ -34,7 +34,7 @@ class Environment
                         if (App::$reloading) {
                             echo "<li>testing match <i>$url</i></li>";
                         }
-                        if (preg_match($url, $_SERVER['SERVER_NAME'])) {
+                        if (preg_match($url, $_SERVER['HTTP_HOST'])) {
                             if (App::$reloading) {
                                 echo "<strong>Matched to environment <i>$env</i></strong>";
                             }
