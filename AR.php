@@ -186,10 +186,15 @@ class AR implements SeekableIterator
                 'ns_level' => 'level',
                 $this->display_field => 'name'
             );
+            if (isset($this->schema_definition)) { /* sometimes the schema definition is not set at this point but that's ok
+                                                    * because that seems to be during migration, where the schema def is going to
+                                                    * be set for this model soon
+                                                    */
             /* add the other fields in the schema to the nested_set_params */
-            foreach (array_keys($this->schema_definition) as $schema_field) {
-                if (!array_key_exists($schema_field, $this->nested_set_params)) {
-                    $this->nested_set_params[$schema_field] = $schema_field;
+                foreach (array_keys($this->schema_definition) as $schema_field) {
+                    if (!array_key_exists($schema_field, $this->nested_set_params)) {
+                        $this->nested_set_params[$schema_field] = $schema_field;
+                    }
                 }
             }
 
