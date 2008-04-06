@@ -6,6 +6,8 @@ class schema_migration
 {
     public $running_from_shell = false;
     public $allow_model_overwrite_override = false; /* testing sets this to true */
+    /* ensures that the schema definition is rebuilt when the migrate task is called, even if no migrations occur */
+    public $schema_rebuilt = false ;
     function __construct() {
         $AR = new AR; $this->db = $AR->db;
         $this->load_migrations();
@@ -266,8 +268,7 @@ class schema_migration
 
         $this->rebuild_schema_definition();
     }
-    function rebuild_schema_definition()
-    {
+    function rebuild_schema_definition() {
         // rebuild the schema definition and load it into memory
         $schema_interregator_results = schema_interregator::build_schema_definition();
         global $path_to_root;
@@ -283,6 +284,7 @@ class schema_migration
             echo "\r\n";
         }
 
+        $this->schema_rebuilt = true;
         flush();
 
     }
