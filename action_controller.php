@@ -106,15 +106,22 @@ class action_controller {
     {
         #save some settings
             $current['route'] = App::$route;
-            $current['layout'] = $this->layout;
             $current['face'] = $this->face;
             $current['controller'] = $this->controller_name;
+            $current['action'] = $this->action;
+            $current['layout'] = $this->layout;
+
             $current_rendered_status = $this->action_rendered_inline;
 
             /* overwrite individual items, that way current ways stay the same e.g. the face */
             foreach ($url_as_array as $url_portion => $url_value) {
                 App::$route[$url_portion] = $url_value;
             }
+            if (isset($url_as_array['face'])) { $this->face = $url_as_array['face']; }
+            if (isset($url_as_array['controller'])) { $this->controller_name = $url_as_array['controller']; }
+            if (isset($url_as_array['action'])) { $this->action = $url_as_array['action']; }
+            if (isset($url_as_array['layout'])) { $this->layout = $url_as_array['layout']; }
+
             //App::$route = $url_as_array;
             #deal with $_GET
             if (isset($url_as_array['GET'])) {
@@ -144,10 +151,12 @@ class action_controller {
             ob_clean();
 
         #restore settings
-            App::$route = $current['route']; #reset the route
-            $this->layout = $current['layout'];
-            $this->face = $current['face'];
-            $this->controller_name = $current['controller'];
+        App::$route = $current['route'];
+        $this->face = $current['face'];
+        $this->controller_name = $current['controller'];
+        $this->action = $current['action'];
+        $this->layout = $current['layout'];
+
             $this->action_rendered_inline = $current_rendered_status;
             if (isset($current_GET)) { $_GET = $current_GET; }
 
