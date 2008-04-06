@@ -138,19 +138,22 @@ class filter
     function filter_select($filter)
     {
         $name = $filter['name']; $alias = $filter['alias'];
-        if (isset($filter['model']))
-        {
+        if (isset($filter['model'])) {
             $foreign_model_name = $filter['model'];
-        }
-        else
-        {
+        } else {
             $foreign_model_name = singularize($name);
         }
         $options = new $foreign_model_name;
         $get_var = 'filter_'. $name;
-        if ($_GET[$get_var] != '') {$value = $_GET[$get_var];} else {$value = null;}
-        if ($filter['criteria'] == '') { $filter['criteria'] = 'all'; }
-        $options = $options->find($filter['criteria'])->as_select_options($value, $filter['field'], true);
+        if ($_GET[$get_var] != '') {
+            $value = $_GET[$get_var];
+        } else {
+            $value = null;
+        }
+        if ($filter['criteria'] == '') {
+            $filter['criteria'] = 'all';
+        }
+        $options = $options->find($filter['criteria'], $filter['additional_sql_options'])->as_select_options($value, $filter['field'], true);
         ?><label for="filter_<?=$name?>"><?=humanize($alias)?></label><select id="filter_<?=$name?>" name="<?=$get_var;?>"><?=$options;?></select><?
     }
 
