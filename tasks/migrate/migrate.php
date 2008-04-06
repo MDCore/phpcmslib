@@ -29,6 +29,9 @@ for($i = 0; $i < sizeof($sys->migrations); $i++) {
             echo $sys->migrations[$i]['result'];
         }
     }
+    if (!$sys->schema_rebuilt) {
+        $sys->rebuild_schema_definition();
+    }
 }
 
 //successfully completed, output the results
