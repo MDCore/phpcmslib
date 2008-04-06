@@ -191,19 +191,19 @@ class cm_controller extends action_controller {
                 ->find($edit_id)
                 ->update_attributes($_POST[$this->primary_model], true, true);
             if ($primary_model_object->is_valid()) {
-                $update_record_id = $primary_model_object->update();
-            /*print_r($primary_model_object); print_r($update_record_id);die();*/
+                $record_updated = $primary_model_object->update();
+            /*print_r($primary_model_object); print_r($record_updated);die();*/
             /* sanity checking; it better be updating and not saving! */
-                if ($update_record_id != $edit_id) {
-                    trigger_error("Update of {$this->primary_model} failed. $update_record_id != $edit_id.", E_USER_ERROR);die();
+                if ($record_updated != $edit_id) {
+                    trigger_error("Update of {$this->primary_model} failed. $record_updated != $edit_id.", E_USER_ERROR);die();
                 }
-            } else { $update_record_id = false; }
+            } else { $record_updated = false; }
         }
         else {
             $no_primary_to_save = true;
         }
 
-        if ($update_record_id | $no_primary_to_save) {
+        if ($record_updated | $no_primary_to_save) {
             unset($_POST['MAX_FILE_SIZE']); #currently used to add a comment each time ??xxx 2007-11-04 what's this
             foreach ( $_POST as $meta_model => $collection ) {
                 if ( $meta_model != $this->primary_model ) { # make sure we are working with meta models
@@ -233,7 +233,7 @@ class cm_controller extends action_controller {
             }
             $this->handle_new_files($edit_id, true);
 
-            if (method_exists($this, 'after_update')) { $this->after_update(); } #todo clean this up.... should be in model, maybe
+            if (method_exists($this, 'after_update')) { $this->after_update($edit_id); } #todo clean this up.... should be in model, maybe
 
             if ($redirect_on_success) {
                 redirect_with_parameters(url_to(array('action' => 'list')), "flash=".proper_nounize($this->list_type). " updated");
@@ -757,8 +757,17 @@ class cm_controller extends action_controller {
                     echo strftime(TIME_FORMAT, strtotime((string)$row->$field));
                     break;
                 case 'split': 
-                    echo htmlentities(split_on_word(stripslashes($row->$field), $this_field_descriptor[1], true));
+                    $full_phrase = $row->$field;
+                    /* this checks that splitting needs to occur before doing the split and tooltip. split_on_word already checks for
+                     * string length but I'm doing it here so that I don't have to show the tooltip unnecessarily
+                     */
+                    if (isset($full_phrase{$this_field_descriptor[1][1]-1})) {
+                        $shortened_phrase = split_on_word(stripslashes($row->$field), $this_field_descriptor[1], true, true);
+                        if (!defined('PRINTING_MODE')) {
+                            ?><a class="tooltip"><?=$shortened_phrase;?><span><?=htmlentities(stripslashes($row->$field));?></span></a><?
+                        }
                     break;
+                    }
                 default:
                     echo htmlentities(stripslashes($row->$field));
                 }
