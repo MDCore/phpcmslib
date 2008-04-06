@@ -106,7 +106,7 @@ function proper_case($str) {
     $str[0] = strtoupper($str[0]);return $str;
 }
 
-function split_on_word($string, $range, $add_ellipses = false) {
+function split_on_word($string, $range, $add_ellipses = false, $htmlentities = false) {
     /*
      * Let me explain by way of example why I substract 1 from min and max. A string like "cats"
      * is length 4 but its array is 0-3. So if I want a min of 1 then my min must actually be 0, to compensate for the zero-based array.
@@ -143,6 +143,7 @@ function split_on_word($string, $range, $add_ellipses = false) {
     if ($split_position == -1) { $split_position = $max - $min; }
     #var_dump($split_string); var_dump($split_position);
     $return = trim(substr($string, 0, $min+$split_position));
+    if ($htmlentities) { $return = htmlentities($return); }
     if ($add_ellipses) { $return .= '&#0133;'; }
     return $return;
      
