@@ -429,8 +429,8 @@ class forms
                             ->find($criteria, $additional_sql_options)
                             ->as_array($field);
                     }
-                    $value_criteria = "WHERE ".foreign_keyize($default_model). " = '".$record->id."'";
-                    $values =  $join_model_object->find($value_criteria)->as_array(foreign_keyize(singularize($fk_model))); //get the values from the db with a primary_model->as_array;
+                    $finder_name = 'find_by_'.foreign_keyize($default_model);//".$record->id."'";
+                    $values =  $join_model_object->$finder_name($record->id)->as_array(foreign_keyize(singularize($fk_model))); //get the values from the db with a primary_model->as_array;
 
                     $element_description[0] = $element_description[0];
                     $element_description['options'] = $options;
