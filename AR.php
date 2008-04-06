@@ -379,6 +379,11 @@ class AR implements SeekableIterator
         if ($name == 'record') { 
             return $this->values;
         }
+        /* check for special value session_user_id and return user_id. Here for backwards compatibility with old apps */
+        if ($name == 'session_user_id' && array_key_exists('user_id', $this->values)) {
+            return $this->values['user_id'];
+        }
+
 
         /* check for a changelog request */
         /* todo: re-use changelog, or set the model names etc in the __construct */
