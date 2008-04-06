@@ -47,13 +47,16 @@ class forms
      * usage:
      * array('categories', 'multi_select'),
      */
-    function multi_select( $name, $values = null, $attributes = null, $options = null )
+    function multi_select($name, $values = null, $attributes = null, $options = null)
     {
         $result = '';
         if (sizeof($options)> 0) {
             $element_name = $name; $element_name = str_replace( '[', '_', $element_name); $element_name = str_replace( ']', '_', $element_name);
             $result .= "<div id=\"".$element_name."_container\">"; 
-            $result .= "<input name =\"".$name."[]\" class=\"checkbox\" type=\"checkbox\" id=\"".$element_name."_all\" onclick=\"
+
+            $result .= '<table><tr>';
+            /* the select all checkbox */
+            $result .= "<td><input name =\"".$name."[]\" class=\"checkbox\" type=\"checkbox\" id=\"".$element_name."_all\" onclick=\"
                 var f = $('div#".$element_name."_container input[@type=checkbox]');
             	for(var i=0; i<f.length; i++){
                     if (this.checked)
@@ -65,16 +68,25 @@ class forms
                         f[i].checked = false;
                     }
                 }
-                \" value=\"\" /> <strong>All</strong> <br /> ";
+            \" value=\"\" /></td><td><strong>All</strong></td>";
 
+            $columns = 1; if (isset($attributes['columns'])) {
+                $columns = $attributes['columns'];
+            }
+            $cnt = 1;
             foreach ($options as $id => $value) {
-                $result .= "<input name =\"".$name."[]\" class=\"checkbox\" type=\"checkbox\" value=\"$id\" ";
+                if ($cnt % $columns == 0) {
+                    $result .= "</tr>\r\n<tr>";
+                }
+                $result .= "<td><input name =\"".$name."[]\" class=\"checkbox\" type=\"checkbox\" value=\"$id\" ";
                 if ($values && in_array($id, $values)) {
                     $result .= "checked=\"checked\" ";
                 }
                 $result .= 'onclick="if (this.checked == false) {'.$element_name.'_all.checked = false;}"';
-                $result .= '/> '.htmlentities(stripslashes($value))."<br />\r\n";
+                $result .= '/></td><td>'.htmlentities(stripslashes($value)).'</td>';
+                $cnt++;
             }
+            $result .= '</tr></table>';
             $result .= '<input type="hidden" name="'.$name.'[]" checked="checked" value="-1" />';
             $result .= "</div>";
         }
@@ -219,7 +231,10 @@ class forms
     {
         $result = '';
         $result .= '<p class="form_element" id="fe_'.forms::name_to_id($element_id).'">';
-        $result .= '<label>'.$title.':';
+        $result .= '<label>';
+        if ($title != '') {
+            $result .= $title.':';
+        }
         $result .= $validation_requirements;
         $result .= '</label><span>'.$element.'</span>';
         if ($note) { $result .='<span class="note">'.$note.'</span>';}
@@ -465,8 +480,10 @@ class forms
         }
 
         //convert element_description to attributes, by removing all the non-attribute stuff
-            $attributes = $element_description;
-            foreach(array(0, 1, 'name', 'options', 'value', 'note', 'only', 'show_all_option', 'order_by','criteria', 'field', 'model', 'label') as $key){unset($attributes[$key]);}
+        $attributes = $element_description;
+        foreach(array(0, 1, 'name', 'options', 'value', 'note', 'only', 'show_all_option', 'order_by','criteria', 'field', 'model', 'label', 'additional_sql_options') as $key){
+            unset($attributes[$key]);
+        }
 
         $element_function = $element_description[1];
         $element_html = self::$element_function($field_name, $value, $attributes, $options);
