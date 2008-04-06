@@ -283,3 +283,66 @@ margin:6px 3px 3px;
 .paging_page_this_page {
 color:#CC3311;
 }
+
+/* tooltips */
+a.tooltip {
+    position:relative; /*this is the key*/
+    z-index:24; background-color:#f0f0f0;
+    text-decoration:none;
+    cursor: default;
+}
+
+a.tooltip:hover {
+    z-index:25;
+}
+
+a.tooltip span {
+    display: none;
+}
+
+a.tooltip:hover span{ /*the span will display just on :hover state*/
+    display:block;
+    position:absolute;
+    top:2em; left:2em; width:15em;
+    border:1px solid #cfcfcf;
+    background-color:#E7E5DC;
+    color: #575751;
+    text-align: center;
+}
+
+.content_box
+{
+    background-color: #eee;
+    border: 1px solid #000;
+    padding: 15px;
+    padding-top: 0px;
+    margin-top: 15px;
+    width: 60%;
+    width: 750px;
+
+}
+.content_box h2 {
+    border-bottom: 1px solid #000;
+    height: 25px;
+    font-size: 14px;
+    line-height: 25px;
+    margin: 0; margin-left: -15px; margin-bottom: 10px;
+    padding-left: 15px;
+    width: 765px;
+    background-color: #fff;
+}
+
+.success_message, .error_message {
+    padding: 5px 0 5px 15px;
+    margin: 15px 0;
+    width: 250px;
+}
+.error_message {
+    background-color: #fbb !important;
+}
+.success_message {
+    background-color: #ffb !important;
+}
+.success_message input {
+    margin-top: 5px;
+}
