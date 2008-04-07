@@ -20,7 +20,7 @@ class cm_controller extends action_controller {
     public $default_action = 'cm_list';
 
     //default configuration 
-    public $allow_edit = true, $allow_add = true, $allow_delete = true;
+    public $allow_edit = true, $allow_add = true, $allow_delete = true, $allow_view = false;
     public $allow_filters = true, $allow_sort = true;
     public $row_limit = 30;
     public $show_record_selector = false;
@@ -78,7 +78,7 @@ class cm_controller extends action_controller {
 
         $this->draw_form_buttons = true;
 
-        /* are we goign into edit mode */
+        /* are we going into delete mode */
         if (isset($_GET['delete']) && $_GET['delete'] == 'y') {
             $this->show_delete = true;
         } else {
@@ -366,7 +366,6 @@ class cm_controller extends action_controller {
                 $this->allow_filters = false;
                 $this->allow_add = false;
                 $this->allow_edit = false;
-                $this->allow_view = false;
                 $this->allow_delete = false;
                 $this->back_link = false;
                 unset($this->category_actions);
@@ -381,7 +380,6 @@ class cm_controller extends action_controller {
             $this->list_fields = split_aliased_string($this->list_fields);
 
         /* draw the list title */
-            if (isset($this->page_title)) { $page_title = $this->page_title; }
             /* the foreign key description portion of the title */
             if (isset($_GET['fk_t'])) {
                 $fk_t= $_GET['fk_t'];
@@ -484,7 +482,7 @@ class cm_controller extends action_controller {
         }
         ?></div><?
         ?><div class="list_wrapper"><?
-            ?><table class="list"><?=$this->list_header() ?><?=$this->list_body($results_list);?></table><?
+            ?><table class="list"><?=$this->list_header();?><?=$this->list_body($results_list);?></table><?
             ?></div><? if (!defined('PRINTING_MODE')) { ?><div class="paging"><?=$this->paging->paging_anchors();?></div><? }  
 
         if ($this->show_record_selector) {
@@ -523,7 +521,12 @@ class cm_controller extends action_controller {
             return true;
         }
 
-        $edit_id = $_GET['edit_id'];
+        /* $_GET['edit_id'] is still here for backwards compat... with other parts of the code. I'm too lazy to change it all right now */
+        if (isset($_GET['edit_id']) && $_GET['edit_id'] != '') {
+            $edit_id = $_GET['edit_id'];
+        } else {
+            $edit_id = App::$route['id'];
+        }
         $record = $this->model_object->find($edit_id);
 
         if ($record && $record->count > 0) {
@@ -641,10 +644,13 @@ class cm_controller extends action_controller {
         ?><thead><tr><?
         if ($this->show_record_selector) { ?><th class="record_selector_column">&nbsp;</th><? }
         if ($this->show_delete) { ?><th><input type="checkbox" id="delete_all" name="delete_all" onclick="select_all_rows();" value="on" /></th><? }
-        if (!($this->show_delete) && $this->allow_edit) { ?><th>&nbsp;</th><? }
-        if (!isset($this->show_delete) || !($this->show_delete) && $this->allow_view) { ?><th>&nbsp;</th><? }
-        if ($this->related_pages && sizeof($this->related_pages) > 0)
-        {
+        if (!$this->show_delete && $this->allow_edit) {
+            ?><th>&nbsp;</th><?
+        }
+        if (!$this->show_delete && $this->allow_view) {
+            ?><th>&nbsp;</th><?
+        }
+        if ($this->related_pages && sizeof($this->related_pages) > 0) {
             foreach ($this->related_pages as $related_page) { ?><th>&nbsp;</th><? } 
         }
         
@@ -713,7 +719,7 @@ class cm_controller extends action_controller {
 
             /* if we are not in delete mode and editing is allowed */
             if (!$this->show_delete && $this->allow_edit) {
-                ?><td class="action_link"><a href="<?=url_to(array('action' => 'edit')).page_parameters('/^edit/');?>&amp;edit_id=<?=$row->__pk_field;?>"><?=$this->edit_link_title;?></a></td><?
+                ?><td class="action_link"><a href="<?=url_to(array('action' => 'edit', 'id' => $row->__pk_field)).page_parameters('/^edit/');?>"><?=$this->edit_link_title;?></a></td><?
             }
 
             /* if we are not in delete mode and viewing is allowed */
