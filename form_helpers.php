@@ -367,12 +367,15 @@ class forms
         }  
 
         /* find the options for the select */
-        if (isset($element_description['model'])) {$fk_model = $element_description['model'];} else { $fk_model = strtolower(tableize($element_description[0])); }
+        if (isset($element_description['model'])) {
+            $fk_model = $element_description['model'];
+        } else {
+            $fk_model = strtolower(tableize($element_description[0]));
+        }
         if ( ($element_description[1] == 'select' || $element_description[1] == 'multi_select')
             && !isset($record->$fk_model)  /* this checks whether or not the field_name is a property or not. If it is a property then it skips this section */
         ) {
-
-            if ($element_description['field']) {$field = $element_description['field'];} else {$field = null;}
+            if ($element_description['field']) { $field = $element_description['field'];} else {$field = null;}
             if ($element_description['show_all_option']) {$show_all_option = $element_description['show_all_option'];} else { $show_all_option = null; }
             if (isset($element_description['criteria'])) { $criteria = $element_description['criteria']; } else { $criteria = 'all'; }
             if (isset($element_description['additional_sql_options'])) { $additional_sql_options = $element_description['additional_sql_options']; } else { $additional_sql_options = null; }
