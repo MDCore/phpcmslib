@@ -253,8 +253,7 @@ function handle_error($errno, $errstr='', $errfile='', $errline='', $backtrace =
 
     /* do we send an email or just display it? */
     global $email_errors_to;
-    global $environment;
-    if (isset($email_errors_to) && $email_errors_to != '' && $environment != 'development') {
+    if (isset($email_errors_to) && $email_errors_to != '' && get_class(App::$env) != 'development') {
         $headers = "MIME-Version: 1.0\r\n";
         $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
@@ -417,6 +416,8 @@ function backtrace($backtrace = null)
             for ($j = 0; $j <= count($bt[$i]["args"]) - 1; $j++) {
                 if (is_array($bt[$i]["args"][$j])) {
                     echo '<pre>';print_r($bt[$i]["args"][$j]); echo '</pre>';
+                } elseif (is_object($bt[$i]["args"][$j])) {
+                    echo get_class($bt[$i]["args"][$j]);
                 } else {
                     echo $bt[$i]["args"][$j];
                 }
