@@ -20,11 +20,13 @@ class Application
         }
         if ( isset($_GET['reload']) ) {
             App::$booting = true; App::$reloading = true; $_GET['reload'] = '';
-            ?><style type="text/css"> li { font-family: "Courier New",monospace,verdana,arial; } </style><ol><?
+            global $running_from_shell;
+            if (!$running_from_shell) {
+                ?><style type="text/css"> li { font-family: "Courier New",monospace,verdana,arial; } </style><ol><?
+            }
         }
 
         global $environment; //pull in the environment from the config
-        
         
         /* slurp config/application.php settings */
         global $default_face; if ($default_face) {
@@ -51,7 +53,7 @@ class Application
         /* load the layouts, controllers and views for ALL faces */
         if (App::$booting) {
             if (App::$reloading) {
-                echo "<li>Using face <strong>".App::$default_face."</strong></li>";
+                echo "<li>Using face <strong>".App::$default_face."</strong></li>\r\n";
             }
 
             foreach (App::$allowed_faces as $face) {
@@ -71,10 +73,10 @@ class Application
 
         /* if forced reload then print app variables and die */
         if (App::$reloading) {
-            echo "<li>Session:<pre>";print_r($_SESSION[APP_NAME]);echo '</pre></li>';
-            echo "<li>App::\$env<pre>";print_r(App::$env);echo '</pre></li>';
-            echo "<li>Application reloaded</li>";
-            echo "</ol>";
+            echo "<li>Session:<pre>";print_r($_SESSION[APP_NAME]);echo "</pre></li>\r\n";
+            echo "<li>App::\$env<pre>";print_r(App::$env);echo "</pre></li>\r\n";
+            echo "<li>Application reloaded</li>\r\n";
+            echo "</ol>\r\n";
             die();
         }
     }
@@ -86,12 +88,12 @@ class Application
         }
 
         if (App::$reloading) {
-            echo "<li>Loading models<ul>";
+            echo "<li>Loading models<ul>\r\n";
         }
         if (isset($_SESSION[APP_NAME]['application']['models'])) {
             foreach ($_SESSION[APP_NAME]['application']['models'] as $model_name => $model) {
                 if (App::$reloading) {
-                    echo "<li>loading <strong>$model_name</strong> ($model)</li>";
+                    echo "<li>loading <strong>$model_name</strong> ($model)</li>\r\n";
                 }
                 if (!App::$skip_model_require) {
                     require($model);
@@ -99,11 +101,11 @@ class Application
             }
         } else {
             if (App::$reloading) {
-                echo "<li>No models found.</li>";
+                echo "<li>No models found.</li>\r\n";
             }
         }
         if (App::$reloading) {
-            echo "</ul></li>";
+            echo "</ul></li>\r\n";
         }
     }
     
@@ -114,7 +116,7 @@ class Application
             if ($face) {
                 echo " for $face";
             }
-            echo "</li>";
+            echo "</li>\r\n";
         }
         //build the path if it has not been passed
         if (!$path && $face) {
@@ -126,7 +128,7 @@ class Application
         //check if the dir exists
         if (!file_exists(App::$env->root.'/'.$path)) {
             if (App::$reloading) {
-                echo "<li>$name folder not found (".App::$env->root.'/'.$path.")</li>";
+                echo "<li>$name folder not found (".App::$env->root.'/'.$path.")</li>\r\n";
             }
             return false;
         }

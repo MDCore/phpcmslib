@@ -6,17 +6,12 @@ class Environment
 
     function load($environment, $path_to_root)
     {
+        global $running_from_shell;
         /* override the environment in certain cases */
         if (defined('TEST_MODE')) {
             $environment = 'test';
         }
 
-        /* force shell to use development environment */
-        if (isset($_SERVER['SHELL']) && 
-            ($environment == 'must_match' || $environment == 'auto')
-           ) {
-            $environment = 'development';
-        }
 
         if ($environment == 'auto' | $environment == 'must_match') {
             //find_environments
@@ -34,11 +29,23 @@ class Environment
                         if (App::$reloading) {
                             echo "<li>testing match <i>$url</i></li>";
                         }
-                        if (preg_match($url, $_SERVER['HTTP_HOST'])) {
-                            if (App::$reloading) {
-                                echo "<strong>Matched to environment <i>$env</i></strong>";
+                        if ($running_from_shell) {
+                            /* shell checking */
+                            if (isset($env_object->shell_username) && $env_object->shell_username == $_SERVER['USER']) {
+                                if (App::$reloading) {
+                                    echo "<strong>Matched to environment <i>$env</i></strong>";
+                                }
+                                $environment = $env;
                             }
-                            $environment = $env;
+                        } else {
+                            /* http checking */
+                            
+                            if (preg_match($url, $_SERVER['HTTP_HOST'])) {
+                                if (App::$reloading) {
+                                    echo "<strong>Matched to environment <i>$env</i></strong>";
+                                }
+                                $environment = $env;
+                            }
                         }
                     }
                     if (App::$reloading) {
@@ -64,6 +71,7 @@ class Environment
                 echo "</ul>";
             }
         }
+
         include_once $path_to_root."/config/environments/".$environment.'.php'; $_SESSION[APP_NAME]['application']['environment'] = $environment;
         App::$env = new $environment;
     }
