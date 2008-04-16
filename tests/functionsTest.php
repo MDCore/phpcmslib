@@ -390,7 +390,7 @@ class functionsTest extends PHPUnit_Framework_TestCase {
         $result = route_from_path($path);
         $this->assertEquals($result, $expected_path);
 
-        /* pass string with differnt action */
+        /* pass string with different action */
         $expected_path = array(
             'face' => 'site',
             'controller' => 'default_controller',

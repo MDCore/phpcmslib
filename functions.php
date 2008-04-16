@@ -213,7 +213,6 @@ function url_to($path, $include_base = true, $explicit_path = false)
     if (!isset($target['face'])) {
         $target['face'] = App::$route['face'];
         if (!isset($target['controller'])) {
-            // why controller->controller_name $target['controller'] = App::$controller->controller_name;
             $target['controller'] = App::$route['controller'];
         }
     }
@@ -280,7 +279,6 @@ function route_from_path($path) {
 
     $result['face'] = App::$route['face'];
     if (!$result['face']) { $result['face'] = App::$default_face; }
-        
     if ($path) {
         $path = explode('/', $path);
         if (!in_array($path[0], App::$allowed_faces) && App::$default_face) #i.e. the first param is not a face, or not an allowed face, but we have a default face set

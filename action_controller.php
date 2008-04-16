@@ -1,13 +1,15 @@
 <?
 /*
- * #TODO
+ * TODO
  * - remove render_partial. Partials are second class? why not just use views?
+ * - change render_as_string to instantiate a new controller object instead of mucking with the current one
  */
 
 class action_controller {
     public $has_rendered = false;
-    public $layout = null;
-    public $face = "site", $controller = null, $view = null;
+    //public $face = "", $controller = null, $view = null;
+    public $route = null; /* the fully qualified route. Nothing is assumed here. face, controller, action, layout. */
+    public $layout = null;/* layout still needs to be independant */
     public $virtual = false;
     public $rendered_content = null; /* todo should this be private */
 
@@ -34,54 +36,50 @@ class action_controller {
          *  since we may want to switch controllers
          */
 
-        if ($controller == null) {$controller = $this; }
+        if ($controller == null) {
+            $controller = $this;
+        }
         
         $only = $except = null;
 
-        switch ($filter)
-        {
-            case 'before_controller_execute':
-                $filter = $controller->before_controller_execute_filter;
-                break;
-            case 'after_controller':
-                $filter = $controller->after_controller_filter;
-                break;
-            case 'before_controller_load':
-                $filter = $controller->before_controller_load_filter;
-                break;
-            default:
-                trigger_error("filter type <i>$filter></i> not defined",  E_USER_ERROR); 
-                return false;
+        switch ($filter) {
+        case 'before_controller_execute':
+            $filter = $controller->before_controller_execute_filter;
+            break;
+        case 'after_controller':
+            $filter = $controller->after_controller_filter;
+            break;
+        case 'before_controller_load':
+            $filter = $controller->before_controller_load_filter;
+            break;
+        default:
+            trigger_error("filter type <i>$filter></i> not defined",  E_USER_ERROR); 
+            return false;
         }
         
-        if ($filter)
-        { 
-            if (is_array($filter))
-            {
+        if ($filter) { 
+            if (is_array($filter)) {
                 $methods = $filter[0];
-                if ($filter['only'] && $filter['except']) { trigger_error("Only and except are mutually exclusive for controller ".$controller->controller_name,  E_USER_ERROR); }
+                if ($filter['only'] && $filter['except']) { trigger_error("Only and except are mutually exclusive for controller ".$controller->route['controller'],  E_USER_ERROR); }
 
                 if ($filter['only']){ $only = explode(',', $filter['only']); }
                 if ($filter['except']){ $except = explode(',', $filter['except']); }
-            }
-            else
-            {
+            } else {
                 $methods = $filter;
             }
 
             $methods = explode(',', $methods);
 
-            foreach($methods as $method_name)
-            {
+            foreach($methods as $method_name) {
                 $method_name = trim($method_name);
                 
-                #check if the method exists
-                    if (!method_exists($controller, $method_name)) { trigger_error("Method \"<i>$method_name</i>\" does not exist for controller_filter in controller <i>$controller->controller_name</i>", E_USER_ERROR ); }
+                /* check if the method exists */
+                if (!method_exists($controller, $method_name)) { trigger_error('Method "<i>$method_name</i>" does not exist for controller_filter in controller <i>'.$controller->route['controller'].'</i>', E_USER_ERROR ); }
                 
-                #execute the method
-                    if (!$only && !$except) { $controller->$method_name(); }
-                    elseif ($only) { if (in_array($controller->controller_name, $only)) { $controller->$method_name(); } }
-                    elseif ($except) { if (!in_array($controller->controller_name, $except)) { $controller->$method_name(); } }
+                /* execute the method */
+                if (!$only && !$except) { $controller->$method_name(); }
+                elseif ($only) { if (in_array($controller->route['controller'], $only)) { $controller->$method_name(); } }
+                elseif ($except) { if (!in_array($controller->route['controller'], $except)) { $controller->$method_name(); } }
             }
         }
     }
@@ -104,61 +102,47 @@ class action_controller {
     }
     public function render_as_string($url_as_array, $layout = null)
     {
-        #save some settings
-            $current['route'] = App::$route;
-            $current['face'] = $this->face;
-            $current['controller'] = $this->controller_name;
-            $current['action'] = $this->action;
-            $current['layout'] = $this->layout;
+        /* save some settings */
+        $current_route = $this->route;
 
-            $current_rendered_status = $this->action_rendered_inline;
+        $current_rendered_status = $this->action_rendered_inline;
 
-            /* overwrite individual items, that way current ways stay the same e.g. the face */
-            foreach ($url_as_array as $url_portion => $url_value) {
-                App::$route[$url_portion] = $url_value;
-            }
-            if (isset($url_as_array['face'])) { $this->face = $url_as_array['face']; }
-            if (isset($url_as_array['controller'])) { $this->controller_name = $url_as_array['controller']; }
-            if (isset($url_as_array['action'])) { $this->action = $url_as_array['action']; }
-            if (isset($url_as_array['layout'])) { $this->layout = $url_as_array['layout']; }
+        /* overwrite individual items, that way current ways stay the same e.g. the face */
+        foreach ($url_as_array as $url_portion => $url_value) {
+            App::$route[$url_portion] = $url_value;
+        }
+        foreach ($url_as_array as $part => $value) {
+            $this->route[$part] = $value;
+        }
+        /* $this->layout still needs to be independant */
+        $this->layout = $this->route['layout'] = $layout;
 
-            //App::$route = $url_as_array;
-            #deal with $_GET
-            if (isset($url_as_array['GET'])) {
-                $current_GET = $_GET;
-                $_GET = $url_as_array['GET'];
-            }
-            $this->layout = $layout;
-            if (isset($url_as_array['face'])) {
-                $this->face = $url_as_array['face'];
-            }
-            if (isset($url_as_array['controller'])) {
-                $this->controller_name = $url_as_array['controller'];
-            }
+        /* deal with $_GET */
+        if (isset($url_as_array['GET'])) {
+            $current_GET = $_GET;
+            $_GET = $url_as_array['GET'];
+        }
 
-            $this->action_rendered_inline = false;
+        $this->action_rendered_inline = false;
 
-        #execute the action, saving the contents
-            ob_start();
-                $this->execute_action(null, true);
-                $this->render_contents = ob_get_contents();
-            ob_clean();
+        /* execute the action, saving the contents */
+        ob_start();
+        $this->execute_action(null, true);
+        $this->render_contents = ob_get_contents();
+        ob_clean();
 
-        #render the layout (if applicable) and view
-            ob_start();
-                $this->render();
-                $result = ob_get_contents();
-            ob_clean();
+        /* render the layout (if applicable) and view */
+        ob_start();
+        $this->render();
+        $result = ob_get_contents();
+        ob_clean();
 
-        #restore settings
-        App::$route = $current['route'];
-        $this->face = $current['face'];
-        $this->controller_name = $current['controller'];
-        $this->action = $current['action'];
-        $this->layout = $current['layout'];
+        /* restore settings */
+        $this->route = $current_route;
+        $this->layout = $current_route['layout'];
 
-            $this->action_rendered_inline = $current_rendered_status;
-            if (isset($current_GET)) { $_GET = $current_GET; }
+        $this->action_rendered_inline = $current_rendered_status;
+        if (isset($current_GET)) { $_GET = $current_GET; }
 
         return $result;
     }
@@ -236,11 +220,10 @@ class action_controller {
 
     }
 
-    private function parse_route_parameter($route_param = null, $update_controller_route = false) {
-        $route = array(
-            'face' => $this->face,
-            'controller' => $this->controller_name
-        );
+    private function parse_route_parameter($route_param = null) {
+        $route = $this->route;
+        $route['action'] = null; /* we check later on that route is explicitly set */
+
         if (is_array($route_param)) {
             /* route param might be called with an ACTION or a VIEW. Convert VIEW to ACTION (there's a life lesson right there.) */
             if (isset($route_param['view'])) {
@@ -260,13 +243,13 @@ class action_controller {
             /* if a string is passed it is a view to be rendered in the current controller */
             $route['action'] = $route_param;
         }
-        elseif ($this->action != null) {
-            $route['action'] = $this->action;
+        elseif ($this->route['action'] != null) {
+            $route['action'] = $this->route['action'];
         }
         else {
             /*  I'm only setting the view here and not in the route initialization because either 
-             *  you use the default route or you passin a partial route _including_ a view. if you 
-             *  pass in a partial route without a view  it's likely to be a  mistake: you are 
+             *  you use the default route or you pass in a partial route _including_ a view. If you 
+             *  pass in a partial route without a view it's likely to be a  mistake: you are 
              *  expecting the app::routes' action to be used. Obviously if there is an important, 
              *  useful, logical case to be made against this then we change this.
              */
@@ -274,14 +257,9 @@ class action_controller {
         }
 
         if (!isset($route['action'])) { 
-            trigger_error('no view to render',  E_USER_ERROR); die();
+            trigger_error('no action to render',  E_USER_ERROR); die();
         }
 
-        if ($update_controller_route) {
-            $this->face = $route['face'];
-            $this->controller = $route['controller'];
-            $this->action = $route['action'];
-        }
         return $route;
     }
 
@@ -293,11 +271,10 @@ class action_controller {
     }
 
     function __construct() {
-        $controller_name = get_class($this);$controller_name = str_replace('_controller', '', $controller_name);
-        $this->controller_name = $controller_name;
+        /* determine the controller name */
+        $controller_name = get_class($this); $controller_name = str_replace('_controller', '', $controller_name);
 
         /* choose the layout */
-            #echo '<pre>';print_r($this);echo '</pre>';
             if (!isset($this->layout)) {
                 /* 
                  * We are referring to the route's face controller and not app::$face here
@@ -308,6 +285,15 @@ class action_controller {
                     $this->layout = $controller_name;
                 }
             }
+
+        /* set up the route */
+        $this->route = array(
+            'face'          => App::$route['face'],
+            'controller'    => $controller_name,
+            'action'        => App::$route['action'],
+            'layout'        => $this->layout
+        );    
+
     }
 
 }

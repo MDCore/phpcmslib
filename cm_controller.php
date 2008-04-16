@@ -39,7 +39,7 @@ class cm_controller extends action_controller {
         parent::__construct();
 
         #the face_controller should be virtual;
-        if ($this->controller_name == 'face') { 
+        if ($this->route['controller'] == 'face') { 
             $this->virtual = true;
         }
         if ($this->virtual) {
@@ -60,7 +60,7 @@ class cm_controller extends action_controller {
         else {
             $this->foreign_keys = array();
         }
-        if (!isset($this->list_type))       { $this->list_type =  singularize($this->controller_name); }
+        if (!isset($this->list_type))       { $this->list_type =  singularize($this->route['controller']); }
         if (!isset($this->primary_model))   { $this->primary_model = $this->list_type; }
         if (!isset($this->list_title))      { $this->list_title = proper_nounize(pluralize($this->list_type)); } $this->list_title = proper_nounize($this->list_title);
         //deprecated? if (!isset($this->email_subject))   { $this->email_subject = $this->list_title; }

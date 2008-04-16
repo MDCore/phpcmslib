@@ -1,4 +1,10 @@
 <?
+/* TODO
+ * - differentiate between the requested route and the actually being rendered route.
+ *   currently this is spread ambiguously between App::$route, controller->route and 
+ *   App::$face, App::$controller etc
+ *
+ */
 class Application
 {
     static $booting;static $reloading;
