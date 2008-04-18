@@ -207,8 +207,8 @@ class action_controller {
                 $this->layout = null; $this->render_inline();
             }
             #debug('execute_action');
-            if (isset(App::$route['id']) && App::$route['id']) {
-                $this->$action_name(App::$route['id']);
+            if (isset($this->route['id']) && $this->route['id']) {
+                $this->$action_name($this->route['id']);
             }
             else {
                 $this->$action_name();
@@ -291,6 +291,7 @@ class action_controller {
             'face'          => App::$route['face'],
             'controller'    => $controller_name,
             'action'        => App::$route['action'],
+            'id'            => App::$route['id'],
             'layout'        => $this->layout
         );    
 

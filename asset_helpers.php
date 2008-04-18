@@ -20,6 +20,11 @@ function script_path($asset_name, $face = null)
     return asset_path('script', $asset_name, $face);
 }
 
+function swf_path($asset_name, $face = null)
+{
+    return asset_path('swf', $asset_name, $face);
+}
+
 function asset_path($asset_type, $asset_name, $face = null)
 {
     switch ($asset_type)
@@ -27,6 +32,7 @@ function asset_path($asset_type, $asset_name, $face = null)
         case 'image':
         case 'stylesheet':
         case 'script':
+        case 'swf':
             break;
         default:
             throw new Exception("Invalid asset type"); return false;

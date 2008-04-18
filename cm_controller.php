@@ -204,7 +204,7 @@ class cm_controller extends action_controller {
         }
 
         if ($record_updated | $no_primary_to_save) {
-            unset($_POST['MAX_FILE_SIZE']); #currently used to add a comment each time ??xxx 2007-11-04 what's this
+            unset($_POST['MAX_FILE_SIZE']); #currently used to add a comment each time ??xxx todo bug 2007-11-04 what's this
             foreach ( $_POST as $meta_model => $collection ) {
                 if ( $meta_model != $this->primary_model ) { # make sure we are working with meta models
                     $fk_field = foreign_keyize($this->primary_model);
@@ -231,7 +231,7 @@ class cm_controller extends action_controller {
                     $meta_model = new $meta_model($collection); $meta_model->save();
                 }
             }
-            $this->handle_new_files($edit_id, true);
+            $this->handle_new_files($edit_id, false);
 
             if (method_exists($this, 'after_update')) { $this->after_update($edit_id); } #todo clean this up.... should be in model, maybe
 
@@ -627,17 +627,18 @@ class cm_controller extends action_controller {
 
     public function handle_new_files($primary_record_id, $force_new = false)
     {   
-        #print_r($_GET);print_r($_POST);print_r($_FILES);
+        #print_r($_GET);print_r($_POST); print_r($_FILES);
         #file uploads #todo get this working for meta_models
-        foreach ($_FILES as $model => $model_files)
-        {
+        foreach ($_FILES as $model => $model_files) {
             $upload = new upload; 
-            foreach ($model_files['name'] as $field_name => $file)
-            {
+            foreach ($model_files['name'] as $field_name => $file) {
                 $upload->load($model, $field_name, $primary_record_id, $force_new);
-                if ($upload->file_uploaded()) {$upload->save();}
+                if ($upload->file_uploaded()) {
+                    $upload->save();
+                }
             }
         }
+        #die();
     }
 
     public function list_header() {

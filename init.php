@@ -20,6 +20,7 @@ require("ajax_helpers.php");
 require("cm_controller.php");
 require("filter.php");
 require("cm_paging.php");
+require("cm_model_upload.php");
 
 /* load the application config */
 if (!isset($only_require_libraries)) {
