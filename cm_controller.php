@@ -283,7 +283,7 @@ class cm_controller extends action_controller {
                     if ($meta_model != $this->primary_model) {
                         $collection[foreign_keyize($this->primary_model)] = $primary_record_id; //add the foreign key straight into the collection
 
-                        if ($primary_model_object->through_model($meta_model)) {
+                        if ($primary_model_object->through_model(pluralize($meta_model))) {
                             $meta_model_object = new $meta_model;
                             #$meta_model_object->delete("WHERE $fk_field = $edit_id"); //delete the records, to re-add them
                             $meta_model_object->save_multiple($collection);

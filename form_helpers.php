@@ -414,8 +414,8 @@ class forms
                     $options_object = singularize($fk_model);
                     $options_object = new $options_object;
 
-                    $join_model_object_name = $primary_model_object->has_many_through($fk_model);
-                    $join_model_object = singularize($join_model_object_name);
+                    $join_model_object_name = singularize($primary_model_object->has_many_through($fk_model));
+                    $join_model_object = $join_model_object_name;
                     $join_model_object = new $join_model_object;
                     
                     $db_field_name = foreign_keyize(singularize($fk_model));
@@ -428,7 +428,7 @@ class forms
                             ->find($criteria, $additional_sql_options)
                             ->as_array($field);
                     } else {
-                        $options_data = $options_object
+                        $options = $options_object
                             ->find($criteria, $additional_sql_options)
                             ->as_array($field);
                     }
