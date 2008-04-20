@@ -285,31 +285,26 @@ color:#CC3311;
 }
 
 /* tooltips */
-a.tooltip {
-    position:relative; /*this is the key*/
-    z-index:24; background-color:#f0f0f0;
+a:hover {
+    background:#ffffff;
     text-decoration:none;
+    background-color:#f0f0f0;
     cursor: default;
-}
-
-a.tooltip:hover {
-    z-index:25;
-}
+} /*BG color is a must for IE6*/
 
 a.tooltip span {
-    display: none;
+    display:none;
+    padding:2px 3px;
+    margin-left:8px;
+    width:130px;
 }
-
-a.tooltip:hover span{ /*the span will display just on :hover state*/
-    display:block;
+a.tooltip:hover span{
+    display:inline;
     position:absolute;
-    top:2em; left:2em; width:15em;
     border:1px solid #cfcfcf;
     background-color:#E7E5DC;
     color: #575751;
-    text-align: center;
 }
-
 .content_box
 {
     background-color: #eee;
