@@ -204,9 +204,8 @@ class cm_controller extends action_controller {
         }
 
         if ($record_updated | $no_primary_to_save) {
-            unset($_POST['MAX_FILE_SIZE']); #currently used to add a comment each time ??xxx todo bug 2007-11-04 what's this
-            foreach ( $_POST as $meta_model => $collection ) {
-                if ( $meta_model != $this->primary_model ) { # make sure we are working with meta models
+            foreach ($_POST as $meta_model => $collection) {
+                if ($meta_model != $this->primary_model) { # make sure we are working with meta models
                     $fk_field = foreign_keyize($this->primary_model);
                     $collection[$fk_field] = $edit_id; #add the foreign key straight into the collection
 
@@ -215,8 +214,7 @@ class cm_controller extends action_controller {
                             $meta_model_object = new $meta_model;
                             $meta_model_object->delete("WHERE $fk_field = $edit_id"); #delete the records, to re-add them
                             $meta_model_object->save_multiple($collection);
-                        }
-                        else {
+                        } else {
                             $meta_model_object = new $meta_model; 
                             $meta_model_object
                                 ->find(" WHERE $fk_field = $edit_id")
@@ -231,7 +229,8 @@ class cm_controller extends action_controller {
                     $meta_model = new $meta_model($collection); $meta_model->save();
                 }
             }
-            $this->handle_new_files($edit_id, false);
+
+            $this->handle_new_files($edit_id);
 
             if (method_exists($this, 'after_update')) { $this->after_update($edit_id); } #todo clean this up.... should be in model, maybe
 
@@ -294,12 +293,12 @@ class cm_controller extends action_controller {
                                 $primary_model_object->delete($primary_record_id);
                                 if (!$meta_model_object->is_valid()) { redirect_with_parameters(url_to(array('action' => 'list')), "flash=".$meta_model_object->validation_errors); die(); }
                             }
-                            $meta_model->save(); #don't need the primary id, afaik
+                            $meta_model_object->save(); #don't need the primary id, afaik
                         }
                     }
                 }
             }
-            $this->handle_new_files($primary_record_id, true);
+            $this->handle_new_files($primary_record_id);
             # callback here
             if (method_exists($this, 'after_save')) { $this->after_save($primary_record_id); } # todo should be in the model, or part of a broader callbacks framework
 
@@ -625,13 +624,21 @@ class cm_controller extends action_controller {
 
     }
 
-    public function handle_new_files($primary_record_id, $force_new = false)
+    public function handle_new_files($primary_record_id)
     {   
         #print_r($_GET);print_r($_POST); print_r($_FILES);
         #file uploads #todo get this working for meta_models
         foreach ($_FILES as $model => $model_files) {
             $upload = new upload; 
             foreach ($model_files['name'] as $field_name => $file) {
+                /* check force_new */
+                $model_object = new $model;
+                if (isset($model_object->cm_force_files_as_new) && $model_object->cm_force_files_as_new == true) {
+                    $force_new = true;
+                } else {
+                    $force_new = false;
+                }
+
                 $upload->load($model, $field_name, $primary_record_id, $force_new);
                 if ($upload->file_uploaded()) {
                     $upload->save();

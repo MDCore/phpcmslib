@@ -125,12 +125,16 @@ class cm_model_upload extends AR {
     }
     function delete()
     {
-        #delete from uploads table
-            $sql = "DELETE FROM uploads WHERE id=".$this->id;
-            $this->db->query($sql);
+        /* delete from uploads table */
+        $sql = "DELETE FROM uploads WHERE id=".$this->id;
+        $this->db->query($sql);
         
-        #delete from uploads folder
-            global $path_to_root;unlink($path_to_root.'/uploads/'.$this->basename());
+        /* delete from uploads folder */
+        global $path_to_root;
+        $filename = $path_to_root.'/uploads/'.$this->basename();
+        if (file_exists($filename) && $this->basename() != '') {
+            unlink($filename);
+        }
     }
 }
 ?>
