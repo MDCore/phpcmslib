@@ -20,7 +20,7 @@ class AR implements SeekableIterator
     public $dsn;
 
     /* AR related fields - now that __get forbids getting random properties,
-     * these can be here as settable but not gettable */    
+     * these can be here as settable but not gettable */
     /*
         public $model_name, $primary_key_field, $schema_table, $display_field, ;
      */
@@ -40,7 +40,7 @@ class AR implements SeekableIterator
      *
      * @return void
      */
-    function connect_to_db($dsn = null) 
+    function connect_to_db($dsn = null)
     {
         if (!$dsn && isset(App::$env)) {
             $dsn = App::$env->dsn;
@@ -65,7 +65,7 @@ class AR implements SeekableIterator
             }
         }
 
-        if ($this->db) { 
+        if ($this->db) {
             $this->db->setFetchMode(MDB2_FETCHMODE_OBJECT);
         }
     }
@@ -76,9 +76,9 @@ class AR implements SeekableIterator
      *
      * @return boolean
      */
-    function setup_attributes() 
+    function setup_attributes()
     {
-        if (!isset(App::$schema_definition[$this->model_name])) { 
+        if (!isset(App::$schema_definition[$this->model_name])) {
             return false;
         }
 
@@ -91,7 +91,7 @@ class AR implements SeekableIterator
      *
      * @return void
      */
-    function __destruct() 
+    function __destruct()
     {
         unset($this->db);
         unset($this->values);
@@ -99,16 +99,16 @@ class AR implements SeekableIterator
 
     /** constructor
      *
-     * @param array   $collection         a collection of values in the format [field name] => value with which to initialize this record   
+     * @param array   $collection         a collection of values in the format [field name] => value with which to initialize this record
      * @param boolean $with_value_changes default 'true'. This allows bypassing the value_changes (??link??) call
      *
      * @return void
      */
-    function __construct($collection = null, $with_value_changes = true) 
+    function __construct($collection = null, $with_value_changes = true)
     {
         //debug echo "<b>before setting pk</b><br>\r\n";
         /* set the default primary key field */
-        if (!property_exists($this, 'primary_key_field')) { 
+        if (!property_exists($this, 'primary_key_field')) {
             $this->primary_key_field = 'id';
         }
         //debug echo "<b>after setting pk</b><br>\r\n\r\n";
@@ -116,25 +116,25 @@ class AR implements SeekableIterator
         /* get the model name */
         $this->model_name = get_class($this);
         //debug echo "<b>after setting_model_name</b><br>\r\n\r\n";
-       
+
         /* pull in the schema definition, and set the record attributes to null */
             $this->setup_attributes();
         //debug echo('<b>after setup_attribs</b><br>');
-        
+
         /* set the primary table, checking first if this model_name is a changelog model */
         if (!property_exists($this, 'schema_table')) {
             /* is this model a changelog model? */
             $changelog_pos = strpos($this->model_name, '_changelog');
             if ($changelog_pos > 0) {
-                /* 
-                 * check if the 'parent' model has a schema_table and use it 
+                /*
+                 * check if the 'parent' model has a schema_table and use it
                  * instead of inferring the table name from the parent model name
                  */
                 $parent_model_name = substr($this->model_name, 0, $changelog_pos);
                 $parent_model_name = new $parent_model_name;
                 if (isset($parent_model_name->schema_table)) {
                     /* determine the changelog table name based on the parent model schema table name */
-                    $this->schema_table = $parent_model_name->schema_table.'_changelog'; 
+                    $this->schema_table = $parent_model_name->schema_table.'_changelog';
                 } else {
                     /* determine the changelog table name based on the parent model name */
                     $this->schema_table = tableize(pluralize(substr($this->model_name, 0, $changelog_pos))).'_changelog';
@@ -148,10 +148,10 @@ class AR implements SeekableIterator
         //debug echo('<b>after setting primary table etc</b><br>');
 
         /* does this model have a changelog? */
-        if (property_exists($this->model_name, 'changelog')) { 
-            $this->has_changelog = true; unset($this->changelog); 
+        if (property_exists($this->model_name, 'changelog')) {
+            $this->has_changelog = true; unset($this->changelog);
         } else {
-            $this->has_changelog = false; 
+            $this->has_changelog = false;
         }
 
         /*set the display field. acts_as_nested_set needs it */
@@ -171,7 +171,7 @@ class AR implements SeekableIterator
         if (property_exists($this, 'acts_as_nested_set')) {
             $this->acts_as_nested_set = true;
 
-            /* 
+            /*
              * an array of field names that DB_NestedSet expects.The format is quite
              * strange: OUR name for the field is on the left while the name
              * that DB_NestedSet expects is the one on the right
@@ -207,7 +207,7 @@ class AR implements SeekableIterator
         } else {
             $this->acts_as_nested_set = false;
         }
-        
+
         /* nested_set and changelog are mutually exclusive, because of the types of
          * changes that a nested set requires i.e. changing the tree position of a
          * single record possibly means changing a large part of the whole tree.
@@ -237,12 +237,12 @@ class AR implements SeekableIterator
         }
 
         /* connect this model to the database */
-        if (!$this->db) { 
+        if (!$this->db) {
             $this->connect_to_db();
         }
     }
 
-    /** 
+    /**
      * handles dynamic finders, also known as magic methods.
      * an example: customer->find_by_firstname_and_lastname('john', 'smith');
      * that method does not exist so __call breaks down the method call and converts it to parameters for find() (??link??)
@@ -252,7 +252,7 @@ class AR implements SeekableIterator
      *
      * @return void
      */
-    private function __call($method_name, $params) 
+    private function __call($method_name, $params)
     {
         /* nested set function checks */
         if ($this->acts_as_nested_set) {
@@ -263,7 +263,7 @@ class AR implements SeekableIterator
                 }
                 /* getChildren() returns a multi-dimensional array of records. */
                 $child_ids = $this->nested_set->getChildren($this->values[$this->primary_key_field], true); // parameters: id_field, keep_as_array?
-                /* get just the record_id's so that we can find() those records (rather than working with an array) */ 
+                /* get just the record_id's so that we can find() those records (rather than working with an array) */
                 $children = new $this->model_name;
                 if (is_array($child_ids) && sizeof($child_ids) > 0 ) {
                     $child_ids = array_keys($child_ids);
@@ -277,7 +277,7 @@ class AR implements SeekableIterator
                 }
                 /* getSubBranch() returns a multi-dimensional array of records. */
                 $branch_ids = $this->nested_set->getSubBranch($this->values[$this->primary_key_field], true); // parameters: id_field, keep_as_array?
-                /* get just the record_id's so that we can find() those records (rather than working with an array */ 
+                /* get just the record_id's so that we can find() those records (rather than working with an array */
                 $branch = new $this->model_name;
                 if (is_array($branch_ids) && sizeof($branch_ids) > 0 ) {
                     $branch_ids = array_keys($branch_ids);
@@ -288,16 +288,16 @@ class AR implements SeekableIterator
         }
         //overload finders
         $finder_criteria_pos = null; $finder_type = null;
-        if (substr($method_name, 0, 8) == 'find_by_') { 
+        if (substr($method_name, 0, 8) == 'find_by_') {
             $finder_criteria_pos = 8;
         }
-        if (substr($method_name, 0, 20) == 'find_most_recent_by_') { 
+        if (substr($method_name, 0, 20) == 'find_most_recent_by_') {
             $finder_criteria_pos = 20; $finder_type = 'most recent';
         }
-        if (substr($method_name, 0, 11) == 'find_first_by_') { 
+        if (substr($method_name, 0, 11) == 'find_first_by_') {
             $finder_criteria_pos = 11; $finder_type = 'first';
         }
-        
+
         if ($finder_criteria_pos) {
             $find_by = substr($method_name, $finder_criteria_pos);
             $find_by = explode('_and_', $find_by);
@@ -309,12 +309,12 @@ class AR implements SeekableIterator
                 $finder_where .= $this->dsn['database'].'.'.$this->schema_table.'.'.$find_by_field." = '".$params[$cnt]."' AND ";
                 $cnt++;
             }
-            if ($cnt > 0 ) { 
+            if ($cnt > 0 ) {
                 // strip the last AND from the finder criteria string
                 $finder_where = '('.substr($finder_where, 0, strlen($finder_where)-5).')';
             }
             $finder_criteria['WHERE'][] = $finder_where;
-            
+
             //special finders
             if (is_array($params[$cnt])) {
                 $finder_criteria = SQL_merge($finder_criteria, $params[$cnt]);
@@ -333,7 +333,7 @@ class AR implements SeekableIterator
             throw new Exception("Method $method_name not defined");
                 return null;
         }
-            
+
     }
 
     /**
@@ -343,7 +343,7 @@ class AR implements SeekableIterator
      *
      * @return boolean
      */
-    private function __isset($name) 
+    private function __isset($name)
     {
         //debug echo 'testing isset '.$name; echo "<br>\r\n\r\n";
 
@@ -363,8 +363,8 @@ class AR implements SeekableIterator
 
     }
 
-    /** 
-     * deals with magic properties like relationships and also with 
+    /**
+     * deals with magic properties like relationships and also with
      * returning record properties
      *
      * @param string $name variable name
@@ -372,11 +372,11 @@ class AR implements SeekableIterator
      * @return variant returns an AR object for relationships and changelog
      *                 returns a property for record properties
      */
-    private function __get($name) 
+    private function __get($name)
     {
         //debug echo 'getting '.$name; echo "<br>\r\n\r\n";
         //check for record_properties request
-        if ($name == 'record') { 
+        if ($name == 'record') {
             return $this->values;
         }
         /* check for special value session_user_id and return user_id. Here for backwards compatibility with old apps */
@@ -403,26 +403,26 @@ class AR implements SeekableIterator
         }
 
         /*if it's for reals then return it, and short circuit all the checks */
-        if (property_exists($this, $name)) { 
+        if (property_exists($this, $name)) {
             return $this->$name;
         }
 
         /* attributes / properties / values of the record */
         if (array_key_exists($name, $this->values)) {
             //echo "\r\nreturning $name with value ";var_dump($this->values[$name]);echo "\r\n";
-            return $this->values[$name]; 
+            return $this->values[$name];
         }
 
         /* relationships magic */
         if ($this->belongs_to($name)) {
             /* if this object belongs to another one, this object contains the foreign key */
             //debug('finding by '.$name);
-            if ($this->count == 0) { 
+            if ($this->count == 0) {
                 return false;
             }
             $ro = new $name;
             $fk = foreign_keyize($name);
-            if (!$this->$fk) { 
+            if (!$this->$fk) {
                 return false;
             }
             $ro->find($this->$fk);
@@ -431,11 +431,11 @@ class AR implements SeekableIterator
 
         if ($this->has_one($name) || $this->has_many($name)) {
             /*
-             * if this object has_one other obect, the other object 
-             * contains the foreign key 
+             * if this object has_one other obect, the other object
+             * contains the foreign key
              */
             //echo 'finding by '.$name;
-            if ($this->count == 0) { 
+            if ($this->count == 0) {
                 return false;
             }
             $ro = singularize($name); $ro = new $ro;
@@ -444,7 +444,7 @@ class AR implements SeekableIterator
 
             /*additional criteria checks */
             $additional_criteria = '';
-            if ($this->has_many($name)) { 
+            if ($this->has_many($name)) {
                 $additional_criteria = $this->has_many($name);
             }
 
@@ -452,24 +452,24 @@ class AR implements SeekableIterator
             return $ro;
         }
         if ($this->has_many_through($name)) {
-            if ($this->count == 0) { 
+            if ($this->count == 0) {
                 return false;
             }
 
             $ro = singularize($name); $ro = new $ro;
             $link = singularize($this->has_many_through($name)); $link = new $link;
             $sql_ro = '
-                SELECT '.$ro->dsn['database'].'.'.$ro->schema_table.'.* 
+                SELECT '.$ro->dsn['database'].'.'.$ro->schema_table.'.*
                 FROM '.$ro->dsn['database'].'.'.$ro->schema_table. ' INNER JOIN '.$link->dsn['database'].'.'.$link->schema_table.'
                 ON '.$ro->dsn['database'].'.'.$link->schema_table.'.'.foreign_keyize(singularize($ro->schema_table)).'
-                     = '.$ro->dsn['database'].'.'.$ro->schema_table.'.'.$ro->primary_key_field.' 
+                     = '.$ro->dsn['database'].'.'.$ro->schema_table.'.'.$ro->primary_key_field.'
                 WHERE '.$link->dsn['database'].'.'.$link->schema_table.'.'.foreign_keyize($this->model_name).' = \''.$this->values[$this->primary_key_field].'\'';
             $ro->find_by_sql($sql_ro);
             $this->last_sql_query = $sql_ro;
             return $ro;
         }
         if ($this->through_model($name)) {
-            if ($this->count == 0) { 
+            if ($this->count == 0) {
                 return false;
             }
             $ro = singularize($name);
@@ -486,13 +486,13 @@ class AR implements SeekableIterator
     /**
      * sets an object property named $name to $value.
      * It will refuse to set the primary key field.
-     * 
+     *
      * @param string $name  the name of the property to set
      * @param string $value the value to set the property to
      *
      * @return void
      */
-    private function __set($name, $value) 
+    private function __set($name, $value)
     {
         //debug echo 'setting '.$name.' to <u>"'.$value.'"</u>'; echo "<br>\r\n";
         // check for primary_key_field
@@ -522,7 +522,7 @@ class AR implements SeekableIterator
      *
      * @return AR
      */
-    function create() 
+    function create()
     {
         $this->clear_attributes();
         return $this;
@@ -533,7 +533,7 @@ class AR implements SeekableIterator
      *
      * @return integer or boolean
      */
-    function update() 
+    function update()
     {
         return $this->save('update');
     }
@@ -547,9 +547,9 @@ class AR implements SeekableIterator
      *
      * @return integer or boolean
      */
-    function save($save_type = "save") 
+    function save($save_type = "save")
     {
-        if (!$this->dirty && $this->count == 0) { 
+        if (!$this->dirty && $this->count == 0) {
             $this->validation_errors = 'Cannot save: Record not dirty and no records found';
             return false;
         }
@@ -559,26 +559,26 @@ class AR implements SeekableIterator
         }
 
         //execute before validation actions
-        if (method_exists($this, 'before_validation')) { 
+        if (method_exists($this, 'before_validation')) {
             $this->before_validation();
         }
-        if (method_exists($this, 'before_validation_on_'.$save_type)) { 
+        if (method_exists($this, 'before_validation_on_'.$save_type)) {
             $this->{'before_validation_on_'.$save_type}();
         }
 
         //validate object
         $allow_save = $this->is_valid();
-        if (!$allow_save) { 
+        if (!$allow_save) {
             return false;
         }
 
         //execute before save/update actions
-        if (method_exists($this, 'before_'.$save_type)) { 
+        if (method_exists($this, 'before_'.$save_type)) {
             $this->{'before_'.$save_type}();
         }
 
         //error if schema definition does not exist
-        if (!$this->schema_definition) { 
+        if (!$this->schema_definition) {
             trigger_error("Schema definition does not exist for model ".get_class($this), E_USER_ERROR);
         }
 
@@ -587,13 +587,13 @@ class AR implements SeekableIterator
         //debug(get_class($this));debug($save_type);print_r($collection);die();
 
         //remove the PK from attributes
-        if (in_array($this->primary_key_field, array_keys($collection))) { 
+        if (in_array($this->primary_key_field, array_keys($collection))) {
             unset ($collection[$this->primary_key_field]);
         }
 
         //populate the values in the fields array
         /* 2007-11-03 addslashes was once here, then in the past removed and now added here again for char escaping. pretty weird */
-        foreach (array_keys($collection) as $attribute) { 
+        foreach (array_keys($collection) as $attribute) {
             $collection[$attribute] = addslashes($this->values[$attribute]);
         }
 
@@ -604,39 +604,39 @@ class AR implements SeekableIterator
 
         if ($save_type == 'save') {
             //deal with created on, naturally only set on save
-            if (in_array('created_on', array_keys($collection))) { 
+            if (in_array('created_on', array_keys($collection))) {
                 $collection['created_on'] = $now;
             }
         }
 
         /* deal with updated_on */
-        if (in_array('updated_on', array_keys($collection)) && !$this->preserve_updated_on) { 
+        if (in_array('updated_on', array_keys($collection)) && !$this->preserve_updated_on) {
             $collection['updated_on'] = $now;
         }
 
-        if ($save_type == "save") { 
+        if ($save_type == "save") {
             $record_id = $this->save_core($collection);
         }
-        if ($save_type == "update") { 
+        if ($save_type == "update") {
             $record_id = $this->update_core($collection);
         }
 
         /* if the save failed, raise an error */
-           //todo... pass the exception back up to here, instead of doing an error check inside *_core 
-        
+           //todo... pass the exception back up to here, instead of doing an error check inside *_core
+
         /* save/update the changelog */
         if ($this->has_changelog) {
             $this->changelog_entry($save_type);
         }
 
         /*execute after save/update actions */
-        if (method_exists($this, 'after_'.$save_type)) { 
+        if (method_exists($this, 'after_'.$save_type)) {
             $this->{'after_'.$save_type}();
         }
 
         return $record_id;
     }
-    
+
     /**
      * does the actual saving to the database by converting the collection to SQL
      *
@@ -644,7 +644,7 @@ class AR implements SeekableIterator
      *
      * @return integer
      */
-    private function save_core($collection) 
+    private function save_core($collection)
     {
         /* is this model a nested_set ? Use the nested_set connection to do the initial save */
         if ($this->acts_as_nested_set) {
@@ -683,7 +683,7 @@ class AR implements SeekableIterator
             //debug ( $sql );die();
 
             $save = $this->db->query($sql); $this->error_check($save);
-            
+
             /* get the key of the new record */
             $record_id = $this->db->lastInsertID($this->schema_table, $this->primary_key_field);
             $this->values[$this->primary_key_field] = $record_id;
@@ -699,7 +699,7 @@ class AR implements SeekableIterator
      *
      * @return integer
      */
-    private function update_core($collection) 
+    private function update_core($collection)
     {
         $record_id = $this->values[$this->primary_key_field];
 
@@ -714,7 +714,7 @@ class AR implements SeekableIterator
             /* build the sql query */
             $update_sql = implode_with_keys(',', $collection, "");
             $sql = 'UPDATE '.$this->dsn['database'].'.'.$this->schema_table." SET $update_sql WHERE ".$this->primary_key_field."=".$this->values[$this->primary_key_field];
-            
+
             $this->last_sql_query = $sql;
 
             //debug($sql);
@@ -723,7 +723,7 @@ class AR implements SeekableIterator
 
         return $record_id;
     }
-    
+
     /**
      * saves multiple records to the database (warning, old cold)
      * an example collection passed would be
@@ -734,7 +734,7 @@ class AR implements SeekableIterator
      *
      * @return void
     */
-    function save_multiple($collection) 
+    function save_multiple($collection)
     {
         $new_records = array();
         foreach ($collection as $field => $value) {
@@ -768,9 +768,9 @@ class AR implements SeekableIterator
          */
     }
 
-    function delete_by_sql($sql) 
+    function delete_by_sql($sql)
     {
-        $this->last_sql_query = $sql; 
+        $this->last_sql_query = $sql;
         $this->results = $this->db->query($sql);
         if ($this->results) {
             $this->count = 0;
@@ -781,7 +781,7 @@ class AR implements SeekableIterator
         return false;
     }
 
-    function delete($criteria = null) 
+    function delete($criteria = null)
     {
         if ($criteria) {
             $sql_criteria = $this->criteria_to_sql($criteria);
@@ -817,7 +817,7 @@ class AR implements SeekableIterator
      *
      * @return void
      */
-    function changelog_entry($action) 
+    function changelog_entry($action)
     {
         //setup some values
             $record_id = $this->values[$this->primary_key_field];
@@ -851,7 +851,7 @@ class AR implements SeekableIterator
      *
      * @return array  an array consisting of (the highest revision number, the created date)
      */
-    function changelog_highest_revision($record_id) 
+    function changelog_highest_revision($record_id)
     {
         //get the highest revision id
         $sql = "SELECT MAX(revision) as rev_id, MAX(created_on) as created_on FROM ".$this->dsn['database'].'.'.$this->schema_table."_changelog WHERE ".$this->model_name.'_id'." = '".$record_id."'";
@@ -866,7 +866,7 @@ class AR implements SeekableIterator
             $revision = 0;
         }
 
-        
+
         $return = array($revision, $created_on);
         return $return;
     }
@@ -880,7 +880,7 @@ class AR implements SeekableIterator
      *
      * @return boolean
      */
-    function write_value_changes(&$field, &$value) 
+    function write_value_changes(&$field, &$value)
     {
         switch ($field) {
         case 'password_md5':
@@ -907,10 +907,10 @@ class AR implements SeekableIterator
             }
             /*
              * removed because I"m handling the slashes more intelligently
-            * if (!get_magic_quotes_gpc()) { 
+            * if (!get_magic_quotes_gpc()) {
                 $value = addslashes($value);
             }*/
-            return true; 
+            return true;
         }
     }
 
@@ -923,11 +923,11 @@ class AR implements SeekableIterator
      *
      * @return string the criteria as SQL
      */
-    function criteria_to_sql($criteria) 
+    function criteria_to_sql($criteria)
     {
         /*if passed a numeric value we assume it's a Primary Key */
         if (is_numeric($criteria)) {
-            $sql_criteria = 
+            $sql_criteria =
                 $this->dsn['database'].'.'.
                 $this->schema_table.'.'.
                 $this->primary_key_field.'='.
@@ -963,9 +963,9 @@ class AR implements SeekableIterator
      *
      * @return AR
      */
-    function find_by_sql($sql) 
+    function find_by_sql($sql)
     {
-        
+
         if (is_array($sql)) {
             $sql = SQL_implode($sql);
         }
@@ -1001,7 +1001,7 @@ class AR implements SeekableIterator
      *
      * @return AR
      */
-    function find($finder_criteria = null, $additional_sql_options = null) 
+    function find($finder_criteria = null, $additional_sql_options = null)
     {
         /* returns $this, by way of find_by_sql */
         //xxxfind
@@ -1012,7 +1012,10 @@ class AR implements SeekableIterator
 
         $sql['SELECT']      = $this->dsn['database'].'.'.$this->schema_table.'.*';
         $sql['FROM']        = $this->dsn['database'].'.'.$this->schema_table;
-        $sql['WHERE']       = $this->criteria_to_sql($finder_criteria);
+
+        if($finder_criteria){
+            $sql['WHERE']       = $this->criteria_to_sql($finder_criteria);
+        }
 
         if ($additional_sql_options) {
             $sql = SQL_merge($sql, $additional_sql_options);
@@ -1025,13 +1028,13 @@ class AR implements SeekableIterator
     /**
      * updates the attributes of this record
      *
-     * @param array   $collection         a collection of values in the format [field name] => value with which to initialize this record   
+     * @param array   $collection         a collection of values in the format [field name] => value with which to initialize this record
      * @param boolean $with_value_changes default 'true'. This allows bypassing the value_changes (??) call
      * @param boolean $clean_the_data     default 'false'. Remove slashencoding; for data coming from $_GET and $_POST. May expand to better cleaning in the future
      *
      * @return AR returns $this
      */
-    public function update_attributes($collection = null, $with_value_changes = false, $clean_the_data = false) 
+    public function update_attributes($collection = null, $with_value_changes = false, $clean_the_data = false)
     {
         if (!$collection) { // if no row is passed then set the current row in results
             if ($this->results && !MDB2::isError($this->results)) {
@@ -1073,7 +1076,7 @@ class AR implements SeekableIterator
      *
      * @return AR
      */
-    public function clear_attributes() 
+    public function clear_attributes()
     {
         if (property_exists($this, 'schema_definition') && is_array($this->schema_definition)) {
             foreach ($this->schema_definition as $attribute => $meta_data) {
@@ -1085,7 +1088,7 @@ class AR implements SeekableIterator
         return $this;
     }
 
-    function as_collection($fields = null, $key_field = null, $compress_single_field = false) 
+    function as_collection($fields = null, $key_field = null, $compress_single_field = false)
     {
         if ($this->last_finder_sql_query == '') {
             throw new Exception('as_collection only works on a collection of records.');
@@ -1095,12 +1098,12 @@ class AR implements SeekableIterator
         if (!$key_field) {
             $key_field = $this->primary_key_field;
         }
-        if (!$fields) { 
+        if (!$fields) {
             $fields = $this->display_field;
         }
         if (!is_array($fields)) { //always make an array out of the fields
-            $fields = array($fields); 
-        } 
+            $fields = array($fields);
+        }
         $result = Array();
 
         /*
@@ -1132,7 +1135,7 @@ class AR implements SeekableIterator
         $this->results->seek($current_index);
         return $result;
     }
-    
+
     /**
      * returns a simple array (based on the current recordset criteria) of values for $field
      * as_array is a simplified version of as_collection
@@ -1141,7 +1144,7 @@ class AR implements SeekableIterator
      *
      * @return array an array of the format [primary_key] => value
      */
-    function as_array($field = null) 
+    function as_array($field = null)
     {
         return $this->as_collection($field, $this->primary_key_field, true);
     }
@@ -1151,7 +1154,7 @@ class AR implements SeekableIterator
      *
      * @param variant $selected        the value to mark as the selected option
      * @param string  $field           the field name to use as the option value
-     * @param variant $show_all_option defines the first <option> tag. 
+     * @param variant $show_all_option defines the first <option> tag.
      *                                 Default is false which doesn't draw an additional tag.
      *                                 'all', true or 'true' draws a tag with '--- Any ---' as the text
      *                                 'none' draws a tag with '--- none ---' as the text
@@ -1159,12 +1162,12 @@ class AR implements SeekableIterator
      *
      * @return array an array of html <option> tags
      */
-    function as_select_options($selected = null, $field = null, $show_all_option = false) 
+    function as_select_options($selected = null, $field = null, $show_all_option = false)
     {
         $result = '';
 
         if ($show_all_option === 'all' || $show_all_option === true || $show_all_option == 'true') {
-            $result .= '<option value="">-- Any --</option>'; 
+            $result .= '<option value="">-- Any --</option>';
         }
         if ($show_all_option === 'none') {
             $result .= '<option value="">-- none --</option>';
@@ -1190,7 +1193,7 @@ class AR implements SeekableIterator
      *
      * @return boolean
      */
-    function has_one($model_name) 
+    function has_one($model_name)
     {
         if (!property_exists($this, 'has_one')) {
             return false;
@@ -1205,10 +1208,10 @@ class AR implements SeekableIterator
      *
      * @return boolean
      */
-    function has_many($model_name) 
+    function has_many($model_name)
     {
         /* nested set automatically has many of itself (children) */
-        if ($this->acts_as_nested_set && $this->model_name == $model_name) { 
+        if ($this->acts_as_nested_set && $this->model_name == $model_name) {
             return true;
         }
         if (!property_exists($this, 'has_many')) {
@@ -1236,7 +1239,7 @@ class AR implements SeekableIterator
     function belongs_to($model_name)
     {
         /* nested set automatically belongs to itself (parent) */
-        if ($this->acts_as_nested_set && $this->model_name == $model_name) { 
+        if ($this->acts_as_nested_set && $this->model_name == $model_name) {
             return true;
         }
 
@@ -1253,9 +1256,9 @@ class AR implements SeekableIterator
      *
      * @return boolean
      */
-    function through_model($model_name) 
+    function through_model($model_name)
     {
-        if (!property_exists($this, 'has_many_through')) { 
+        if (!property_exists($this, 'has_many_through')) {
             return false;
         }
         if (!$this->has_many_through) {
@@ -1275,7 +1278,7 @@ class AR implements SeekableIterator
      *
      * @return boolean
      */
-    function has_many_through($model_name) 
+    function has_many_through($model_name)
     {
         if (!property_exists($this, 'has_many_through')) {
             return false;
@@ -1288,7 +1291,7 @@ class AR implements SeekableIterator
         } else {
             return false;
         }
-    
+
     }
 
     /**
@@ -1298,16 +1301,16 @@ class AR implements SeekableIterator
      *
      * @return variant returns null if the field is not required and '*' if it is
      */
-    function requirements($field_name) 
+    function requirements($field_name)
     {
         /*todo flesh out this method to return an english string explaining what the requirements for this field are */
         //debug("validation requirements for $field_name on ".get_class($this));
-        if (property_exists($this, 'validates_presence_of')) { 
+        if (property_exists($this, 'validates_presence_of')) {
             $required_fields = $this->validates_presence_of;
         } else {
             $required_fields = null;
         }
-        
+
         if (is_array($required_fields) && in_array($field_name, $required_fields)) {
             return '*';
         }
@@ -1318,7 +1321,7 @@ class AR implements SeekableIterator
      *
      * @return boolean true is valid, false is invalid
      */
-    function is_valid() 
+    function is_valid()
     {
         /*todo flesh this out with other validation methods. Put in validations class? */
         $validation_result = array();
@@ -1331,7 +1334,7 @@ class AR implements SeekableIterator
                     $this->$required_field == ""
                 ) {
                     $human_field_name = $required_field;
-                    if (substr($human_field_name, -3) == '_id') { 
+                    if (substr($human_field_name, -3) == '_id') {
                         $human_field_name = substr($human_field_name, 0, strlen($human_field_name)-3);
                     } //todo fix this hack. need a new validation for associated records, natch.
                     $validation_result[$required_field]['message'] = humanize($human_field_name)." is empty";
@@ -1363,7 +1366,7 @@ class AR implements SeekableIterator
      *
      * @return float the sum value
      */
-    function sum($sum_field = null) 
+    function sum($sum_field = null)
     {
         if (!$sum_field) {
             if (!property_exists($this, 'sum_field')) {
@@ -1376,8 +1379,8 @@ class AR implements SeekableIterator
         }
 
 
-        /* 
-         * get the current index of the MDB2 resultset, since we are going to be 
+        /*
+         * get the current index of the MDB2 resultset, since we are going to be
          * messing with it; I want to come back to the same place later
          */
         $current_index = $this->key();
@@ -1404,7 +1407,7 @@ class AR implements SeekableIterator
      *
      * @return string the display_field value of the current record, or false if no records in this recordset
      */
-    function display_name() 
+    function display_name()
     {
         if ($this->count == 0) {
             return false;
@@ -1421,7 +1424,7 @@ class AR implements SeekableIterator
      *
      * @return variant the MDB2 resultcode
      */
-    function error_check($result, $die_on_error = true) 
+    function error_check($result, $die_on_error = true)
     {
         if (PEAR::isError($result) || MDB2::isError($result)) {
             if ($die_on_error) {
@@ -1437,13 +1440,13 @@ class AR implements SeekableIterator
             }
         }
     }
-    
+
     /**
      * returns the current AR object
      *
      * @return AR
      */
-    function current() 
+    function current()
     {
         return $this;
     }
@@ -1453,7 +1456,7 @@ class AR implements SeekableIterator
      *
      * @return integer
      */
-    function key() 
+    function key()
     {
         if ($this->valid()) {
             return $this->offset;
@@ -1467,7 +1470,7 @@ class AR implements SeekableIterator
      *
      * @return boolean
      */
-    function seek($index) 
+    function seek($index)
     {
         if ($this->valid()) {
             $this->results->seek($index);
@@ -1485,7 +1488,7 @@ class AR implements SeekableIterator
      *
      * @return boolean
      */
-    function valid() 
+    function valid()
     {
         if ($this->count > 0
             && !MDB2::isError($this->results)
@@ -1498,16 +1501,16 @@ class AR implements SeekableIterator
 
     }
 
-    /** 
+    /**
      * moves to the beginning of the collection
      *
      * @return void
      */
-    function rewind() 
+    function rewind()
     {
         /*
-         * I am not using valid() because valid checks offset. 
-         * when at the end it could never rewind! 
+         * I am not using valid() because valid checks offset.
+         * when at the end it could never rewind!
          */
         if ($this->count > 0 && !MDB2::isError($this->results)) {
             $this->offset = 0;
@@ -1515,12 +1518,12 @@ class AR implements SeekableIterator
         }
     }
 
-    /** 
+    /**
      * selects the next record in the collection
      *
      * @return void
      */
-    function next() 
+    function next()
     {
         $this->seek($this->offset+1);
     }
@@ -1537,7 +1540,7 @@ class AR implements SeekableIterator
 }
 
 if (!defined('SQL_INSERT_DATE_FORMAT')) {
-    define('SQL_INSERT_DATE_FORMAT', '%Y-%m-%d'); 
+    define('SQL_INSERT_DATE_FORMAT', '%Y-%m-%d');
 }
 if (!defined('SQL_INSERT_DATE_TIME_FORMAT')) {
     define('SQL_INSERT_DATE_TIME_FORMAT', '%Y-%m-%d %R');
@@ -1548,8 +1551,8 @@ if (!defined('SQL_INSERT_DATE_TIME_FORMAT')) {
  *
  * @param variant $record1             an array in the format [field name] => value or an AR object
  * @param variant $record2             an array in the format [field name] => value or an AR object
- * @param boolean $include_boilerplate It automatically ignores id, updated_on, 
- *                                      created_on, revision and user_id unless 
+ * @param boolean $include_boilerplate It automatically ignores id, updated_on,
+ *                                      created_on, revision and user_id unless
  *                                      include_boilerplate is set to true
  *
  * @return array a 1 dimensional array of changed attributes
@@ -1586,7 +1589,7 @@ function compare_records($record1, $record2, $include_boilerplate = false)
 }
 /*
  * docs - todo make this use a proper php documenting standard
- * 
+ *
  * more callbacks todo:
  * before_delete (great for cancelling delete and marking as "deleted")
  * after_delete
