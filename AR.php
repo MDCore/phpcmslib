@@ -1034,7 +1034,7 @@ class AR implements SeekableIterator
      *
      * @return AR returns $this
      */
-    public function update_attributes($collection = null, $with_value_changes = false, $clean_the_data = false)
+    public function update_attributes($collection = null, $with_value_changes = true, $clean_the_data = false)
     {
         if (!$collection) { // if no row is passed then set the current row in results
             if ($this->results && !MDB2::isError($this->results)) {

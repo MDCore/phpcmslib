@@ -205,28 +205,35 @@ class cm_controller extends action_controller {
 
         if ($record_updated | $no_primary_to_save) {
             foreach ($_POST as $meta_model => $collection) {
-                if ($meta_model != $this->primary_model) { # make sure we are working with meta models
+                if ($meta_model != $this->primary_model) { /* make sure we are working with meta models */
                     $fk_field = foreign_keyize($this->primary_model);
-                    $collection[$fk_field] = $edit_id; #add the foreign key straight into the collection
+                    $collection[$fk_field] = $edit_id; /* add the foreign key straight into the collection */
 
-                    if (!isset($collection['_add_record'])) {
-                        if ($primary_model_object->through_model($meta_model)) {
-                            $meta_model_object = new $meta_model;
-                            $meta_model_object->delete("WHERE $fk_field = $edit_id"); #delete the records, to re-add them
-                            $meta_model_object->save_multiple($collection);
-                        } else {
-                            $meta_model_object = new $meta_model; 
-                            $meta_model_object
-                                ->find(" WHERE $fk_field = $edit_id")
-                                ->update_attributes($collection, true, true);
-                            if (!$meta_model_object->is_valid()) {
-                                redirect_with_parameters(url_to(array('action' => 'edit')), "edit_id=".$edit_id."&flash=".$meta_model_object->validation_errors);die();
-                            }
-                            $meta_model_object->update();
+                    /* forms must singularize their model names, that is why this needs to be pluralized */
+                    if ($primary_model_object->through_model(pluralize($meta_model))) {
+                        /* this is a join table */
+                        $meta_model_object = new $meta_model;
+                        $meta_model_object->delete("WHERE $fk_field = $edit_id"); #delete the records, to re-add them
+                        $meta_model_object->save_multiple($collection);
+                    } else {
+                        /* this is another table that has a foreign key of the primary table in it */
+                        $meta_model_object = new $meta_model; 
+                        $meta_model_object
+                            ->find(" WHERE $fk_field = $edit_id")
+                            ->update_attributes($collection, true, true);
+                        if (!$meta_model_object->is_valid()) {
+                            redirect_with_parameters(url_to(array('action' => 'edit')), "edit_id=".$edit_id."&flash=".$meta_model_object->validation_errors);die();
                         }
+                        $meta_model_object->update();
                     }
-                    #todo duplicate the meta-model code from cm_save
-                    $meta_model = new $meta_model($collection); $meta_model->save();
+
+                    /* todo duplicate the meta-model code from cm_save */
+                    /*
+                     * what is this code doing? the two blocks above both save?!?!?! 
+                     *
+                    $meta_model = new $meta_model($collection);
+                    $meta_model->save();
+                     */
                 }
             }
 
