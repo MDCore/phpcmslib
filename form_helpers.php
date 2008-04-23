@@ -114,15 +114,15 @@ class forms
          * yes_no, true_false 
          */
         $result = "<select id=\"".$name."\" name=\"$name\"";
-        $result .= self::parse_attributes($attributes);
+        $result .= self::parse_attributes($attributes, array('default'));
         $result .= ">"; 
         if (!is_array($options) && $options == 'yes_no' )
         {
             $result .= '<option value="Y" ';
-            if ( $value == 'Y' ) { $result .= 'selected = "selected"'; }
+            if ( $value == 'Y' | (!$value && $attributes['default'] == 'Y')) { $result .= 'selected = "selected"'; }
             $result .= '>Yes</option>' ;
             $result .= '<option value="N" ';
-            if ( $value == 'N' ) { $result .= 'selected = "selected"'; }
+            if ( $value == 'N' | (!$value && $attributes['default'] == 'N')) { $result .= 'selected = "selected"'; }
             $result .= '>No</option>' ;
         }
         elseif (!is_array($options) && $options == 'true_false' )
@@ -190,16 +190,11 @@ class forms
 
     function textarea($name, $value = null, $attributes = null) 
     {
-        //attributes includes id, readonly etc.. whatever is in there get's set
         $result = '';
-        //default attributes
-            // id
-                if (!isset($attributes['id'])) { $attributes['id'] = 'name'; }
+        if (!isset($attributes['id'])) { $attributes['id'] = 'name'; }
 
-                $result .= '<textarea id="'.$name.'" name="'.$name.'" ';
-
+        $result .= '<textarea id="'.$name.'" name="'.$name.'" ';
         $result .= self::parse_attributes( $attributes );
-
         $result .= ' />'.stripslashes($value).'</textarea>'; 
     return $result;
     }
@@ -345,8 +340,7 @@ class forms
         $page = App::$controller;
         $primary_model_object = new $default_model;
         //print_r($element_description);
-        if ( sizeof( $element_description ) == 1 || !isset($element_description[1]))
-        {
+        if ( sizeof( $element_description ) == 1 || !isset($element_description[1])) {
             //default settings:
             // input type=text with this as title and field_name
             $element_description[1] = 'input'; 
@@ -355,7 +349,7 @@ class forms
             if ($element_description[0]  == 'password') {
                 $db_field_name = 'password_md5'; 
                 $field_name = "$default_model"."[$db_field_name]";
-                //$element_description['type'] = "password"; not setting to password ebcause it is never shown. plain text entry is better
+                //$element_description['type'] = "password"; not setting to password because it is never shown. plain text entry is better
                 $element_description['value'] = '';
                 if ( $page->action == 'edit' ) {$element_description['note'] = '(leave blank to leave password unchanged)';}
             }
@@ -371,6 +365,11 @@ class forms
         // convert a type of "text" to "textarea"
         if (isset($element_description[1]) && $element_description[1] == 'text') {$element_description[1] = 'textarea';}
 
+        // upload ? Set the field_name
+        if ($element_description[1] == 'upload') {
+            /* putting this here prevents it from setting the db_field_name later and trying to find a value for it */
+            $field_name = $default_model.'['.$element_description[0].']';
+        }
         //upload and edit ? pass upload identifier array as value
         if (isset($element_description[1]) && $element_description[1] == 'upload' && $page->action == 'edit')
         {
@@ -465,27 +464,23 @@ class forms
         if (!$field_name && !$db_field_name) { // if not set by a special case
             if (array_key_exists('name', $element_description)) {
                 $field_name = $element_description['name'];
-                //pull the model and db_field_name out
+                //pull the db_field_name out
                 $bpos = strpos($field_name, '[');
                 if ($bpos > 0) {
-                    $field_model = substr($field_name, 0, $bpos-1);
                     $db_field_name = substr($db_field_name, $bpos+1, -1);
                 } else {
                     $db_field_name = $field_name;
-                    $field_model = $default_model;
                 }
             } else {
                 $db_field_name = strtolower(tableize($element_description[0])); // I'm strtolowering because I'm going to assume that if you don't specificy a specific name for the field then it should be all lowered automatically
-
                 $field_name = $default_model.'['.$db_field_name.']';
-                $field_model = $default_model;
             }
         }
         //value
         if (array_key_exists('value', $element_description)) {
             $value = $element_description['value'];
         } else {
-            //if (($page->action == 'edit') && $db_field_name)
+            /* no value set for this field but a db_field_name is set */
             if ($db_field_name) {
                 $value = htmlentities($record->$db_field_name);
             }
