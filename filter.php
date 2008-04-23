@@ -115,6 +115,7 @@ class filter
                 $lnk_model = $primary_model_object->has_many_through($name);
                 if ($lnk_model)
                 {
+                    $lnk_model = singularize($lnk_model);
                     $lnk_model_object = new $lnk_model;
                     $lnk_model_table = $lnk_model_object->schema_table;
                     
