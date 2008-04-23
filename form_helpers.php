@@ -14,32 +14,46 @@ class forms
 
     function upload($name, $value = null, $attributes = null)
     {
-
         $page = App::$controller;
         $result = '';
 
-        if ( $page->action == 'edit' )
-        {
+        if (isset($attributes['preview']) && $attributes['preview']) {
+            $preview = true;
+        } else {
+            $preview = false;
+        }
+
+        if ($page->action == 'edit') {
             //preview this sucker
             $upl = new upload;
             $upl->load($value['model'], $value['field_name'], $value['record_id']);
-            if ($upl->file_exists())
-            {
-                $result .= '<a href="'.$upl->display_filename().'">View current '.humanize($value['field_name']).'</a><br />';
-
+            if ($preview) {
+                /* previewed uploads */
+                if ($upl->file_exists()) {
+                    $result .= '<a href="'.$upl->display_filename().'" target="_blank"><img src="'.$upl->display_filename().'" style="width: 100px;" /><br />'.$upl->original_filename.'</a><br />';
+                } else {
+                    $result .= '<i>No '.proper_nounize($upl->field_name).' uploaded</i><br />';
+                }
+            } else {
+                /* uploads that are not being previewed */
+                if ($upl->file_exists()) {
+                    $result .= 'View: <a href="'.$upl->display_filename().'" target="_blank">'.$upl->original_filename.'</a><br />';
+                } else {
+                    $result .= '<i>No '.proper_nounize($upl->field_name).' uploaded</i><br />';
+                }
             }
-            $result .="<input onchange=\"new_attachment(this);\" id=\"".$name."\" type=\"file\" name=\"$name\"";
-            $result .= self::parse_attributes( $attributes );
+            $result .="<input id=\"".$name."\" type=\"file\" name=\"$name\"";
+            $result .= self::parse_attributes($attributes, array('preview', 'show_note'));
             $result .=" />";
-        }
-        else
-        {
+        } else {
             //
-            $result .="<input onchange=\"new_attachment(this);\" id=\"".$name."\" type=\"file\" name=\"$name\"";
-            $result .= self::parse_attributes( $attributes );
+            $result .="<input id=\"".$name."\" type=\"file\" name=\"$name\"";
+            $result .= self::parse_attributes($attributes, array('preview', 'show_note'));
             $result .=" />";
         }
-        $result .= "<div>Note: You cannot upload individual files larger than ".ini_get('upload_max_filesize'). " and the entire upload will fail if larger than ".ini_get('post_max_size').".</div>";
+        if (!isset($attributes['show_note']) | (isset($attributes['show_note']) && $attributes['show_note'] == true)) {
+            $result .= "<div>Note: You cannot upload individual files larger than ".ini_get('upload_max_filesize'). " and the entire upload will fail if larger than ".ini_get('post_max_size').".</div>";
+        }
     return $result;
     }
 
@@ -215,13 +229,14 @@ class forms
         require($path);
     }
 
-    function parse_attributes( $attributes ) 
+    function parse_attributes($attributes, $except = null) 
     {
         $result = '';
         if ($attributes) {
-            foreach ($attributes as $option => $option_value)
-            {
-                $result .= $option.'="'.$option_value.'" ';
+            foreach ($attributes as $option => $option_value) {
+                if (!$except | ($except && !in_array($option, $except))) {
+                    $result .= $option.'="'.$option_value.'" ';
+                }
             }
             return $result;
         }
@@ -484,7 +499,7 @@ class forms
 
         //convert element_description to attributes, by removing all the non-attribute stuff
         $attributes = $element_description;
-        foreach(array(0, 1, 'name', 'options', 'value', 'note', 'only', 'show_all_option', 'order_by','criteria', 'field', 'model', 'label', 'additional_sql_options') as $key){
+        foreach(array(0, 1, 2, 3, 'name', 'options', 'value', 'note', 'only', 'show_all_option', 'order_by','criteria', 'field', 'model', 'label', 'additional_sql_options') as $key) {
             unset($attributes[$key]);
         }
 
