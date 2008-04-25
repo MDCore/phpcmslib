@@ -182,20 +182,35 @@ class cm_controller extends action_controller {
     public function cm_update($redirect_on_success = true) {
         $edit_id = $_GET['edit_id'];
 
+        $result = $this->cm_update_core($edit_id, $_POST);
+
+        switch ($result['result']) {
+        case 'validation_errors':
+            redirect_with_parameters(url_to(array('action' => 'edit')), "edit_id=".$edit_id."&flash=".$result['errors']);
+            break;
+        case 'success':
+            if ($redirect_on_success) {
+                redirect_with_parameters(url_to(array('action' => 'list')), "flash=".proper_nounize($this->list_type). " updated");
+            }
+            break;
+        }
+    }
+    public function cm_update_core($edit_id, $full_collection)
+    {
         if (method_exists($this, 'before_update')) { $this->before_update(); } #todo clean this up.... should be in model, maybe
 
-        #print_r($_GET);print_r($_POST);print_r($_FILES);
-        if (isset($_POST[$this->primary_model])) {
+        #print_r($_GET);print_r($full_collection);print_r($_FILES);
+        if (isset($full_collection[$this->primary_model])) {
             $primary_model_object = new $this->primary_model;
             $primary_model_object
                 ->find($edit_id)
-                ->update_attributes($_POST[$this->primary_model], true, true);
+                ->update_attributes($full_collection[$this->primary_model], true, true);
             if ($primary_model_object->is_valid()) {
                 $record_updated = $primary_model_object->update();
             /*print_r($primary_model_object); print_r($record_updated);die();*/
             /* sanity checking; it better be updating and not saving! */
                 if ($record_updated != $edit_id) {
-                    trigger_error("Update of {$this->primary_model} failed. $record_updated != $edit_id.", E_USER_ERROR);die();
+                    trigger_error("Update of {$this->primary_model} failed. $record_updated != $edit_id.", E_USER_ERROR); die();
                 }
             } else { $record_updated = false; }
         }
@@ -204,7 +219,7 @@ class cm_controller extends action_controller {
         }
 
         if ($record_updated | $no_primary_to_save) {
-            foreach ($_POST as $meta_model => $collection) {
+            foreach ($full_collection as $meta_model => $collection) {
                 if ($meta_model != $this->primary_model) { /* make sure we are working with meta models */
                     $fk_field = foreign_keyize($this->primary_model);
                     $collection[$fk_field] = $edit_id; /* add the foreign key straight into the collection */
@@ -224,12 +239,21 @@ class cm_controller extends action_controller {
                         if (!$meta_model_object->is_valid()) {
                             redirect_with_parameters(url_to(array('action' => 'edit')), "edit_id=".$edit_id."&flash=".$meta_model_object->validation_errors);die();
                         }
-                        $meta_model_object->update();
+                        if ($meta_model_object->count > 0) {
+                            $meta_model_object->update();
+                        } else {
+                            /* This accounts for adding new records as meta models and not just updating existing ones.
+                             * A good case for this is adding a comment to a collection of comments as part of another
+                             * model.
+                             */
+                            $meta_model_object->save();
+                        }
                     }
 
                     /* todo duplicate the meta-model code from cm_save */
                     /*
-                     * what is this code doing? the two blocks above both save?!?!?! 
+                     * this code used to be part of another hack which would ADD a record to a meta_model instead of updating. 
+                     * I removed the hack so this had to go. but I've left it here for when I want to do that. 
                      *
                     $meta_model = new $meta_model($collection);
                     $meta_model->save();
@@ -241,12 +265,11 @@ class cm_controller extends action_controller {
 
             if (method_exists($this, 'after_update')) { $this->after_update($edit_id); } #todo clean this up.... should be in model, maybe
 
-            if ($redirect_on_success) {
-                redirect_with_parameters(url_to(array('action' => 'list')), "flash=".proper_nounize($this->list_type). " updated");
-            }
+            return array('result' => 'success');
         } else {
-            redirect_with_parameters(url_to(array('action' => 'edit')), "edit_id=".$edit_id."&flash=".$primary_model_object->validation_errors);
+            return array('result' => 'validation_failed', 'errors' => $primary_model_object->validation_errors);
         }
+
     }
 
     /** 

@@ -4,36 +4,23 @@
  * executing phpunit <testClass>
  */
 require_once '../functions.php';
+require_once '../string_helpers.php';
+require_once '../filter.php';
 require_once '../AR.php';
 require_once '../action_controller.php';
 require_once '../cm_controller.php';
 
-class CMControllerTest extends PHPUnit_Framework_TestCase {
-    public function __construct()
-    {
-    }
-    public function __destruct()
-    {
-    }
-    /**
-     * Sets up the fixture, for example, opens a network connection.
-     * This method is called before a test is executed.
-     *
-     * @access protected
-     */
-    protected function setUp() {
-    }
 
-    /**
-     * Tears down the fixture, for example, closes a network connection.
-     * This method is called after a test is executed.
-     *
-     * @access protected
-     */
-    protected function tearDown() {
-    }
+/* DB TestCase */
+require_once 'DB_TestCase.php';
 
-    public function test___construct() {
+class CMControllerTest extends DB_TestCase {
+    /* construct, destruct, setup and teardown are handled by the
+     * DB Testcase which recreates the test db 
+     */
+
+    public function test___construct()
+    {
         $this->markTestIncomplete(
           'This test has not been implemented yet.'
         );
@@ -77,6 +64,84 @@ class CMControllerTest extends PHPUnit_Framework_TestCase {
 
         /* foreign key title prefix */
     }
+
+    public function test_cm_update()
+    {
+        $this->markTestIncomplete(
+          'This test has not been implemented yet.'
+        );
+    }
+    public function test_cm_update_core_simple()
+    {
+
+        $_POST = array('customer'
+            => array(
+                'name' => 'update_core_name'
+            )
+        );
+
+        $cm = new customers_controller;
+        $result = $cm->cm_update_core(1, $_POST);
+
+        $customer = new customer;
+        $customer->find(1);
+
+        $this->assertEquals('update_core_name', $customer->name);
+        $this->assertEquals('success', $result['result']);
+    }
+    public function test_cm_update_core_validation()
+    {
+
+        $_POST = array('customer'
+            => array(
+                'name' => '',
+                'company_name' => 'update_core_company'
+            )
+        );
+
+        $customer = new customer;
+        $this->assertEquals('name', $customer->validates_presence_of[0]);
+
+        $cm = new customers_controller;
+        $result = $cm->cm_update_core(1, $_POST);
+
+        $this->assertEquals('validation_failed', $result['result']);
+    }
+
+    public function test_cm_update_core_advanced()
+    {
+        $_POST = array(
+            'product'
+            => array(
+                'name' => 'update_core_name'
+            ),
+            'category'
+            => array(
+                'name' => 'update_core_cat_name'
+            )
+        );
+
+        $cm = new categories_controller;
+        $results = $cm->cm_update_core(1, $_POST);
+
+        $product = new product; $product->find(1);
+        $cat = new category; $cat->find(1);
+
+        $this->assertEquals('update_core_name', $product->name);
+        $this->assertEquals('update_core_cat_name', $cat->name);
+    }
+    
+}
+
+
+
+class customers_controller extends cm_controller
+{
+
+}
+
+class categories_controller extends cm_controller
+{
 
 }
 ?>

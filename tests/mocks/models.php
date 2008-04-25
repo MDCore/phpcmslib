@@ -18,6 +18,8 @@ class customer extends db_conn
     public $display_field = 'company_name';
     public $changelog;
     public $has_one = 'car';
+
+    public $validates_presence_of = 'name';
 }
 class customer_changelog extends db_conn
 {
