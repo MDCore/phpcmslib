@@ -10,6 +10,7 @@ require_once '../AR.php';
 require_once '../action_controller.php';
 require_once '../cm_controller.php';
 
+require_once 'DB/NestedSet.php' ;
 
 /* DB TestCase */
 require_once 'DB_TestCase.php';
@@ -89,26 +90,7 @@ class CMControllerTest extends DB_TestCase {
         $this->assertEquals('update_core_name', $customer->name);
         $this->assertEquals('success', $result['result']);
     }
-    public function test_cm_update_core_validation()
-    {
-
-        $_POST = array('customer'
-            => array(
-                'name' => '',
-                'company_name' => 'update_core_company'
-            )
-        );
-
-        $customer = new customer;
-        $this->assertEquals('name', $customer->validates_presence_of[0]);
-
-        $cm = new customers_controller;
-        $result = $cm->cm_update_core(1, $_POST);
-
-        $this->assertEquals('validation_failed', $result['result']);
-    }
-
-    public function test_cm_update_core_advanced()
+    public function test_cm_update_core_two_table()
     {
         $_POST = array(
             'product'
@@ -130,18 +112,49 @@ class CMControllerTest extends DB_TestCase {
         $this->assertEquals('update_core_name', $product->name);
         $this->assertEquals('update_core_cat_name', $cat->name);
     }
+    public function test_cm_update_core_validation()
+    {
+
+        $_POST = array('customer'
+            => array(
+                'name' => '',
+                'company_name' => 'update_core_company'
+            )
+        );
+
+        $customer = new customer;
+        $this->assertEquals('name', $customer->validates_presence_of[0]);
+
+        $cm = new customers_controller;
+        $result = $cm->cm_update_core(1, $_POST);
+
+        $this->assertEquals('validation_failed', $result['result']);
+    }
+    public function test_cm_update_core_link_table()
+    {
+
+        $_POST = array('user_find'
+            => array(
+                'find_id' => array(
+                   2, 3 
+                )
+            )
+        );
+
+        $cm = new users_controller;
+        $result = $cm->cm_update_core(1, $_POST);
+
+        $user = new user;
+        $user->find(1);
+
+        $this->assertEquals('success', $result['result']);
+        $this->assertEquals(2, $user->user_finds->count);
+    }
     
 }
 
-
-
-class customers_controller extends cm_controller
-{
-
-}
-
-class categories_controller extends cm_controller
-{
-
-}
+/* controller classes */
+class customers_controller extends cm_controller { }
+class categories_controller extends cm_controller { }
+class users_controller extends cm_controller { }
 ?>

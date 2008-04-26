@@ -732,7 +732,7 @@ class AR implements SeekableIterator
      *
      * @param array $collection a collection of records to save
      *
-     * @return void
+     * @return array an array consisting of the id's of the saved records
     */
     function save_multiple($collection)
     {
@@ -751,6 +751,7 @@ class AR implements SeekableIterator
          * [3] => array('product_id' => 4)
          */
 
+        $result = array();
         for ( $i=0; $i < sizeof($new_records); $i++ ) { //for each of the non-array values of the collection...
             foreach ($collection as $field => $value) {//put it in the sub-arrays of each new record
                 if (!is_array($value)) {
@@ -758,8 +759,9 @@ class AR implements SeekableIterator
                 }
             }
             $this->update_attributes($new_records[$i]);
-            $this->save();//save this new record
+            $result[] = $this->save();//save this new record
         }
+        return $result;
         /* by this point we will have a new records like so:
          * [0] => array('customer_id', => 25, 'product_id' => 1)
          * [1] => array('customer_id', => 25, 'product_id' => 2)

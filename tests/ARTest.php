@@ -18,7 +18,6 @@ require_once '../functions.php';
 require_once '../AR.php';
 require_once '../application.php';
 
-require_once 'MDB2.php' ;
 require_once 'DB/NestedSet.php' ;
 
 /* DB TestCase */
@@ -412,10 +411,18 @@ class ARTest extends DB_TestCase {
     }
 
     public function testSave_multiple() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
+        $input = array(
+            'user_id' => 1, 
+            'find_id'  => Array(2, 3)
         );
+        $user_find = new user_find;
+        $result = $user_find->save_multiple($input);
+        
+        $user = new user;
+        $user->find(1);
+        $this->assertEquals(3, $user->finds->count);
+
+
     }
 
     public function testSave_keeps_slashes() {

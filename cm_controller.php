@@ -200,8 +200,8 @@ class cm_controller extends action_controller {
         if (method_exists($this, 'before_update')) { $this->before_update(); } #todo clean this up.... should be in model, maybe
 
         #print_r($_GET);print_r($full_collection);print_r($_FILES);
+        $primary_model_object = new $this->primary_model;
         if (isset($full_collection[$this->primary_model])) {
-            $primary_model_object = new $this->primary_model;
             $primary_model_object
                 ->find($edit_id)
                 ->update_attributes($full_collection[$this->primary_model], true, true);
@@ -225,11 +225,12 @@ class cm_controller extends action_controller {
                     $collection[$fk_field] = $edit_id; /* add the foreign key straight into the collection */
 
                     /* forms must singularize their model names, that is why this needs to be pluralized */
+                    /* todo if the through model is singularized it just does _nothing_ */
                     if ($primary_model_object->through_model(pluralize($meta_model))) {
                         /* this is a join table */
                         $meta_model_object = new $meta_model;
                         $meta_model_object->delete("WHERE $fk_field = $edit_id"); #delete the records, to re-add them
-                        $meta_model_object->save_multiple($collection);
+                        $result = $meta_model_object->save_multiple($collection);
                     } else {
                         /* this is another table that has a foreign key of the primary table in it */
                         $meta_model_object = new $meta_model; 
