@@ -672,9 +672,15 @@ class ARTest extends DB_TestCase {
             }
             $this->fail('An exception was not raised');
     }
-    /**
-     * @todo Implement testAs_array().
-     */
+    public function test_as_collection_with_display_field_function()
+    {
+        // There is a definite bug with doing this!
+
+        // Remove the following lines when you implement this test.
+        $this->markTestIncomplete(
+          'This test has not been implemented yet.'
+        );
+    }
     public function testAs_array() {
 
         $customer = new customer;
@@ -701,9 +707,6 @@ class ARTest extends DB_TestCase {
         #$this->assertEquals($expected, $customer->as_array());
     }
 
-    /**
-     * @todo Implement testAs_select_options().
-     */
     public function testAs_select_options() {
         // Remove the following lines when you implement this test.
         $this->markTestIncomplete(

@@ -191,11 +191,12 @@ class forms
     function textarea($name, $value = null, $attributes = null) 
     {
         $result = '';
-        if (!isset($attributes['id'])) { $attributes['id'] = 'name'; }
+        if (!isset($attributes['id'])) { $attributes['id'] = str_replace(']', '', str_replace('[', '_', $name)); }
 
-        $result .= '<textarea id="'.$name.'" name="'.$name.'" ';
+        $result .= '<textarea name="'.$name.'" ';
         $result .= self::parse_attributes( $attributes );
         $result .= ' />'.stripslashes($value).'</textarea>'; 
+
     return $result;
     }
 
