@@ -503,7 +503,7 @@ class ARTest extends DB_TestCase {
     }
     public function test_delete_with_criteria() {
         $customer = new customer;$customer->find(1);
-        $this->AssertTrue($customer->delete('WHERE id=1'));
+        $this->AssertTrue($customer->delete('id=1'));
     }
     public function test_delete_on_empty() {
         $customer = new customer;

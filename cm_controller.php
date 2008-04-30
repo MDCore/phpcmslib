@@ -229,7 +229,7 @@ class cm_controller extends action_controller {
                     if ($primary_model_object->through_model(pluralize($meta_model))) {
                         /* this is a join table */
                         $meta_model_object = new $meta_model;
-                        $meta_model_object->delete("WHERE $fk_field = $edit_id"); #delete the records, to re-add them
+                        $meta_model_object->delete("$fk_field = $edit_id"); #delete the records, to re-add them
                         $result = $meta_model_object->save_multiple($collection);
                     } else {
                         /* this is another table that has a foreign key of the primary table in it */
@@ -315,7 +315,7 @@ class cm_controller extends action_controller {
 
                         if ($primary_model_object->through_model(pluralize($meta_model))) {
                             $meta_model_object = new $meta_model;
-                            #$meta_model_object->delete("WHERE $fk_field = $edit_id"); //delete the records, to re-add them
+                            #$meta_model_object->delete("$fk_field = $edit_id"); //delete the records, to re-add them
                             $meta_model_object->save_multiple($collection);
                         } else {
                             $meta_model_object = new $meta_model($collection); 

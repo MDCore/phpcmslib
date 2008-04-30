@@ -786,7 +786,7 @@ class AR implements SeekableIterator
     function delete($criteria = null)
     {
         if ($criteria) {
-            $sql_criteria = $this->criteria_to_sql($criteria);
+            $sql_criteria = ' WHERE '.$this->criteria_to_sql($criteria);
         } elseif ($this->count > 0) {
             //i.e. delete just this record
             $sql_criteria = ' WHERE '.$this->dsn['database'].'.'.$this->schema_table.'.'.$this->primary_key_field.' = '.$this->values[$this->primary_key_field];
