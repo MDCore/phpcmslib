@@ -82,25 +82,10 @@ case 'test':
     /* include the helpers file with general custom test methods */
     include $path_to_root.'/test/test_helpers.php';
 
-    /* require the model test files */
-    pedantic_app_TestRunner::init_models($path_to_root);
-
-    $suite = new pedantic_app_testsuite();
-
-    /* add all the test suites */
-    $test_files = pedantic_app_testrunner::$test_files;
-    $part = 'models';
-    foreach ($test_files[$part] as $test_class_name => $test_file) {
-        //echo "Adding Test Suite $test_class_name\r\n";
-        $suite->addTestSuite($test_class_name);
-    }
-    /* controllers + views */
-    //todo
-
     /* pull the development database schema */
     // step 1: run all the migrations against the test environment (implicitly the test env)
     echo "Running the migrations against the test database\r\n";
-    pedantic_app_testrunner::run_all_migrations();
+    #pedantic_app_testrunner::run_all_migrations();
 
     // step 2: pull the schema
     echo "pulling the schema from the test database\r\n";
@@ -110,8 +95,8 @@ case 'test':
     /* set the schema property in pedantic_app_testrunner */
     pedantic_app_testrunner::$schema = $schema;
 
-    echo "Running the tests\r\n";
-    pedantic_app_testrunner::run($suite);
+    /* run all the tests */
+    pedantic_app_testrunner::run_tests();
 
     break;
 

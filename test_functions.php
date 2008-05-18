@@ -4,6 +4,7 @@
  * - fixtures CSV, SQL... yaml?
  * - fixtures methods can take multiple parameters, all to be executed
  * - remove custom methods below wherever they are used and use official methods instead
+ * - functional testing... faking the http process
  */
 
 /* TESTCASE CLASSES */
@@ -70,13 +71,28 @@ class pedantic_controller_view_testcase extends pedantic_app_testcase
 
     function __construct() {
         /* todo this is only for controllers! */
-        $this->get_part('controller', $this);
         $controller_name = str_replace('_tests', '', get_class($this));
-        $file_name = App::$env->root.'/'.pedantic_app_testrunner::$face.'/controllers/'.$controller_name.'.php';
-        /* require the controller */
-        require_once($file_name);
         $this->controller_name = $controller_name;
+        
+        $face = pedantic_app_testrunner::$face;
+        /* require the face controller */
+        require(App::$env->root."/$face/controllers/face_controller.php");
+
+        /* require the controller */
+        $file_name = App::$env->root.'/'.$face.'/controllers/'.$controller_name.'.php';
+        require_once($file_name);
     }
+    function setUp()
+    {
+        session_start();
+        parent::setUp();
+    }
+    function tearDown()
+    {
+        session_destroy();
+        parent::tearDown();
+    }
+    
 }
 /* This is for models and extends the pedantic app framework Testcase */
 class pedantic_app_model_testcase extends pedantic_app_testcase
@@ -102,8 +118,6 @@ class pedantic_app_testrunner extends PHPUnit_TextUI_TestRunner
 
     function init_face($path_to_root, $face)
     {
-        //autodetect the face and load the face controller
-        require_once ("$path_to_root/$face/controllers/face_controller.php");
 
         /* load all of the controller and view tests */
         foreach (pedantic_app_testrunner::$parts as $part) {
@@ -115,24 +129,17 @@ class pedantic_app_testrunner extends PHPUnit_TextUI_TestRunner
         pedantic_app_testrunner::$test_files = $test_files;
         pedantic_app_testrunner::$face = $face;
     }
-    function init_models($path_to_root)
-    {
-        $part = 'models';
-        /* load all of the controller and view tests */
-        $test_files[$part] = pedantic_app_testrunner::find_part_tests($part);
-        foreach($test_files[$part] as $test_file) {
-            require($test_file);
-        }
-        pedantic_app_testrunner::$test_files = $test_files;
-    }
     function find_part_tests($part, $face = null)
     {
         if ($face) {
             /* face-specific parts */
-            $path = App::$env->root."/$face/test/$part/";
+            $path = App::$env->root."/test/$face/$part/";
         } else {
             /* app-general parts */
             $path = App::$env->root."/test/$part/";
+        }
+        if (!file_exists($path)) {
+            return false;
         }
         if ($handle = opendir($path)) {
             $files = Array();
@@ -146,6 +153,44 @@ class pedantic_app_testrunner extends PHPUnit_TextUI_TestRunner
             closedir($handle);
 
             return $files;
+        }
+    }
+    function run_part_tests($test_files, $part, $face = null)
+    {
+        if (is_null($test_files)) {
+            return false;
+        }
+        if (is_null($part)) {
+            die('No part specified');
+        }
+        var_dump($test_files);
+        foreach ($test_files as $test_class_name => $test_file) {
+            $heading = humanize($part).': '.humanize($test_class_name);
+            echo "\r\n".$heading."\r\n".str_repeat('=', strlen($heading))."\r\n";
+
+            pedantic_app_testrunner::$face = $face;
+            require($test_file);
+            $suite = new pedantic_app_testsuite();
+            $suite->addTestSuite($test_class_name);
+            pedantic_app_testrunner::run($suite);
+        }
+
+    }
+    function run_tests()
+    {
+        /* models */
+        $test_files = pedantic_app_testrunner::find_part_tests('models');
+        $test_files = pedantic_app_testrunner::run_part_tests($test_files, 'models');
+        
+        /* controllers + views */
+        global $allowed_faces;
+        $test_faces = explode(',', $allowed_faces);
+        foreach ($test_faces as $face) {
+            $parts = array('controllers', 'views');
+            foreach($parts as $part) {
+                $test_files = pedantic_app_testrunner::find_part_tests($part, $face);
+                $test_files = pedantic_app_testrunner::run_part_tests($test_files, $part, $face);
+            }
         }
     }
 
