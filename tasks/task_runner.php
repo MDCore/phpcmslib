@@ -1,5 +1,7 @@
 <?
 /* TODO
+ * - nicer output for tests. Print out each model, controller etc as its tests are being run
+ *  - this probably means splitting it into seperate suites ?
  */
 
 /* NOTE
@@ -97,16 +99,18 @@ case 'test':
 
     /* pull the development database schema */
     // step 1: run all the migrations against the test environment (implicitly the test env)
-    #pedantic_app_testrunner::run_all_migrations();
+    echo "Running the migrations against the test database\r\n";
+    pedantic_app_testrunner::run_all_migrations();
 
     // step 2: pull the schema
-    echo "pulling the schema\r\n";
+    echo "pulling the schema from the test database\r\n";
     $schema_interregator = new schema_interregator;
     $schema = $schema_interregator->pull_entire_schema(App::$env->dsn);
 
     /* set the schema property in pedantic_app_testrunner */
     pedantic_app_testrunner::$schema = $schema;
 
+    echo "Running the tests\r\n";
     pedantic_app_testrunner::run($suite);
 
     break;

@@ -1,7 +1,9 @@
 <?
 /*
  * todo:
- * - fixtures CSV... yaml?
+ * - fixtures CSV, SQL... yaml?
+ * - fixtures methods can take multiple parameters, all to be executed
+ * - remove custom methods below wherever they are used and use official methods instead
  */
 
 /* TESTCASE CLASSES */
@@ -155,7 +157,6 @@ class pedantic_app_testrunner extends PHPUnit_TextUI_TestRunner
         $sys->allow_model_overwrite = false;
 
         /* drop and recreate the database */
-        echo "Running migrations\r\n";
         ob_start();
         pedantic_app_testrunner::recreate_database();
         for($i = 0; $i < sizeof($sys->migrations); $i++) {
@@ -169,7 +170,6 @@ class pedantic_app_testrunner extends PHPUnit_TextUI_TestRunner
             }
         }
         ob_end_clean();
-        echo "Database recreated\r\n";
     }
     public function recreate_database() {
         $db_name = App::$env->dsn['database'];
@@ -192,6 +192,7 @@ class pedantic_app_testrunner extends PHPUnit_TextUI_TestRunner
     }
 }
 
+/* WHAT USES THESE METHODS !?!?! LIB TESTING?? */ 
 function update_schema_version($version)
 {
     $sql = "UPDATE schema_info set version='$version'";
