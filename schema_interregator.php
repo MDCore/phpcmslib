@@ -1,7 +1,26 @@
 <?
 class schema_interregator
 {
-    function pull_schema_for_model($model_name, $echo_progress = false) {
+    function pull_entire_schema($env)
+    {
+        /* get a list of tables in the db */
+        $AR = new AR;
+        $AR->db->loadModule('Manager');
+        $AR->db->loadModule('Reverse');
+        $tables_list = $AR->db->listTables();
+
+        /* pull each tables' schema */
+        $tables = array();
+        foreach ($tables_list as $table) {
+            $table_name = $env['database'].'.'.$table;
+            $table_schema = $AR->db->tableInfo($table_name, null);
+            $tables[$table] = $table_schema;
+        }
+        return $tables;
+    }
+
+    function pull_schema_for_model($model_name, $echo_progress = false)
+    {
         if (substr($model_name, 0, 1) != '_')  { /* don't try to interrogate or load models prefixed with _ */
             $model_object = new $model_name;
             if (!isset($model_object->virtual)) {
@@ -43,7 +62,8 @@ class schema_interregator
             }
         }
     }
-    function pull_schema_for_all_models() {
+    function pull_schema_for_all_models()
+    {
         $tables = null;
 
         if (sizeof($_SESSION[APP_NAME]['application']['models']) > 0) {
@@ -64,14 +84,16 @@ class schema_interregator
         return $tables;           
     }
 
-    function build_schema_definition() {
+    function build_schema_definition()
+    {
         $schema = schema_interregator::pull_schema_for_all_models();
         if ($schema != '') {
             $source = schema_interregator::generate_schema_source($schema);
             schema_interregator::write_schema_source($source);
         }
     }
-    function generate_schema_source($schema) {
+    function generate_schema_source($schema)
+    {
         $source = null;
         $source = '$schema_definition = Array(';
         if (!$schema) { return false; } //todo raise an exception
@@ -97,7 +119,8 @@ class schema_interregator
         //echo '<pre>'.$source.'</pre>';
     }
 
-    function write_schema_source($source, $filename = 'default') {
+    function write_schema_source($source, $filename = 'default')
+    {
         if ($source == '') {
             return false;
         }

@@ -5,7 +5,7 @@
 class schema_migration
 {
     public $running_from_shell = false;
-    public $allow_model_overwrite_override = false; /* testing sets this to true */
+    public $allow_model_overwrite = true; /* testing sets this to false */
     /* ensures that the schema definition is rebuilt when the migrate task is called, even if no migrations occur */
     public $schema_rebuilt = false ;
     function __construct() {
@@ -303,7 +303,7 @@ class schema_migration
          *      validates_presence_of
          */
 
-        if (!$this->allow_model_overwrite_override) { /* testing bypasses the file creation */
+        if ($this->allow_model_overwrite) { /* testing bypasses the file creation */
             //create the file if required
             $filename = realpath($path_to_root)."/models/$model_name.php";
 

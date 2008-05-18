@@ -62,6 +62,55 @@ case 'migrate':
     require $path_to_lib.'/schema_migration.php' ;
     require $path_to_lib.'/tasks/migrate/migrate.php';
     break;
+
+case 'test':
+    ini_set('memory_limit', '100M');
+    require_once 'PHPUnit/Framework.php';
+    require_once 'PHPUnit/TextUI/TestRunner.php';
+
+    /* setup test_specific stuff */
+    $path_to_root = '.';
+    define('TEST_MODE', true);
+
+    require $path_to_root.'/vendor/pedantic/lib/init.php';
+    require $path_to_lib.'/schema_interregator.php' ;
+    require $path_to_lib.'/schema_migration.php' ;
+    require $path_to_root.'/vendor/pedantic/lib/test_functions.php';
+
+    /* include the helpers file with general custom test methods */
+    include $path_to_root.'/test/test_helpers.php';
+
+    /* require the model test files */
+    pedantic_app_TestRunner::init_models($path_to_root);
+
+    $suite = new pedantic_app_testsuite();
+
+    /* add all the test suites */
+    $test_files = pedantic_app_testrunner::$test_files;
+    $part = 'models';
+    foreach ($test_files[$part] as $test_class_name => $test_file) {
+        //echo "Adding Test Suite $test_class_name\r\n";
+        $suite->addTestSuite($test_class_name);
+    }
+    /* controllers + views */
+    //todo
+
+    /* pull the development database schema */
+    // step 1: run all the migrations against the test environment (implicitly the test env)
+    #pedantic_app_testrunner::run_all_migrations();
+
+    // step 2: pull the schema
+    echo "pulling the schema\r\n";
+    $schema_interregator = new schema_interregator;
+    $schema = $schema_interregator->pull_entire_schema(App::$env->dsn);
+
+    /* set the schema property in pedantic_app_testrunner */
+    pedantic_app_testrunner::$schema = $schema;
+
+    pedantic_app_testrunner::run($suite);
+
+    break;
+
 case 'help':
 ?>
 Beachhead : Create a new project
