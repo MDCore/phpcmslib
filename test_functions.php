@@ -5,6 +5,8 @@
  * - fixtures methods can take multiple parameters, all to be executed
  * - remove custom methods below wherever they are used and use official methods instead
  * - functional testing... faking the http process
+ * - session rebuilding. 
+ * - rerun application between each session
  */
 
 /* TESTCASE CLASSES */
@@ -45,7 +47,7 @@ class pedantic_app_testcase extends PHPUnit_Framework_TestCase
 
                     unset($table_definition[$i]);
                 }
-                //#echo $table_name."\r\n";
+                //echo $table_name."\r\n";
                 //var_dump($table_definition);
                 $result = $AR->db->createTable($table_name, $table_definition);
             }
@@ -76,7 +78,9 @@ class pedantic_controller_view_testcase extends pedantic_app_testcase
         
         $face = pedantic_app_testrunner::$face;
         /* require the face controller */
-        require(App::$env->root."/$face/controllers/face_controller.php");
+        if (!class_exists('face_controller')) {
+            require(App::$env->root."/$face/controllers/face_controller.php");
+        }
 
         /* require the controller */
         $file_name = App::$env->root.'/'.$face.'/controllers/'.$controller_name.'.php';
@@ -84,12 +88,11 @@ class pedantic_controller_view_testcase extends pedantic_app_testcase
     }
     function setUp()
     {
-        session_start();
         parent::setUp();
     }
     function tearDown()
     {
-        session_destroy();
+        //session_unset();
         parent::tearDown();
     }
     
@@ -157,13 +160,13 @@ class pedantic_app_testrunner extends PHPUnit_TextUI_TestRunner
     }
     function run_part_tests($test_files, $part, $face = null)
     {
-        if (is_null($test_files)) {
+        if (is_null($test_files) | !is_array($test_files)) {
             return false;
         }
         if (is_null($part)) {
             die('No part specified');
         }
-        var_dump($test_files);
+        //var_dump($test_files);
         foreach ($test_files as $test_class_name => $test_file) {
             $heading = humanize($part).': '.humanize($test_class_name);
             echo "\r\n".$heading."\r\n".str_repeat('=', strlen($heading))."\r\n";

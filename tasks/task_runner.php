@@ -85,7 +85,7 @@ case 'test':
     /* pull the development database schema */
     // step 1: run all the migrations against the test environment (implicitly the test env)
     echo "Running the migrations against the test database\r\n";
-    #pedantic_app_testrunner::run_all_migrations();
+    pedantic_app_testrunner::run_all_migrations();
 
     // step 2: pull the schema
     echo "pulling the schema from the test database\r\n";
