@@ -351,7 +351,7 @@ class cm_controller extends action_controller {
      */
     public function cm_delete() {
         // delete these puppies
-            $sql_delete = "WHERE ".$this->primary_key_field." IN (";
+            $sql_delete = $this->primary_key_field." IN (";
             $records_deleted = 0;
             foreach ($_POST['delete'] as $delete_id)
             {
