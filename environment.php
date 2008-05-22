@@ -14,6 +14,7 @@ class Environment
 
 
         if ($environment == 'auto' | $environment == 'must_match') {
+            $server_hostname = 'unknown';
             //find_environments
             foreach (Environment::find_environments($path_to_root) as $env) {
                 if (App::$reloading) {
@@ -31,7 +32,11 @@ class Environment
                         }
                         if ($running_from_shell) {
                             /* shell checking */
-                            if (isset($env_object->shell_username) && $env_object->shell_username == $_SERVER['USER']) {
+                            $server_hostname = $_SERVER['USER'];
+                            if (!$server_hostname) {
+                                $server_hostname = $_SERVER['LOGNAME'];
+                            }
+                            if (isset($env_object->shell_username) && $env_object->shell_username == $server_hostname) {
                                 if (App::$reloading) {
                                     echo "<strong>Matched to environment <i>$env</i></strong>";
                                 }
@@ -39,7 +44,7 @@ class Environment
                             }
                         } else {
                             /* http checking */
-                            
+                            $server_hostname = $_SERVER['HTTP_HOST'];
                             if (preg_match($url, $_SERVER['HTTP_HOST'])) {
                                 if (App::$reloading) {
                                     echo "<strong>Matched to environment <i>$env</i></strong>";
@@ -64,8 +69,8 @@ class Environment
                 }
             }
             if ($environment == "must_match") {
-                $error = '<h1>Application Load Failed</h1>The domain <i>'.$_SERVER['HTTP_HOST'].'</i> could not be matched to any environment.';
-                die($error);
+                $error = '<h1>Application Load Failed</h1>The domain <i>'.$server_hostname.'</i> could not be matched to any environment.';
+                trigger_error($error, E_USER_ERROR); die();
             }
             if (App::$reloading) {
                 echo "</ul>";
