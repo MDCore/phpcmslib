@@ -97,6 +97,9 @@ function pluralize($str) {
     if (strtolower(substr($str, -2)) == 'ss') {
         return $str.'es';
     }
+    if (strtolower(substr($str, -2)) == 'ch') {
+        return $str.'es';
+    }
     #exceptions
     if (preg_match('/person$/', $str)) { return substr($str, 0, strlen($str)-6).'people'; }
 

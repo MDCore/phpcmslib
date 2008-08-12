@@ -12,6 +12,7 @@
 
 /* TODO
  * - document properties of cm_controller (find out how)
+ * - related pages doesn't have enough convention over configuration
  */
 class cm_controller extends action_controller {
     public $is_controller = true;
@@ -29,7 +30,7 @@ class cm_controller extends action_controller {
     public $list_sort_field = null, $list_sort_type = null;
 
     /*
-     * now in /cm/face_controller
+     * now in /cm/cm_face_controller
      
     public $before_controller_load_filter = 'is_logged_in';
     public $before_controller_execute_filter = 'check_for_print';
@@ -39,7 +40,7 @@ class cm_controller extends action_controller {
         parent::__construct();
 
         #the face_controller should be virtual;
-        if ($this->route['controller'] == 'face') { 
+        if (($this->route['controller'] == $this->route['face'].'_face') || ($this->route['controller'] == 'face')) { 
             $this->virtual = true;
         }
         if ($this->virtual) {

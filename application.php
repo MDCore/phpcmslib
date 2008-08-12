@@ -160,7 +160,7 @@ class Application
         }
     }
 
-    static function require_this($type_name, $name, $face = null)
+    static function require_this($type_name, $name, $face = null, $recheck_if_missing = true)
     {
         /* this is not used to require models, only other resources */
 
@@ -174,6 +174,13 @@ class Application
             //echo '<pre>';print_r($_SESSION[APP_NAME]['application'][$face][$type_name][$name.'.php']);echo '</pre>';
             $file_to_require = $_SESSION[APP_NAME]['application'][$face][$type_name][$name.'.php'];
             return $file_to_require;
+        } elseif ($recheck_if_missing) {
+
+            $expected_path = App::$env->root.'/'.$face.'/'.$type_name.'/'.$name.'.php';
+            if (file_exists($expected_path)) {
+                $_SESSION[APP_NAME]['application'][$face][$type_name][$name.'.php'] = $expected_path;
+                require($expected_path);
+            }
         } else {
             return false;
         }
@@ -261,7 +268,7 @@ function handle_error($errno, $errstr='', $errfile='', $errline='', $backtrace =
 
     /* do we send an email or just display it? */
     global $email_errors_to;
-    if (isset($email_errors_to) && $email_errors_to != '' && get_class(App::$env) != 'development') {
+    if (isset($email_errors_to) && $email_errors_to != '' && get_class(App::$env) == 'production') {
         $headers = "MIME-Version: 1.0\r\n";
         $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 

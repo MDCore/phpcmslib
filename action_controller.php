@@ -159,7 +159,17 @@ class action_controller {
     function render_layout() {
         if ($this->view_parameters) {foreach ($this->view_parameters as $variable => $value) { $$variable = $value; } }
 
-        if ($layout_path = App::require_this('layout', $this->layout)) { require ($layout_path); }
+        if ($layout_path = App::require_this('layout', $this->layout)) {
+            require ($layout_path);
+        } else {
+            /* fail: layout not found */
+            $environment = $_SESSION[APP_NAME]['application']['environment'];
+            if ($environment == 'production') {
+                http_header(404, true);
+            } else {
+                trigger_error('Layout <i>'.$this->layout.'</i> not found', E_USER_ERROR); 
+            }
+        }
 
     }
     function render_view($route_param = null) {
@@ -172,7 +182,17 @@ class action_controller {
 
         $view_url = $path_to_root.'/'.$route['face'].'/views/'.$route['controller'].'/'.$route['action'].'.php';
         //debug($view_url);
-        require ($view_url);
+        if (file_exists($view_url)) {
+            include($view_url);
+        }
+        else {
+            $environment = $_SESSION[APP_NAME]['application']['environment'];
+            if ($environment == 'production') {
+                http_header(404, true);
+            } else {
+                trigger_error("View <i>".$route['face'].'/'.$route['controller'].'/'.$route['action']."</i> not found", E_USER_ERROR); 
+            }
+        }
 
         return true;
     }

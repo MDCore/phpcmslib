@@ -41,19 +41,21 @@ class dispatcher
             App::$route = route_from_path($path);
 
         #-------------------------------------------------------------------------------------------------
-            
-           #echo '<pre>';print_r(App::$route);echo '</pre>';
-        #load the controller
-            #load the face_controller for this face first
-            if ($face_controller_path = App::require_this('controller', 'face_controller', App::$route['face'])) {
-                #the face controller was found
-                require($face_controller_path);
-                $face_controller = new face_controller;
-            }
-            else {
-                #a face controller is required
-                    trigger_error("face_controller not found for <strong>".App::$route['face']."</strong> face", E_USER_ERROR); 
-            }
+        #echo '<pre>';print_r(App::$route);echo '</pre>';
+        #
+        #load the face_controller for this face first
+        if ($face_controller_path = App::require_this('controller', App::$route['face'].'_face_controller', App::$route['face'])) {
+            $face_controller_classname = App::$route['face'].'_face_controller';
+        } elseif ($face_controller_path = App::require_this('controller', 'face_controller', App::$route['face'])) {
+            $face_controller_classname = 'face_controller';
+        }
+        else {
+            #a face controller is required
+                trigger_error("face_controller not found for <strong>".App::$route['face']."</strong> face", E_USER_ERROR); 
+        }
+        require($face_controller_path);
+        $face_controller = new $face_controller_classname;
+
         #-------------------------------------------------------------------------------------------------
             #before_controller_load_filter
                 $face_controller->handle_controller_filter('before_controller_load', $face_controller);
@@ -68,14 +70,12 @@ class dispatcher
         #-------------------------------------------------------------------------------------------------
             
             if (!$controller) {
-                // check for some 'oddities'
-                switch(App::$route['controller']) {
-                case 'favicon_ico_controller':
-                    /*case 'robots_txt_controller': // I'm excluding robots.txt here. It _should_ exist as a good practice */
+                /* generate an error of some kind if the file does not exist */
+                global $environment;
+                if ($environment == 'production') {
                     http_header(404, true);
-                    break;
-                default:
-                    trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> not found", E_USER_ERROR);
+                } else {
+                    trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> not found", E_USER_ERROR); 
                 }
             }
 
