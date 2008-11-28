@@ -107,7 +107,7 @@ Beachhead : Create a new project
 usage:
 beachhead <path> <repository_url>
 [--root_url=ROOT_URL]           The default root URL is '/'.
-[--project=PROJECT_NAME]        The default project name is the last directory in 
+[--project=PROJECT_NAME]        The default project name is the last directory in
                                 the path parameter.
 
 Migrate : Run migrations

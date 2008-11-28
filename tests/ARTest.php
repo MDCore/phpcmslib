@@ -7,7 +7,7 @@
  * - modify more tests to use the big test data
  * - use proper mocking and stubbing, not my handmade... stuff
  * - remove hardcoded DSN information
- */                                                      
+ */
 
 /* requires
  * we need to require everything we need here because allTests.php is not run when
@@ -99,9 +99,9 @@ class ARTest extends DB_TestCase {
     }
 
     public function test_find_with_only_additional_options()
-    { 
+    {
         $customer = new customer;
-        $customer->find(null, 
+        $customer->find(null,
             array('WHERE' => "name like '%Mary Williams%'")
         );
 
@@ -124,7 +124,7 @@ class ARTest extends DB_TestCase {
         $customer = new customer;
         $customer->find_by_id(1);
         $this->assertEquals('Mary Williams',$customer->name);
-        
+
         $test = new customer;
         $test->find_by_name('Mary Williams');
         $this->assertEquals(1, $test->id);
@@ -234,7 +234,7 @@ class ARTest extends DB_TestCase {
         $this->assertEquals(1, $customer->record['id']);
     }
 
-    #bug: these additional criteria need to be upper case for SQL 
+    #bug: these additional criteria need to be upper case for SQL
     public function test_get_additional_criteria_from_relationships()
     {
         #has many
@@ -377,7 +377,7 @@ class ARTest extends DB_TestCase {
          */
         $this->markTestIncomplete();
     }
-    /* 
+    /*
      * save tests
      */
     public function test_save_with_direct_value_updates() {
@@ -407,17 +407,17 @@ class ARTest extends DB_TestCase {
 
         $test = new customer; $test->find(5001);
         $this->assertEquals('new name', $test->name);
-       
+
     }
 
     public function testSave_multiple() {
         $input = array(
-            'user_id' => 1, 
+            'user_id' => 1,
             'find_id'  => Array(2, 3)
         );
         $user_find = new user_find;
         $result = $user_find->save_multiple($input);
-        
+
         $user = new user;
         $user->find(1);
         $this->assertEquals(3, $user->finds->count);
@@ -450,7 +450,7 @@ class ARTest extends DB_TestCase {
         $_SESSION[APP_NAME]['user_id'] = 17;
 
         $user_find = new user_find(array(
-            'find_id' => 99, 
+            'find_id' => 99,
             'user_id' => 25
         ));
         $uf_id = $user_find->save();
@@ -470,7 +470,7 @@ class ARTest extends DB_TestCase {
         $this->assertFalse($customer->update());
     }
     public function test_update_saves_to_database() {
-        
+
         $customer = new customer;
         $customer->find(1);
         $customer->name = 'new customer';
@@ -554,7 +554,7 @@ class ARTest extends DB_TestCase {
         $customer = new customer();
         $customer->find(1);
         $customer->delete();
-        
+
         #indirect
         $cc = new customer_changelog;
         $cc->find_most_recent_by_customer_id(1);
@@ -574,7 +574,7 @@ class ARTest extends DB_TestCase {
         $this->fail('An exception was not raised when accessing the changelog on a non-existent customer');
     }
 
-    /* 
+    /*
      * misc
      */
     public function test_AR_disallows_changing_id() {
@@ -612,7 +612,7 @@ class ARTest extends DB_TestCase {
         $customer = new customer;
         $customer->find(1);
         $customer->clear_attributes();
-        $this->assertNotEquals(1, $customer->id); 
+        $this->assertNotEquals(1, $customer->id);
         $customer = null;
 
         $collection = array('name' => 'new name');
@@ -622,7 +622,7 @@ class ARTest extends DB_TestCase {
         $this->assertNotEquals('new name', $customer->name);
         $c2 = null;
 
-        /* 
+        /*
          * not a test per se... but this code generates an error when it shouldn't. not sure how to test for that ( pre nov 2007 )
          * 2007-12-02: not sure this is giving an error anymore
          *
@@ -659,7 +659,7 @@ class ARTest extends DB_TestCase {
             #todo
 
         #custom method #todo
-        
+
         #make sure it doesn't do anything when empty
             try
             {
@@ -855,7 +855,7 @@ class ARTest extends DB_TestCase {
         $this->assertEquals(2, $test->find_by_id(1)->sub_branch()->count, 'the father node should have 2 nodes in its sub_branch');
 
         $this->assertEquals(45, $test->find_by_id(1)->sub_branch()->sum('sum_test'));
-        
+
         //great-grandson
         $cat = new tree_table;
         $cat->parent_id = 3;
@@ -884,7 +884,7 @@ class ARTest extends DB_TestCase {
         $this->assertEquals(4, $cat->save());
         $cat = new tree_table(array('name' => 'great-grandson', 'sum_test' => 75));
         $this->assertEquals(5, $cat->save());
-        
+
         /* check that all the records are there */
         $test = new tree_table;
         $this->assertEquals(5, $test->find('all')->count);

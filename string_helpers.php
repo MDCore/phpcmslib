@@ -21,9 +21,9 @@ function foreign_keyize($str) {
     #debug(tableize($str));debug(singularize($str));
     return tableize($str).'_id';
     #return singularize(tableize($str)).'_id'; #auto singularization is causing probs
-    
+
 }
-function humanize($str) { #todo should this worry about CamelCase ? 
+function humanize($str) { #todo should this worry about CamelCase ?
     $result = '';
     $string_length = strlen($str); #this is a speedup; putting it inside the loop means it is called each time
     for ($i = 0; $i < $string_length; $i++) # todo too clunky, use a regex
@@ -42,14 +42,14 @@ function humanize($str) { #todo should this worry about CamelCase ?
     $result = str_replace('  ', ' ', $result); #todo fix this hackety hack!
 
     #upper case single characters
-        $result = preg_replace_callback('( [a-z] )', 
+        $result = preg_replace_callback('( [a-z] )',
        create_function(
            // single quotes are essential here,
            // or alternative escape all $ as \$
            '$matches',
            'return strtoupper($matches[0]);'
        ), $result);
-    
+
     return proper_case($result);
 }
 function tableize($str) {
@@ -115,7 +115,7 @@ function split_on_word($string, $range, $add_ellipses = false, $htmlentities = f
      * is length 4 but its array is 0-3. So if I want a min of 1 then my min must actually be 0, to compensate for the zero-based array.
      */
     $min = $range[0]-1; $max = $range[1]-1;
-    
+
     /* if the string is less than the max then our work here is done */
         if (!isset($string{$max})) { /* speedup for: if (strlen($string) < $max) { */
             return $string;
@@ -131,7 +131,7 @@ function split_on_word($string, $range, $add_ellipses = false, $htmlentities = f
 
     foreach ($split_candidates as $candidate) {
         /* Why are we increasing the length of max ? Well, I want to account for the chance that the
-         * last character is a split character or phrase. If the last character is a split 
+         * last character is a split character or phrase. If the last character is a split
          * character (or phrase) then we get a max length string, instead of a possibly much shorter one.
          */
         $string_candidate = substr($string, $min, ($max - $min + strlen($candidate)));
@@ -149,7 +149,7 @@ function split_on_word($string, $range, $add_ellipses = false, $htmlentities = f
     if ($htmlentities) { $return = htmlentities($return); }
     if ($add_ellipses) { $return .= '&#0133;'; }
     return $return;
-     
+
 }
 
 function value_else_na($value) {

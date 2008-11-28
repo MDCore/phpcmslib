@@ -134,9 +134,9 @@ class functionsTest extends PHPUnit_Framework_TestCase {
 
         $this->assertEquals($expected, SQL_implode($input));
     }
-    /* I want this to work, but I understand why it doesn't. It doesn't because assuming where clauses 
+    /* I want this to work, but I understand why it doesn't. It doesn't because assuming where clauses
      * need joining by AND is presumptive.
-     * I could  change AR::sql_phrases['WHERE'] to ' AND ' but I think it might be counterproductive and 
+     * I could  change AR::sql_phrases['WHERE'] to ' AND ' but I think it might be counterproductive and
      * prevent more advanced WHERE critera. That assertion needs testing though */
     public function testSQLImplode8() {
         $input = array(
@@ -179,7 +179,7 @@ class functionsTest extends PHPUnit_Framework_TestCase {
         );
         $this->assertEquals($expected, SQL_explode($input));
     }
-    
+
     public function testSQLExplode4()
     {
         $input = "SELECT a, b as cats, c FROM t INNER JOIN bob ON bob.a = t.p WHERE id=3 AND (t='a' AND t='b') ORDER BY p ASC";
@@ -221,7 +221,7 @@ class functionsTest extends PHPUnit_Framework_TestCase {
     public function testSQLMerge1()
     {
         $input_1 = array(
-            'WHERE' => array("w1 = 'a'", " AND w2 = 'b'"), 
+            'WHERE' => array("w1 = 'a'", " AND w2 = 'b'"),
             'SELECT' => array('t.1', 't.2'),
             'FROM' => 't'
         );

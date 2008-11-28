@@ -81,7 +81,7 @@ class Environment
         App::$env = new $environment;
     }
 
-    function find_environments($path_to_root) 
+    function find_environments($path_to_root)
     {
         $environment = null;
         if (App::$reloading) {
@@ -92,7 +92,7 @@ class Environment
             while (false != ($file = readdir($handle))) {
                 $environment = $file;
                 $file = $check_path.$file;
-                
+
                 if (is_file($file)) {
                     $environment = str_replace('.php', '', $environment);
                     $environments[] = $environment;
@@ -100,7 +100,7 @@ class Environment
             }
             closedir($handle);
             if (App::$reloading) {
-                echo "<li>found environments:"; 
+                echo "<li>found environments:";
                 echo '<pre>';print_r($environments);echo '</pre>';
                 echo "<li>";
             }
@@ -114,6 +114,6 @@ class Environment
 class Env extends Environment
 {
     //foo is there cos I read something about empty classes not working so lekker. yes, yes, where's my proof...
-    var $foo = ''; 
+    var $foo = '';
 }
 ?>

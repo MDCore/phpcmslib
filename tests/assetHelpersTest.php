@@ -25,7 +25,7 @@ class assetHelpersTest extends PHPUnit_Framework_TestCase {
     protected function setUp() {
         App::$face = 'site';
         App::$env = new Environment;
-        
+
         App::$env->root = '/websites/tests';
         App::$env->url = 'http://webserver/tests';
     }

@@ -66,7 +66,7 @@ class forms
         $result = '';
         if (sizeof($options)> 0) {
             $element_name = $name; $element_name = str_replace( '[', '_', $element_name); $element_name = str_replace( ']', '_', $element_name);
-            $result .= "<div id=\"".$element_name."_container\">"; 
+            $result .= "<div id=\"".$element_name."_container\">";
 
             $result .= '<table><tr>';
             /* the select all checkbox */
@@ -111,11 +111,11 @@ class forms
     {
         /*
          * $options takes a either html source of options or one of these values:
-         * yes_no, true_false 
+         * yes_no, true_false
          */
         $result = "<select id=\"".$name."\" name=\"$name\"";
         $result .= self::parse_attributes($attributes, array('default'));
-        $result .= ">"; 
+        $result .= ">";
         if (!is_array($options) && $options == 'yes_no' )
         {
             $result .= '<option value="Y" ';
@@ -133,13 +133,13 @@ class forms
             $result .= '<option value="false" ';
             if ( $value == 'false' ) { $result .= 'selected = "selected"'; }
             $result .= '>False</option>' ;
-            
+
         }
         elseif (!is_null($options))
         {
                 $result .= $options;
         }
-        $result .= "</select>"; 
+        $result .= "</select>";
         return $result;
     }
 
@@ -154,9 +154,9 @@ class forms
 
 
         $result .= self::parse_attributes( $attributes );
-        $result .= ' />';  
+        $result .= ' />';
         $result .= '<input type="button" class="date_picker_button" id="'.$id.'_button" value="..." />';
-        
+
         $result .= '
             <script type="text/javascript">
             Calendar.setup({
@@ -184,23 +184,23 @@ class forms
 
         $result .= self::parse_attributes( $attributes );
 
-        $result .= ' />';  
+        $result .= ' />';
     return $result;
     }
 
-    function textarea($name, $value = null, $attributes = null) 
+    function textarea($name, $value = null, $attributes = null)
     {
         $result = '';
         if (!isset($attributes['id'])) { $attributes['id'] = str_replace(']', '', str_replace('[', '_', $name)); }
 
         $result .= '<textarea name="'.$name.'" ';
         $result .= self::parse_attributes( $attributes );
-        $result .= ' />'.stripslashes($value).'</textarea>'; 
+        $result .= ' />'.stripslashes($value).'</textarea>';
 
     return $result;
     }
 
-    function partial($name) 
+    function partial($name)
     {
         /* this whole partial handling is a HACK! action_controller should be rendering the partial. not this way. Ugh! */
         $base_url = App::$route;
@@ -225,7 +225,7 @@ class forms
         require($path);
     }
 
-    function parse_attributes($attributes, $except = null) 
+    function parse_attributes($attributes, $except = null)
     {
         $result = '';
         if ($attributes) {
@@ -256,17 +256,17 @@ class forms
     function form($default_model, $record = null)
     {
         ?><div class="form list_form"><?
-        
+
         $page = App::$controller;
         $arguments = func_get_args();
-        if (sizeof($arguments) == 1) {$arguments = $arguments[0];} //arguments are being passed as an array 
+        if (sizeof($arguments) == 1) {$arguments = $arguments[0];} //arguments are being passed as an array
 
         /*
          * arg 0 is the default model
          * arg 1 is the record
          * arg 2... should be arrays for the elements
          */
-            
+
         $default_model = $arguments[0];
         $record = $arguments[1];
         for ($i=2;$i<sizeof($arguments);$i++)
@@ -274,11 +274,11 @@ class forms
             $arg = $arguments[$i];
             if (is_array($arg)) // it's a form element
             {
-                $draw_element = true; 
+                $draw_element = true;
                 //is there an 'only' option ?
                 if ( array_key_exists( 'only', $arg ) )
                 {
-                    $only = $arg['only'];    
+                    $only = $arg['only'];
                     $only = split( ',', $only );
                     if (!in_array( $page->action, $only ))
                     {
@@ -286,7 +286,7 @@ class forms
                     }
                 }
 
-                if ( $draw_element ) 
+                if ( $draw_element )
                 {
                     //is it a partial or a form element ?
                     if ( array_key_exists( 'partial', $arg ) )
@@ -298,7 +298,7 @@ class forms
                         self::draw_element( $arg, $default_model, $record );
                     }
                 }
-            }                
+            }
             else
             {
                 //spit it out as is
@@ -324,7 +324,7 @@ class forms
 
     function draw_element( $element_description, $default_model, $record )
     {
-        
+
         /*
          * form element definition
          * 0 = display_name
@@ -344,11 +344,11 @@ class forms
         if ( sizeof( $element_description ) == 1 || !isset($element_description[1])) {
             //default settings:
             // input type=text with this as title and field_name
-            $element_description[1] = 'input'; 
+            $element_description[1] = 'input';
 
             //check for other special cases
             if ($element_description[0]  == 'password') {
-                $db_field_name = 'password_md5'; 
+                $db_field_name = 'password_md5';
                 $field_name = "$default_model"."[$db_field_name]";
                 //$element_description['type'] = "password"; not setting to password because it is never shown. plain text entry is better
                 $element_description['value'] = '';
@@ -357,7 +357,7 @@ class forms
         }
         //convert type of hidden to type input attrib type=hidden
         if ($element_description[1] == 'hidden') {
-            $element_description[1] = 'input'; 
+            $element_description[1] = 'input';
             $element_description['type'] = 'hidden';
             $visible = false;
         }
@@ -379,7 +379,7 @@ class forms
                 'field_name' => $element_description[0],
                 'record_id' => $record->id
             );
-        }  
+        }
 
         /* find the options for the select */
         if (isset($element_description['model'])) {
@@ -406,11 +406,11 @@ class forms
                 if (class_exists($fk_model)) {
                     $options_object = new $fk_model;
                 } else {
-                    trigger_error("<i>$fk_model</i> model class does not exist.", E_USER_ERROR); 
+                    trigger_error("<i>$fk_model</i> model class does not exist.", E_USER_ERROR);
                 }
 
                 if (!($primary_model_object->has_one($fk_model) || $primary_model_object->belongs_to($fk_model))) {
-                    trigger_error("Relationship to  <i>".$fk_model."</i> not found", E_USER_ERROR); 
+                    trigger_error("Relationship to  <i>".$fk_model."</i> not found", E_USER_ERROR);
                 }
 
                 $field_name = $default_model."[$db_field_name]";
@@ -432,7 +432,7 @@ class forms
                     $join_model_object_name = singularize($primary_model_object->has_many_through($fk_model));
                     $join_model_object = $join_model_object_name;
                     $join_model_object = new $join_model_object;
-                    
+
                     $db_field_name = foreign_keyize(singularize($fk_model));
 
                     $field_name = $join_model_object_name."[$db_field_name]";
@@ -453,14 +453,14 @@ class forms
                     $element_description[0] = $element_description[0];
                     $element_description['options'] = $options;
                     $element_description['value'] = array_values($values);
-                    
+
                 } elseif (!(array_key_exists('options', $element_description))) {
-                    trigger_error("Relationship to  <i>".$fk_model."</i> not found", E_USER_WARNING); 
+                    trigger_error("Relationship to  <i>".$fk_model."</i> not found", E_USER_WARNING);
                 }
                 break;
             }
         }
-        
+
         //field_name and db_field_name
         if (!$field_name && !$db_field_name) { // if not set by a special case
             if (array_key_exists('name', $element_description)) {
@@ -521,7 +521,7 @@ class forms
             echo $element_html;
         }
     }
-    
+
     function form_buttons($update_name = "update", $show_reset = true, $show_cancel = true, $show_note = true)
     {
         ?><input type="submit" value="<?=$update_name?>" />&nbsp;

@@ -17,7 +17,7 @@ body {
 }
 .migration a {
     color: #000;
-    font-size: 0.8em; 
+    font-size: 0.8em;
     text-decoration: none;
 }
 .success {

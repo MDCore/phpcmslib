@@ -150,7 +150,7 @@ class tasks_beachhead
             echo $this->strings[304]."\r\n";
         }
         foreach ($this->submodules as $submodule) {
-            $repository = $submodule['repository']; 
+            $repository = $submodule['repository'];
             $branch = $submodule['branch'];
             $path = $submodule['path'];
             if ($branch == '') {
@@ -167,7 +167,7 @@ class tasks_beachhead
         if ($op) {
             echo $this->strings[305];
         }
-        
+
         /* sort out the project url */
         $project_url = $this->root_url.'/'.$project;
         $project_url = str_replace('//', '/', $project_url);
@@ -217,16 +217,16 @@ class tasks_beachhead
                 'DEV_URL' => $project_url
             )
         );
-        
+
         /* give everyone writes to change the schema def. Well, at least www user */
         chmod($this->project_path.'/config/cache/schema_definition.php', 0777);
-        
+
 
         exec("cd {$this->project_path} ; git commit -a -m '".$this->strings['401']."'", $output);
         if ($op) {
             //echo "\r\n".$this->strings[310]."\r\n";
         }
-        
+
         /* creating the database */
         if ($op) {
             echo $this->strings[309]."\r\n";

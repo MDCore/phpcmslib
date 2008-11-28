@@ -56,7 +56,6 @@ class stringHelpersTest extends PHPUnit_Framework_TestCase {
         $expected = "Private -- under contract BEIJ Trust";
         $this->assertEquals($expected, split_on_word($sentence, $range));
 
-        
     }
 
 }

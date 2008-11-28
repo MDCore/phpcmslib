@@ -13,10 +13,10 @@ $possible_tlds = array('com', 'co.za', 'org.za', 'net', 'za.net', 'org', 'tv', '
 if (mt_rand(0, 100) <= 51) {
     $frequency_range = 263;
     $sex = 'female';
-} 
+}
 else {
     $frequency_range = 332;
-    $sex = 'male'; 
+    $sex = 'male';
 }
 
 $AR = new AR;
@@ -24,7 +24,7 @@ $echo = false;
 if ($echo ) { echo '<table>'; }
 for ($i = 0; $i < 100000; $i++)
 {
-    #the names 
+    #the names
     $name = get_name($sex.'_names', $frequency_range);
     $surname = get_name('surnames', 100);
     $name = proper_nounize(strtolower($name)); $surname = proper_nounize(strtolower($surname));

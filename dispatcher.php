@@ -24,7 +24,7 @@ class dispatcher
                 $path = null;
             }
             unset($collection['qs']);
-            
+
             if ($path == 'index_html') {$path = 'default';}
             return $path;
         }
@@ -36,7 +36,7 @@ class dispatcher
             $collection = &$_GET;
         }
         $path = $this->path_from_collection($collection);
-        
+
         /* build the route */
             App::$route = route_from_path($path);
 
@@ -51,7 +51,7 @@ class dispatcher
         }
         else {
             #a face controller is required
-                trigger_error("face_controller not found for <strong>".App::$route['face']."</strong> face", E_USER_ERROR); 
+                trigger_error("face_controller not found for <strong>".App::$route['face']."</strong> face", E_USER_ERROR);
         }
         require($face_controller_path);
         $face_controller = new $face_controller_classname;
@@ -59,7 +59,7 @@ class dispatcher
         #-------------------------------------------------------------------------------------------------
             #before_controller_load_filter
                 $face_controller->handle_controller_filter('before_controller_load', $face_controller);
-            
+
         #-------------------------------------------------------------------------------------------------
 
             if ($controller_path = App::require_this('controller', App::$route['controller'], App::$route['face'])) {
@@ -68,14 +68,14 @@ class dispatcher
                 $controller = new App::$route['controller'];
             }
         #-------------------------------------------------------------------------------------------------
-            
+
             if (!$controller) {
                 /* generate an error of some kind if the file does not exist */
                 global $environment;
                 if ($environment == 'production') {
                     http_header(404, true);
                 } else {
-                    trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> not found", E_USER_ERROR); 
+                    trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> not found", E_USER_ERROR);
                 }
             }
 

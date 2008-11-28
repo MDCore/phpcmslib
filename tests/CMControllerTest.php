@@ -17,7 +17,7 @@ require_once 'DB_TestCase.php';
 
 class CMControllerTest extends DB_TestCase {
     /* construct, destruct, setup and teardown are handled by the
-     * DB Testcase which recreates the test db 
+     * DB Testcase which recreates the test db
      */
 
     public function test___construct()
@@ -136,7 +136,7 @@ class CMControllerTest extends DB_TestCase {
         $_POST = array('user_find'
             => array(
                 'find_id' => array(
-                   2, 3 
+                   2, 3
                 )
             )
         );
@@ -150,7 +150,7 @@ class CMControllerTest extends DB_TestCase {
         $this->assertEquals('success', $result['result']);
         $this->assertEquals(2, $user->user_finds->count);
     }
-    
+
 }
 
 /* controller classes */

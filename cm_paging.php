@@ -14,7 +14,7 @@ class cm_paging {
         #page no
             if (isset($_GET['page_no']) && is_numeric($_GET['page_no'])) {
                 $this->page_no = $_GET['page_no'];
-            } 
+            }
             else {
                 $this->page_no = 1;
             }
@@ -23,7 +23,7 @@ class cm_paging {
     function limit_sql() {
         $this->sanitize_page_numbers();
         if (0 == $this->no_of_records) { return '0, 0'; } #no records
-        
+
         $sql = (($this->page_no-1) * $this->records_per_page).', '.$this->records_per_page;
         return $sql;
 
@@ -40,7 +40,7 @@ class cm_paging {
     }
 
     function page_description($record_descriptor) {
-        ?><h4 class="paging_page_description">Viewing <? if ($this->page_no > 0 && $this->highest_page_no > 1) { 
+        ?><h4 class="paging_page_description">Viewing <? if ($this->page_no > 0 && $this->highest_page_no > 1) {
             $start_record = (($this->page_no-1) * $this->records_per_page)+1;
             $end_record = ($this->page_no) * $this->records_per_page;
             if ($end_record > $this->no_of_records) { $end_record = $this->no_of_records; }
@@ -62,7 +62,7 @@ class cm_paging {
         if ($return_as_string) { ob_start(); }
 
         ?><div class="paging_container" <? if ($this->paging_container_style) { ?>style="<?=$this->paging_container_style;?>"<? } ?>><?
-        
+
 
             #moving between pages
                 ?><div class="paging_page_numbers"><table style="width: 100%;"><tr><?
@@ -83,12 +83,12 @@ class cm_paging {
                         ?>><?=$per_page_option;?><?
                         if($this->records_per_page == $per_page_option) { ?> records per page<?  }
                         ?></option><?
-                    }      
+                    }
                     ?></select></span><?
                 }
 
                 ?></td><td><?
-                
+
                 if (($this->records_per_page * (int)$this->page_no) < $this->no_of_records) {
                     $this->link_to_page($this->page_no+1, null, 'page '.($this->page_no+1).' &gt;&gt;','next');
                 }
@@ -98,7 +98,7 @@ class cm_paging {
                 if ($this->highest_page_no > 1) {
                     $jump_pages = array();
                     $half_a_jump_block = (int)(($this->max_jump_links - 1) / 2);
-                
+
                 #link to all pages if less than max_jump_links pages
                     if ($this->highest_page_no < $this->max_jump_links) {
                         $jump_pages = range(1, $this->highest_page_no);
@@ -116,7 +116,7 @@ class cm_paging {
                             if ( $right_distance < $half_a_jump_block ) { $left_bonus = $half_a_jump_block - $right_distance; }
 
                         #if the left distance is < $half_a_jump_block then the right distance CANT be less than $half_a_jump_block too because that would have been covered by the < 11 above
-                        #if not less than five then we have a right bonus of 0 to $half_a_jump_block because right distance _might_ be less than $half_a_jump_block 
+                        #if not less than five then we have a right bonus of 0 to $half_a_jump_block because right distance _might_ be less than $half_a_jump_block
                         if ( $left_distance <= $half_a_jump_block )
                         {
                             $jump_pages = array_merge($jump_pages, range(1, $this->page_no));

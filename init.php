@@ -27,7 +27,7 @@ if (!isset($only_require_libraries)) {
     require($path_to_root.'/config/application.php');
 }
 
-/* 
+/*
  * PEAR in /vendor
  * If the shared-host doesn't install PEAR libraries, this adds the vendor/PEAR path
  * to include_path.
@@ -36,7 +36,7 @@ if (!isset($only_require_libraries)) {
 if (isset($use_PEAR_in_vendor) && $use_PEAR_in_vendor) {
     $local_pear_path = $path_to_root.'/vendor/PEAR/pear/php/';
     ini_set('include_path', ini_get('include_path').PATH_SEPARATOR.$local_pear_path);
-} 
+}
 
 /* PEAR Libraries */
 require_once('MDB2.php');
@@ -45,7 +45,7 @@ if ((isset($uses_nested_set) && $uses_nested_set == true)) {
 }
 
 /*
- * phpmailer was required here but that is not part of lib so I kicked it out. 
+ * phpmailer was required here but that is not part of lib so I kicked it out.
  * Require it in config/application if necessary.
  */
 

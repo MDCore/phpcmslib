@@ -14,7 +14,7 @@ class stylesheet_dispatcher extends dispatcher
         global $path_to_root;
         if (!$collection) { $collection = &$_GET; }
         $path = $this->path_from_collection($collection);
-        
+
         #build the route
             App::$route = route_from_path($path);
 

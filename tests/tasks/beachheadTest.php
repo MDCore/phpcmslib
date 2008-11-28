@@ -87,5 +87,5 @@ class tasks_beachheadTest extends PHPUnit_Framework_TestCase {
         $sql = "DROP DATABASE IF EXISTS tasks_beachhead_test";
         $result = $db->query($sql); App::error_check($result);
     }
-    
+
 }

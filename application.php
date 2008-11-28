@@ -1,7 +1,7 @@
 <?
 /* TODO
  * - differentiate between the requested route and the actually being rendered route.
- *   currently this is spread ambiguously between App::$route, controller->route and 
+ *   currently this is spread ambiguously between App::$route, controller->route and
  *   App::$face, App::$controller etc
  *
  */
@@ -33,7 +33,7 @@ class Application
         }
 
         global $environment; //pull in the environment from the config
-        
+
         /* slurp config/application.php settings */
         global $default_face; if ($default_face) {
             App::$default_face = $default_face;
@@ -54,7 +54,7 @@ class Application
         }
         App::$schema_definition = $schema_definition;
 
-        App::load_models($path_to_root); 
+        App::load_models($path_to_root);
 
         /* load the layouts, controllers and views for ALL faces */
         if (App::$booting) {
@@ -114,7 +114,7 @@ class Application
             echo "</ul></li>\r\n";
         }
     }
-    
+
     static function find_these($name, $face = null, $path = null)
     {
         if (App::$reloading) {
@@ -144,7 +144,7 @@ class Application
             while (false != ($file_name = readdir($handle))) {
                 //redundant line $layout = $file_name;
                 $file = App::$env->root.'/'.$path.'/'.$file_name;
-                
+
                 if (is_file($file)) {
                     $files[$file_name] = $file;
                 }
@@ -169,7 +169,7 @@ class Application
         if (!$face) {
             $face = App::$face;
         }
-        
+
         if (isset($_SESSION[APP_NAME]['application'][$face][$type_name]) && in_array($name.'.php', array_keys($_SESSION[APP_NAME]['application'][$face][$type_name]))) {
             //echo '<pre>';print_r($_SESSION[APP_NAME]['application'][$face][$type_name][$name.'.php']);echo '</pre>';
             $file_to_require = $_SESSION[APP_NAME]['application'][$face][$type_name][$name.'.php'];
@@ -186,7 +186,7 @@ class Application
         }
     }
 
-    static function error_check($result, $die_on_error = true) 
+    static function error_check($result, $die_on_error = true)
     {
         if (PEAR::isError($result) || MDB2::isError($result)) {
             if ($die_on_error) {
@@ -209,7 +209,7 @@ class App extends Application
  * error handler only for !dev
  */
 
-function framework_error_handler($errno, $errstr='', $errfile='', $errline='') 
+function framework_error_handler($errno, $errstr='', $errfile='', $errline='')
 {
     // if error has been supressed with an @
     if (error_reporting() == 0) {
@@ -247,7 +247,7 @@ function framework_error_handler($errno, $errstr='', $errfile='', $errline='')
 
     handle_error($errno, $errstr, $errfile, $errline, $backtrace);
 }
-function framework_exception_handler($exc) 
+function framework_exception_handler($exc)
 {
     $errno = $exc->getCode();
     $errstr = $exc->getMessage();
@@ -259,7 +259,7 @@ function framework_exception_handler($exc)
     handle_error($errno, $errstr, $errfile, $errline, $backtrace);
 }
 
-function handle_error($errno, $errstr='', $errfile='', $errline='', $backtrace = null) 
+function handle_error($errno, $errstr='', $errfile='', $errline='', $backtrace = null)
 {
     /* Lets 500 - Internal Server Error this script */
     http_header('500');
@@ -275,7 +275,7 @@ function handle_error($errno, $errstr='', $errfile='', $errline='', $backtrace =
         $subject = '['.$_SERVER['HTTP_HOST'].'] Error - '.date(DATE_RFC822);
         mail($email_errors_to, $subject, $detailed_error, $headers);
 
-        // print a pretty error message 
+        // print a pretty error message
         die(friendly_error_description());
     } else {
         //die(friendly_error_description());
@@ -283,7 +283,7 @@ function handle_error($errno, $errstr='', $errfile='', $errline='', $backtrace =
     }
 }
 
-function detailed_error_description($errno, $errstr='', $errfile='', $errline='', $backtrace = null) 
+function detailed_error_description($errno, $errstr='', $errfile='', $errline='', $backtrace = null)
 {
     /* stringify and friendlify error codes */
     switch($errno) {
@@ -387,7 +387,7 @@ function detailed_error_description($errno, $errstr='', $errfile='', $errline=''
     ob_clean();
     return $error_page;
 }
-function friendly_error_description() 
+function friendly_error_description()
 {
     ob_start();
     ?><html>
@@ -411,7 +411,7 @@ function backtrace($backtrace = null)
     } else {
         $bt = debug_backtrace();
     }
-   
+
     echo '<div class="error_handler_part"><h3>Backtrace (most recent call last)</h3>';
 
     for ($i = 0; $i <= count($bt)- 1; $i++) {
@@ -420,12 +420,12 @@ function backtrace($backtrace = null)
         } else {
             echo "File: <strong>".$bt[$i]["file"]."</strong><br/>";
         }
-       
+
         if (isset($bt[$i]["line"])) {
             echo "<strong>line ".$bt[$i]["line"]."</strong><br />";
         }
         echo "function called: <i>".$bt[$i]["function"].'</i><br />';
-       
+
         if ($bt[$i]["args"]) {
             echo "args: ";
             for ($j = 0; $j <= count($bt[$i]["args"]) - 1; $j++) {
@@ -436,7 +436,7 @@ function backtrace($backtrace = null)
                 } else {
                     echo $bt[$i]["args"][$j];
                 }
-                           
+
                 if ($j != count($bt[$i]["args"]) - 1) {
                     echo ", ";
                 }

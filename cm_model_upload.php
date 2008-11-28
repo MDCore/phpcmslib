@@ -3,22 +3,22 @@
  * rebuild this class! it is teh olds
  */
 class cm_model_upload extends AR {
-    
+
     var $save_path, $preview_path;
     function __construct()
     {
-        parent::__construct(); 
+        parent::__construct();
         $this->save_path = App::$env->root.'/uploads';
         $this->preview_path .= App::$env->url.'/uploads';
     }
     function load_from_files()
     {
         $model = $this->model;$field_name = $this->field_name;$record_id = $this->record_id;
-        
+
         if ($_FILES[$model]['size'][$field_name] > 0 && is_uploaded_file($_FILES[$model]['tmp_name'][$field_name])) {
             /* set the properties, yo */
             $this->original_filename = $_FILES[$model]['name'][$field_name];
-            $this->file_type = $_FILES[$model]['type'][$field_name]; 
+            $this->file_type = $_FILES[$model]['type'][$field_name];
             $this->file_size = $_FILES[$model]['size'][$field_name];
             $this->model = $model;
             $this->field_name = $field_name;
@@ -33,13 +33,13 @@ class cm_model_upload extends AR {
     }
     function file_uploaded()
     {
-        if ($_FILES[$this->model]['size'][$this->field_name] > 0 
+        if ($_FILES[$this->model]['size'][$this->field_name] > 0
             && is_uploaded_file($_FILES[$this->model]['tmp_name'][$this->field_name])) {
             return true;
         } else {
             return false;
         }
-        
+
     }
     function load($model, $field_name, $record_id, $force_new = false)
     {
@@ -66,14 +66,14 @@ class cm_model_upload extends AR {
         $this->before_save();
         #save to the db
         if ($this->new_record) {
-            $sql = "INSERT INTO uploads 
+            $sql = "INSERT INTO uploads
                 (original_filename, file_type, file_size, model, field_name, record_id, salt) VALUES (
-           '".$this->original_filename."', 
-           '".$this->file_type."', 
-           '".$this->file_size."', 
-           '".$this->model."', 
-           '".$this->field_name."', 
-           '".$this->record_id."', 
+           '".$this->original_filename."',
+           '".$this->file_type."',
+           '".$this->file_size."',
+           '".$this->model."',
+           '".$this->field_name."',
+           '".$this->record_id."',
            '".$this->salt."'
             );" ;
         } else {
@@ -81,17 +81,17 @@ class cm_model_upload extends AR {
             # TODO
 
             $sql = "UPDATE uploads SET
-            original_filename = '".$this->original_filename."', 
-            file_type = '".$this->file_type."', 
-            file_size = '".$this->file_size."', 
-            field_name = '".$this->field_name."', 
-            record_id = '".$this->record_id."', 
+            original_filename = '".$this->original_filename."',
+            file_type = '".$this->file_type."',
+            file_size = '".$this->file_size."',
+            field_name = '".$this->field_name."',
+            record_id = '".$this->record_id."',
             salt = '".$this->salt."'
             WHERE id = '".$this->id."';";
         }
         $this->db->query($sql);
         $this->after_save();
-    } 
+    }
     function after_save()
     {
         #save the file
@@ -128,7 +128,7 @@ class cm_model_upload extends AR {
         /* delete from uploads table */
         $sql = "DELETE FROM uploads WHERE id=".$this->id;
         $this->db->query($sql);
-        
+
         /* delete from uploads folder */
         global $path_to_root;
         $filename = $path_to_root.'/uploads/'.$this->basename();

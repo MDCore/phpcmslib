@@ -14,7 +14,7 @@ class ajax
             ?>
         }
         ?>$.get('<?=$url;?>', <?
-        
+
     , function(data) { <?=$callback_function;?>(data); } );<?
          */
     }

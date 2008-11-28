@@ -5,7 +5,7 @@
  * - fixtures methods can take multiple parameters, all to be executed
  * - remove custom methods below wherever they are used and use official methods instead
  * - functional testing... faking the http process
- * - session rebuilding. 
+ * - session rebuilding.
  * - rerun application between each session
  */
 
@@ -75,7 +75,7 @@ class pedantic_controller_view_testcase extends pedantic_app_testcase
         /* todo this is only for controllers! */
         $controller_name = str_replace('_tests', '', get_class($this));
         $this->controller_name = $controller_name;
-        
+
         $face = pedantic_app_testrunner::$face;
         /* require the face controller */
         if (!class_exists('face_controller')) {
@@ -95,7 +95,7 @@ class pedantic_controller_view_testcase extends pedantic_app_testcase
         //session_unset();
         parent::tearDown();
     }
-    
+
 }
 /* This is for models and extends the pedantic app framework Testcase */
 class pedantic_app_model_testcase extends pedantic_app_testcase
@@ -184,7 +184,7 @@ class pedantic_app_testrunner extends PHPUnit_TextUI_TestRunner
         /* models */
         $test_files = pedantic_app_testrunner::find_part_tests('models');
         $test_files = pedantic_app_testrunner::run_part_tests($test_files, 'models');
-        
+
         /* controllers + views */
         global $allowed_faces;
         $test_faces = explode(',', $allowed_faces);
@@ -240,7 +240,7 @@ class pedantic_app_testrunner extends PHPUnit_TextUI_TestRunner
     }
 }
 
-/* WHAT USES THESE METHODS !?!?! LIB TESTING?? */ 
+/* WHAT USES THESE METHODS !?!?! LIB TESTING?? */
 function update_schema_version($version)
 {
     $sql = "UPDATE schema_info set version='$version'";

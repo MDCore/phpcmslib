@@ -25,7 +25,7 @@ default:
     $dispatcher = 'dispatcher';
     break;
 }
-    
+
 /* load this dispatcher class */
 $dispatcher_path = $path_to_root.'/vendor/pedantic/lib/'.$dispatcher.'.php';
 require($dispatcher_path);

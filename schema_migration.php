@@ -15,13 +15,13 @@ class schema_migration
 
     function get_latest_schema_number() {
         $sql = "SELECT version from schema_info";
-        $result = $this->db->query($sql); 
+        $result = $this->db->query($sql);
         //check if the table exists
         if (MDB2_ERROR_NOSUCHTABLE == AR::error_check($result, false))
         {
             //create the table and reselect
             $this->create_schema_info_table();
-            $result = $this->db->query($sql); 
+            $result = $this->db->query($sql);
             AR::error_check($result);
         }
         else
@@ -59,12 +59,12 @@ class schema_migration
 
         //sort the array
             sort($migrations);
-        
+
         //build the meta-data
             for ( $i=0; $i < sizeof($migrations); $i++ )
-            { 
+            {
                 $file_name = $this->file_name_from_full_path($migrations[$i]);
-                $version = explode('_', $file_name); $version = $version[0]; 
+                $version = explode('_', $file_name); $version = $version[0];
                 $description = str_replace('_', ' ', str_replace('.'.$this->file_extension_from_file_name($file_name), '', substr($file_name, strlen($version)+1)));
                 $migrations[$i] = array(
                     'version' => (int)$version,
@@ -158,7 +158,7 @@ class schema_migration
         $table_schema = $this->db->tableInfo($table_name, null);
         $error_code = AR::error_check($table_schema, false);
         //check if there were any errors pulling the schema
-        if ($error_code) 
+        if ($error_code)
         {
             switch ($error_code)
             {
@@ -178,7 +178,7 @@ class schema_migration
         $table_name = $arguments[0];
         $schema_definition = $arguments[1];
         //var_dump($table_name);
-    
+
         $AR = new AR;
         $manager = $this->db->loadModule('Manager');
         $mdb2_table = array();
@@ -237,7 +237,7 @@ class schema_migration
                 echo '<br />';
             } else {
                 echo "\r\n";
-            }*/ 
+            }*/
         }
         catch (Exception $e) {
             //print_r($e);
@@ -288,7 +288,7 @@ class schema_migration
         flush();
 
     }
-    
+
     /* TODO do it in 'html' then capture + save */
     function create_model($model_name, $schema = null, $options = null, $allow_overwrite = false)
     {

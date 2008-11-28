@@ -32,14 +32,14 @@ class action_controller {
         /*
          * face controllers execute controller-level filters on their child controllers by default.
          *  That is why the filters are defined in the face controller but executed on the current controller.
-         *  The exception to this is the before controller load filter, which is executed on the face_controller, 
+         *  The exception to this is the before controller load filter, which is executed on the face_controller,
          *  since we may want to switch controllers
          */
 
         if ($controller == null) {
             $controller = $this;
         }
-        
+
         $only = $except = null;
 
         switch ($filter) {
@@ -53,11 +53,11 @@ class action_controller {
             $filter = $controller->before_controller_load_filter;
             break;
         default:
-            trigger_error("filter type <i>$filter></i> not defined",  E_USER_ERROR); 
+            trigger_error("filter type <i>$filter></i> not defined",  E_USER_ERROR);
             return false;
         }
-        
-        if ($filter) { 
+
+        if ($filter) {
             if (is_array($filter)) {
                 $methods = $filter[0];
                 if ($filter['only'] && $filter['except']) { trigger_error("Only and except are mutually exclusive for controller ".$controller->route['controller'],  E_USER_ERROR); }
@@ -72,10 +72,10 @@ class action_controller {
 
             foreach($methods as $method_name) {
                 $method_name = trim($method_name);
-                
+
                 /* check if the method exists */
                 if (!method_exists($controller, $method_name)) { trigger_error('Method "<i>$method_name</i>" does not exist for controller_filter in controller <i>'.$controller->route['controller'].'</i>', E_USER_ERROR ); }
-                
+
                 /* execute the method */
                 if (!$only && !$except) { $controller->$method_name(); }
                 elseif ($only) { if (in_array($controller->route['controller'], $only)) { $controller->$method_name(); } }
@@ -84,7 +84,7 @@ class action_controller {
         }
     }
     public function render($route_param = null) {
-        $this->parse_route_parameter($route_param, true); // allow passing in a different route collection or view to render 
+        $this->parse_route_parameter($route_param, true); // allow passing in a different route collection or view to render
 
         /* if the $route_param is JUST a view then execute that method too. That way one
          * can just call render->(view_name) and it will execute the action and render the action's view
@@ -92,7 +92,7 @@ class action_controller {
         if (!is_array($route_param) && !is_null($route_param)) {
             $this->$route_param();
         }
-        
+
         if (isset($this->layout) && $this->layout) {
             $this->render_layout();
         }
@@ -167,16 +167,16 @@ class action_controller {
             if ($environment == 'production') {
                 http_header(404, true);
             } else {
-                trigger_error('Layout <i>'.$this->layout.'</i> not found', E_USER_ERROR); 
+                trigger_error('Layout <i>'.$this->layout.'</i> not found', E_USER_ERROR);
             }
         }
 
     }
     function render_view($route_param = null) {
-        $route = $this->parse_route_parameter($route_param); // allow passing in a different route collection or view to render 
+        $route = $this->parse_route_parameter($route_param); // allow passing in a different route collection or view to render
 
         global $path_to_root;
-        
+
         # set up the view_parameters
             if ($this->view_parameters) {foreach ($this->view_parameters as $variable => $value) { $$variable = $value; } }
 
@@ -190,7 +190,7 @@ class action_controller {
             if ($environment == 'production') {
                 http_header(404, true);
             } else {
-                trigger_error("View <i>".$route['face'].'/'.$route['controller'].'/'.$route['action']."</i> not found", E_USER_ERROR); 
+                trigger_error("View <i>".$route['face'].'/'.$route['controller'].'/'.$route['action']."</i> not found", E_USER_ERROR);
             }
         }
 
@@ -252,7 +252,7 @@ class action_controller {
             }
 
             /* it is an array so overwrite all the array options of the route with the ones in the
-             * passed route. e.g.if I'm passing array('controller' => 'customers') set the route's 
+             * passed route. e.g.if I'm passing array('controller' => 'customers') set the route's
              * controller to customers instead of the default
              */
             foreach ($route_param as $route_part => $value) {
@@ -267,16 +267,16 @@ class action_controller {
             $route['action'] = $this->route['action'];
         }
         else {
-            /*  I'm only setting the view here and not in the route initialization because either 
-             *  you use the default route or you pass in a partial route _including_ a view. If you 
-             *  pass in a partial route without a view it's likely to be a  mistake: you are 
-             *  expecting the app::routes' action to be used. Obviously if there is an important, 
+            /*  I'm only setting the view here and not in the route initialization because either
+             *  you use the default route or you pass in a partial route _including_ a view. If you
+             *  pass in a partial route without a view it's likely to be a  mistake: you are
+             *  expecting the app::routes' action to be used. Obviously if there is an important,
              *  useful, logical case to be made against this then we change this.
              */
             $route['action'] = App::$route['action'];
         }
 
-        if (!isset($route['action'])) { 
+        if (!isset($route['action'])) {
             trigger_error('no action to render',  E_USER_ERROR); die();
         }
 
@@ -296,9 +296,9 @@ class action_controller {
 
         /* choose the layout */
             if (!isset($this->layout)) {
-                /* 
+                /*
                  * We are referring to the route's face controller and not app::$face here
-                 * because this construct() call happens before the face and controller 
+                 * because this construct() call happens before the face and controller
                  * are set in stone, so to speak
                  */
                 if (in_array($controller_name, $_SESSION[APP_NAME]['application'][App::$route['face']]['layouts'])) {
@@ -313,7 +313,7 @@ class action_controller {
             'action'        => App::$route['action'],
             'id'            => App::$route['id'],
             'layout'        => $this->layout
-        );    
+        );
 
     }
 

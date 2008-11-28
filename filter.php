@@ -46,7 +46,7 @@ class filter
         {
             //check if this is a select filter and an int and look up the value
             $filter = $this->filters[$filter_value['name']];
-            if ($filter['type'] == 'select') 
+            if ($filter['type'] == 'select')
             {
                 if (is_numeric($filter_value['value']))
                 {
@@ -62,7 +62,7 @@ class filter
                     $options = new $class_name;
                     $options->find($filter_value['value']);
                     $display_field = 'name'; if (isset($filter['field'])) {$display_field = $filter['field'];}
-                    if (substr($display_field, -2) == '()') 
+                    if (substr($display_field, -2) == '()')
                     {
                         $display_field = substr($display_field, 0, strlen($display_field)-2); $display_value = $options->$display_field();
                     }
@@ -70,20 +70,20 @@ class filter
                     {
                         $display_value = $options->$display_field;
                     }
-                    $result[] = '<i>'.humanize($this->filters[$filter_value['name']]['alias']) . "</i> of \"" .$display_value."\""; 
+                    $result[] = '<i>'.humanize($this->filters[$filter_value['name']]['alias']) . "</i> of \"" .$display_value."\"";
                 }
                 else
                 {
-                    $result[] = '<i>'.humanize($this->filters[$filter_value['name']]['alias']) . "</i> of \"" .$filter_value['value']."\""; 
+                    $result[] = '<i>'.humanize($this->filters[$filter_value['name']]['alias']) . "</i> of \"" .$filter_value['value']."\"";
                 }
-            } 
+            }
             else
             {
-                $result[] = '<i>'.proper_nounize($this->filters[$filter_value['name']]['alias']) . "</i> of \"" .$filter_value['value']."\""; 
+                $result[] = '<i>'.proper_nounize($this->filters[$filter_value['name']]['alias']) . "</i> of \"" .$filter_value['value']."\"";
             }
         }
         return $pre_text.to_sentence($result);
-            
+
     }
     function sql_criteria()
     {
@@ -111,14 +111,14 @@ class filter
             if ($this->filters[$name]['type'] == 'select')
             {
                 #check what relationship it is to the primary model
-                $primary_model_object = new $this->primary_model; 
+                $primary_model_object = new $this->primary_model;
                 $lnk_model = $primary_model_object->has_many_through($name);
                 if ($lnk_model)
                 {
                     $lnk_model = singularize($lnk_model);
                     $lnk_model_object = new $lnk_model;
                     $lnk_model_table = $lnk_model_object->schema_table;
-                    
+
                     #meet up with the link table, dog
                     $filter_field = $lnk_model_table.'.'.foreign_keyize(singularize($name));
                     $from = "INNER JOIN $lnk_model_table on $lnk_model_table."
@@ -132,7 +132,7 @@ class filter
                 $sql['WHERE'][] = str_replace('~', '.', $filter_field)."='".$filter_value['value']."'";
             }
         }
-        
+
         return $sql;
     }
 

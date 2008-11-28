@@ -20,7 +20,7 @@ class cm_controller extends action_controller {
     public $face = 'cm';
     public $default_action = 'cm_list';
 
-    //default configuration 
+    //default configuration
     public $allow_edit = true, $allow_add = true, $allow_delete = true, $allow_view = false;
     public $allow_filters = true, $allow_sort = true;
     public $row_limit = 30;
@@ -31,16 +31,16 @@ class cm_controller extends action_controller {
 
     /*
      * now in /cm/cm_face_controller
-     
+
     public $before_controller_load_filter = 'is_logged_in';
     public $before_controller_execute_filter = 'check_for_print';
      */
-    function __construct() 
+    function __construct()
     {
         parent::__construct();
 
         #the face_controller should be virtual;
-        if (($this->route['controller'] == $this->route['face'].'_face') || ($this->route['controller'] == 'face')) { 
+        if (($this->route['controller'] == $this->route['face'].'_face') || ($this->route['controller'] == 'face')) {
             $this->virtual = true;
         }
         if ($this->virtual) {
@@ -90,7 +90,7 @@ class cm_controller extends action_controller {
         if (!isset($this->edit_link_title)) {
             $this->edit_link_title = 'Edit';
         }
-        
+
         //setup some objects
         $this->model_object = new $this->primary_model; #instantiate an object of this model so we can interrogate it
         $this->filter_object = new filter;
@@ -121,8 +121,8 @@ class cm_controller extends action_controller {
         if (!isset($this->foreign_key_title_prefix)) {$this->foreign_key_title_prefix = ' in ';}
     }
 
-    /** 
-     * handles calling the list, edit, add, view, save, update and delete pages by 
+    /**
+     * handles calling the list, edit, add, view, save, update and delete pages by
      * by friendly names.
      *
      * @param string $method_name The name of the method that was called
@@ -130,12 +130,12 @@ class cm_controller extends action_controller {
      *
      * @return void
      */
-    function __call($method_name, $params) 
+    function __call($method_name, $params)
     {
         global $path_to_root;
 
         $this->action = $method_name;
-        /* 
+        /*
          * automatic cm pages router
          * TODO: clean this up. calling with $this->$cm_page might be better ?
          */
@@ -156,7 +156,7 @@ class cm_controller extends action_controller {
             case 'add':
                 $this->cm_add();break;
             case 'view':
-                $this->cm_view();break; 
+                $this->cm_view();break;
             case 'save':
                 $this->cm_save();break;
             case 'update':
@@ -167,12 +167,12 @@ class cm_controller extends action_controller {
                 $this->action = null;
             }
     }
-    
+
 #------------------------------#
 # Action Presets
 #------------------------------#
 
-    /** 
+    /**
      * Updates an existing record and related records, if applicable.
      * If the controller has a before_update or after_update method those are called as applicable.
      *
@@ -234,7 +234,7 @@ class cm_controller extends action_controller {
                         $result = $meta_model_object->save_multiple($collection);
                     } else {
                         /* this is another table that has a foreign key of the primary table in it */
-                        $meta_model_object = new $meta_model; 
+                        $meta_model_object = new $meta_model;
                         $meta_model_object
                             ->find(" WHERE $fk_field = $edit_id")
                             ->update_attributes($collection, true, true);
@@ -254,8 +254,8 @@ class cm_controller extends action_controller {
 
                     /* todo duplicate the meta-model code from cm_save */
                     /*
-                     * this code used to be part of another hack which would ADD a record to a meta_model instead of updating. 
-                     * I removed the hack so this had to go. but I've left it here for when I want to do that. 
+                     * this code used to be part of another hack which would ADD a record to a meta_model instead of updating.
+                     * I removed the hack so this had to go. but I've left it here for when I want to do that.
                      *
                     $meta_model = new $meta_model($collection);
                     $meta_model->save();
@@ -274,7 +274,7 @@ class cm_controller extends action_controller {
 
     }
 
-    /** 
+    /**
      * Saves an existing record and related records, if applicable.
      * If the controller has a before_save or after_save method those are called as applicable.
      *
@@ -285,9 +285,9 @@ class cm_controller extends action_controller {
     public function cm_save($redirect_on_success = true)
     {
         #debug('handling_save');print_r($_GET);print_r($_POST);print_r($_FILES);
-        
+
         if (method_exists($this, 'before_save')) { $this->before_save(); } //todo clean this up.... should be in model, maybe
-        
+
         $collection = $_POST[$this->primary_model];
         if (!$collection) {
             $collection = $_POST;
@@ -295,17 +295,17 @@ class cm_controller extends action_controller {
         } else {
             $has_meta_data = true;
         }
-        // save the form data for the primary model 
+        // save the form data for the primary model
         $primary_model_object = new $this->primary_model;
         $primary_model_object->update_attributes($collection, true, true); /* with value changes, clean */
 
         if (!$primary_model_object->is_valid()) {
-            $_GET['flash'] = $primary_model_object->validation_errors; 
+            $_GET['flash'] = $primary_model_object->validation_errors;
             $this->cm_add();
             return false;
         }
 
-        $primary_record_id = $primary_model_object->save(); 
+        $primary_record_id = $primary_model_object->save();
 
         if ($primary_record_id) { /* might not have one if saving failed e.g. validation */
             if ($has_meta_data) {
@@ -319,7 +319,7 @@ class cm_controller extends action_controller {
                             #$meta_model_object->delete("$fk_field = $edit_id"); //delete the records, to re-add them
                             $meta_model_object->save_multiple($collection);
                         } else {
-                            $meta_model_object = new $meta_model($collection); 
+                            $meta_model_object = new $meta_model($collection);
                             if (!$meta_model_object->is_valid()) {
                                 #delete the primary_record
                                 $primary_model_object->delete($primary_record_id);
@@ -343,7 +343,7 @@ class cm_controller extends action_controller {
         }
     }
 
-    /** 
+    /**
      * Deletes a collection of records. The records are defined by a collection of ID's in $_POST['delete'].
      * If the controller has a before_save or after_save method those are called as applicable.
      * This has no redirect on success because this simple delete can be handled by AR
@@ -363,7 +363,7 @@ class cm_controller extends action_controller {
             }
             if (substr($sql_delete, -1, 1) == ',') { $sql_delete = substr($sql_delete, 0, -1); }
             $sql_delete .= ");";
-    
+
         // delete records
             $ign = $this->model_object->delete($sql_delete);
 
@@ -378,7 +378,7 @@ class cm_controller extends action_controller {
 # CM views
 #------------------------------#
 
-    /** 
+    /**
      * A list of records
      *
      * @return void
@@ -428,13 +428,13 @@ class cm_controller extends action_controller {
             }
 
         if ($this->show_delete) {
-            ?><form id="list_delete" method="post" action="<?=url_to(array('action' =>'delete')).page_parameters('', false)?>"><? 
+            ?><form id="list_delete" method="post" action="<?=url_to(array('action' =>'delete')).page_parameters('', false)?>"><?
         }
 
     #--------- query, sql_query, sql query, sqlquery, xxxsql ---------------------------------------#
-        
+
         if (!is_array($this->sql_query)) {$list_sql = SQL_explode($this->sql_query);} else { $list_sql = $this->sql_query; }
-        
+
 
         #if (!isset($list_sql['WHERE']) || $list_sql['WHERE'] == '') { $list_sql['WHERE'] = '1=1'; }
         if (property_exists($this, 'foreign_keys')) {
@@ -446,7 +446,7 @@ class cm_controller extends action_controller {
                 $list_sql['WHERE'][] = " AND $key='$value'";
             }
         }
-        
+
         if (property_exists($this, 'filter_object')) {
             $filter_sql = $this->filter_object->sql_criteria();
         }
@@ -481,7 +481,7 @@ class cm_controller extends action_controller {
         if ($this->list_sort_field) {
             $list_sql['ORDER BY'] = $this->list_sort_field.' '.$this->list_sort_type;
         }
-        
+
         #turn the array into a string
             $this->list_sql = $list_sql;
             #print_r ( $list_sql );
@@ -507,32 +507,32 @@ class cm_controller extends action_controller {
             AR::error_check($results_list);
 
         ?><div class="list_rows"><?=$this->paging->page_description($this->list_type);?> <?
-        
+
         if (property_exists($this, 'filter_object')) {
             echo $this->filter_object->match_text($no_of_records);
         }
         ?></div><?
         ?><div class="list_wrapper"><?
             ?><table class="list"><?=$this->list_header();?><?=$this->list_body($results_list);?></table><?
-            ?></div><? if (!defined('PRINTING_MODE')) { ?><div class="paging"><?=$this->paging->paging_anchors();?></div><? }  
+            ?></div><? if (!defined('PRINTING_MODE')) { ?><div class="paging"><?=$this->paging->paging_anchors();?></div><? }
 
         if ($this->show_record_selector) {
             ?><div id="record_selector_buttons_container"><input disabled="disabled" type="button" id="bt_select_record" value="Select <?=$this->list_type;?>" onclick="window.parent.select_record_callback(currently_selected_row.val());" /><input type="button" id="bt_cancel_record_selector" value="cancel" onclick="window.parent.cancel_record_callback();" /></div><?
         }
 
         ?><div><?
-        if ($this->show_delete) { ?><input type="submit" value="Delete selected" onclick="return confirm('Are you sure you want to delete these <?=humanize(pluralize($this->list_type))?> ?');">&nbsp;<? } 
+        if ($this->show_delete) { ?><input type="submit" value="Delete selected" onclick="return confirm('Are you sure you want to delete these <?=humanize(pluralize($this->list_type))?> ?');">&nbsp;<? }
         if (isset($this->return_page )) {$return_page = $this->return_page ;} else { $return_page = pluralize($this->list_type); }  #XXX
         ?> </div><?
-        
+
         if ($this->allow_add || $this->allow_delete || $this->back_link || isset($this->category_actions)) {
             ?><div class="category_actions"><? #todo document category_actions
-            if (isset($this->category_actions)) { 
+            if (isset($this->category_actions)) {
                 foreach ($this->category_actions as $value => $url) {
                     ?><a href="<?=$url;?>"><?=$value;?></a><br /><?
                 }
             }
-            if  ($this->back_link) { ?><a href="<?=url_to($this->back_link).page_parameters('/^fk/', false);?>">Back to <?=humanize($this->back_link);?></a><br /><? }
+            if ($this->back_link) { ?><a href="<?=url_to($this->back_link).page_parameters('/^fk/', false);?>">Back to <?=humanize($this->back_link);?></a><br /><? }
             if ($this->allow_add) { ?><a href="<?=url_to(array('action' =>'add')).page_parameters('', false);?>">Add a new <?=humanize($this->list_type);?></a><br /><? }
             if ($this->allow_delete) { ?><a href="<?=page_parameters('');?>&amp;delete=y">Delete <?=humanize(pluralize($this->list_type));?></a><br /><? }
             ?></div><?
@@ -540,7 +540,7 @@ class cm_controller extends action_controller {
         $this->render_inline();
     }
 
-    /** 
+    /**
      * The edit page for a record
      *
      * @return void
@@ -580,7 +580,7 @@ class cm_controller extends action_controller {
         $this->render_inline();
     }
 
-    /** 
+    /**
      * The add form for a new record
      *
      * @return void
@@ -599,7 +599,7 @@ class cm_controller extends action_controller {
         if (isset($this->add_postback_parameters)) {$parameters_to_remove .= ','.$this->add_postback_parameters['filters']; $parameters.= '&'.$this->add_postback_parameters['parameters'];}
 
         echo url_to(array('action' => 'save')).page_parameters($parameters_to_remove).$parameters;?>"><?
-            
+
         if (isset($_POST) && sizeof($_POST) > 0 ) {
             $this->model_object->update_attributes($_POST[$this->primary_model], true, true);
         }
@@ -626,7 +626,7 @@ class cm_controller extends action_controller {
 
     function related_page_anchor($related_page, $row) {
         if (!isset($related_page['controller'])) {$related_page['controller'] = $related_page[0];}
-        
+
         $target = array(
             'controller' => $related_page['controller'],
             'action'     => $related_page['action']
@@ -644,7 +644,7 @@ class cm_controller extends action_controller {
         /*if (isset($related_page['fk']) || (isset($related_page['fk_title_field']))) { echo '?p=y'; }*/
         if (isset($related_page['fk'])) {
             if (!isset($related_page['fk_field'])) { $fk_field = $this->model_object->primary_key_field; } else { $fk_field = $related_page['fk_field']; }
-            ?>&amp;fk=<?=$related_page['fk'];?>~<? echo $row->$fk_field; 
+            ?>&amp;fk=<?=$related_page['fk'];?>~<? echo $row->$fk_field;
         }
         if (isset($related_page['fk_title_field'])) { ?>&amp;fk_t=<? echo urlencode($row->{$related_page['fk_title_field']}); }
 
@@ -657,11 +657,11 @@ class cm_controller extends action_controller {
     }
 
     public function handle_new_files($primary_record_id)
-    {   
+    {
         #print_r($_GET);print_r($_POST); print_r($_FILES);
         #file uploads #todo get this working for meta_models
         foreach ($_FILES as $model => $model_files) {
-            $upload = new upload; 
+            $upload = new upload;
             foreach ($model_files['name'] as $field_name => $file) {
                 /* check force_new */
                 $model_object = new $model;
@@ -691,20 +691,20 @@ class cm_controller extends action_controller {
             ?><th>&nbsp;</th><?
         }
         if ($this->related_pages && sizeof($this->related_pages) > 0) {
-            foreach ($this->related_pages as $related_page) { ?><th>&nbsp;</th><? } 
+            foreach ($this->related_pages as $related_page) { ?><th>&nbsp;</th><? }
         }
-        
+
         foreach ($this->list_fields as $header => $alias) {
             ?><th <?
-            
+
             if ($this->list_sort_field == $header) {
                 echo 'class = "sorted"';
             }
             ?>><?
             $sortable = $this->allow_sort;
             if (substr($header, -2) == '()') {
-                $sortable = false; 
-                
+                $sortable = false;
+
                 if (substr($alias, -2) == '()') { $alias = substr($alias, 0, strlen($alias)-2); }
             }
             if ($sortable) {
@@ -718,9 +718,9 @@ class cm_controller extends action_controller {
             echo proper_nounize($alias);
             if ($sortable) {?></a><?}
             ?></th><?
-        }    
+        }
         ?> </tr></thead><?
-            
+
     }
 
     public function list_body($results_list) {
@@ -783,9 +783,9 @@ class cm_controller extends action_controller {
              *                   fk_field                : the field name to use for the value of the foreign_key field. not required.
              *                   fk_title_field          : the name that will be passed to the target action as extra title text. not required.
              *                   append_page_parameters  : setting this values causes page_parameters() to be called with the value of this property
-             */                           
+             */
             if ($this->related_pages && $no_of_related_pages > 0) {
-                foreach ($this->related_pages as $related_page ) { echo $this->related_page_anchor($related_page, $row); } 
+                foreach ($this->related_pages as $related_page ) { echo $this->related_page_anchor($related_page, $row); }
             }
 
             /* here we actually write out the value of the field */
@@ -802,7 +802,7 @@ class cm_controller extends action_controller {
                 case 'time':
                     echo strftime(TIME_FORMAT, strtotime((string)$row->$field));
                     break;
-                case 'split': 
+                case 'split':
                     $full_phrase = $row->$field;
                     /* this checks that splitting needs to occur before doing the split and tooltip. split_on_word already checks for
                      * string length but I'm doing it here so that I don't have to show the tooltip unnecessarily

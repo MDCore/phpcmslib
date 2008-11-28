@@ -1,4 +1,4 @@
-<?php    
+<?php
 /* todo:
  * - find a place use this define, maybe
  * - remove the reliance on AR.php
@@ -19,11 +19,11 @@ function redirect_with_parameters($url, $additional_parameters = '', $return_url
 
 function SQL_implode($sql_array, $prepend_phrases = true)
 {
-    $result = ''; 
+    $result = '';
     foreach(AR::$sql_phrases as $phrase => $join_text)
     {
         $this_phrase = '';
-        if ($sql_array[$phrase] != '') 
+        if ($sql_array[$phrase] != '')
         {
             if (!is_array($sql_array[$phrase]))
             {
@@ -62,9 +62,9 @@ function SQL_implode($sql_array, $prepend_phrases = true)
 function SQL_explode($sql) {
     #todo - add subquery checks. I'll do this when I need a subquery split, thanks. and use a recursive function!
     $result = array();
-    
+
     /*
-     * todo tokenize this sql statement eg: 
+     * todo tokenize this sql statement eg:
     *           $sql = SELECT a, b, (SELECT cats from foo where foo.id = blah.id) as meh FROM blah"
      * tokenize should do this:
      *          $sql = SELECT a, b, (~#1#~) as meh FROM blah
@@ -101,13 +101,13 @@ function SQL_merge($array_1, $array_2) {
         foreach(array($array_1, $array_2) as $candidate)
         {
             #candidate
-                if (isset($candidate[$phrase])) 
+                if (isset($candidate[$phrase]))
                 {
                     if (is_array($candidate[$phrase]))
                     {
-                        if (is_array($result[$phrase])) 
+                        if (is_array($result[$phrase]))
                         {
-                            $result[$phrase] = array_merge($result[$phrase], $candidate[$phrase]); 
+                            $result[$phrase] = array_merge($result[$phrase], $candidate[$phrase]);
                         }
                         else
                         {
@@ -116,7 +116,7 @@ function SQL_merge($array_1, $array_2) {
                     }
                     else
                     {
-                        $result[$phrase][] = $candidate[$phrase]; 
+                        $result[$phrase][] = $candidate[$phrase];
                     }
                 }
         }
@@ -165,7 +165,7 @@ function page_parameters($except = '', $always_return_something = true, $method 
                         #debug echo "$matches<br>";
                     }
                 }
-                
+
                 if ($matches == 0) {
                     if ($method == 'querystring') { $return .= '&'. $var .'=' .urlencode($value); }
                     if ($method == 'hidden') { $return .= "<input type=\"hidden\" name=\"$var\" value=\"$value\" />"; }
@@ -185,7 +185,7 @@ function page_parameters($except = '', $always_return_something = true, $method 
 return $return;
 }
 
-function debug ($str) { 
+function debug ($str) {
    echo "<pre>";var_dump($str);echo "</pre>";
 }
 
@@ -202,9 +202,9 @@ if (!function_exists('property_exists')) {
 function url_to($path, $include_base = true, $explicit_path = false)
 {
     if (is_array($path)) {
-        $target = $path; 
+        $target = $path;
     } else {
-        $target = route_from_path($path); 
+        $target = route_from_path($path);
     }
 
     //echo '<!--'; var_dump(App::$route); echo "\r\n====\r\n"; var_dump($path); echo "\r\n====\r\n"; var_dump($target); echo '-->';
@@ -220,7 +220,7 @@ function url_to($path, $include_base = true, $explicit_path = false)
     $target['controller'] = str_replace('_controller', '', $target['controller']);
 
     //echo '<!--'; var_dump(App::$route); echo "\r\n====\r\n"; var_dump($path); echo "\r\n====\r\n"; var_dump($target); echo '-->';
-    
+
     /* route's are the same so just send back emptystring */
     $app_route_controller = str_replace('_controller', '', App::$route['controller']);
     if (!$explicit_path && !$include_base) {
@@ -241,19 +241,19 @@ function url_to($path, $include_base = true, $explicit_path = false)
     if ($target['face'] != App::$default_face || $explicit_path) {
         $url .= $target['face'].'/';
     }
-        
+
     /* append the controller path */
-    $url .= $target['controller']; 
+    $url .= $target['controller'];
 
     /* warn if action is specified without target */
     if ((!isset($target['action']) | $target['action'] == '') && (isset($target['id']) && $target['id'] != '')) {
-        trigger_error('id specified in route without action', E_USER_WARNING); 
+        trigger_error('id specified in route without action', E_USER_WARNING);
     }
 
     /* no specified action?  let the controller decide */
     if (isset($target['action']) && $target['action'] != '') {
         $url .= '/'.$target['action'];
-        if (isset($target['id']) && $target['id'] != '') 
+        if (isset($target['id']) && $target['id'] != '')
         {
             $url .= '/'.$target['id'];
         }
@@ -318,7 +318,7 @@ function as_hiddens($collection, $prefixes = null) {
         }
         else
         {
-            #echo 'prefixes:';var_dump($prefixes);echo "\r\n"; 
+            #echo 'prefixes:';var_dump($prefixes);echo "\r\n";
             if (!is_null($prefixes)) {
                 $cnt = 0;
                 $this_prefix = '';
@@ -335,7 +335,7 @@ function as_hiddens($collection, $prefixes = null) {
                     }
                 }
                 $name = $this_prefix.'['.$name.']';
-                #if ($cnt > 1) { $name .= '[]'; }; #append an array thing to this because there 
+                #if ($cnt > 1) { $name .= '[]'; }; #append an array thing to this because there
             }
             $this_hidden = '<input type="hidden" name="'.$name.'" value="'.$value.'" />';
             #var_dump($this_hidden);
@@ -354,7 +354,7 @@ function random_string($length = 9, $allowed_characters = "abcdefghijkmnopqrstuv
     }
 
     return $string;
-} 
+}
 
 function http_header($code, $output_message_and_die = false) {
 $headers = array (

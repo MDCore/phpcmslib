@@ -45,7 +45,7 @@ class schema_interregator
                     }
                 } else {
                     //print_r($table_schema);
-                
+
                     foreach ($table_schema as $field) {
                         $fields_in_table[$field['name']] = array(
                             'type' => $field['type'],
@@ -81,7 +81,7 @@ class schema_interregator
         }
         //echo '<pre>';print_r($tables);echo '</pre>';
 
-        return $tables;           
+        return $tables;
     }
 
     function build_schema_definition()

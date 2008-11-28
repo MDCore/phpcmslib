@@ -10,7 +10,7 @@ class DB_TestCase extends PHPUnit_Framework_TestCase {
     public $delete_db = true; /* default true: keep mysql clean! */
 
     public $schema_sql = array(
-        "customer" => array('create' => 
+        "customer" => array('create' =>
                 "CREATE TABLE ARTest.customers (
                   `id` int(11) NOT NULL auto_increment,
                   `created_on` datetime NOT NULL,
@@ -22,7 +22,7 @@ class DB_TestCase extends PHPUnit_Framework_TestCase {
                   PRIMARY KEY  (`id`)
               ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
               'insert' => "INSERT INTO ARTest.customers (id, name, company_name, address, active, created_on, updated_on) VALUES (1, 'cust 1', 'company 1', 'address 1', 'Y', now(), now())"),
-        "customer_changelog" => array('create' => 
+        "customer_changelog" => array('create' =>
                 "CREATE TABLE ARTest.customers_changelog (
                   `id` int(11) NOT NULL auto_increment,
                   `created_on` datetime NOT NULL,
@@ -38,7 +38,7 @@ class DB_TestCase extends PHPUnit_Framework_TestCase {
                   PRIMARY KEY  (`id`)
               ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
               'insert' => "INSERT INTO ARTest.customers_changelog (revision, action, customer_id, id, name, company_name, address, active, created_on, updated_on) VALUES (1, 'insert', 1, 1, 'cust 1', 'company 1', 'address 1', 'Y', now(), now())"),
-        "product" => array('create' => 
+        "product" => array('create' =>
                 "create table ARTest.products (
                   `id` int(11) NOT NULL auto_increment,
                   `category_id` int(11) NOT NULL,
@@ -53,7 +53,7 @@ class DB_TestCase extends PHPUnit_Framework_TestCase {
                 )
             ),
 
-        "category" => array('create' => 
+        "category" => array('create' =>
                 "create table ARTest.categories (
                   `id` int(11) NOT NULL auto_increment,
                   `name` varchar(255) NOT NULL,
@@ -61,7 +61,7 @@ class DB_TestCase extends PHPUnit_Framework_TestCase {
                 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
               'insert' => "INSERT INTO ARTest.categories (id, name) VALUES (1, 'Shoes')"),
 
-        "tree_table" => array('create' => 
+        "tree_table" => array('create' =>
                 "CREATE TABLE ARTest.tree_tables (
                         `id` int(11) NOT NULL auto_increment,
                         `ns_root_id` int(11) NOT NULL,
@@ -78,7 +78,7 @@ class DB_TestCase extends PHPUnit_Framework_TestCase {
                     /*, 'insert' => "INSERT INTO ARTest.categories (id, name) VALUES (1, 'Shoes')"
                      */
                 ),
-        "tree_tables_lock" => array('create' => 
+        "tree_tables_lock" => array('create' =>
                 "CREATE TABLE ARTest.tree_tables_locks (
                         `lockID` varchar(255) NOT NULL,
                         `lockTable` varchar(255) NOT NULL,
@@ -88,14 +88,14 @@ class DB_TestCase extends PHPUnit_Framework_TestCase {
                      */
                 ),
 
-        "user" => array('create' => 
+        "user" => array('create' =>
                 "create table ARTest.users (
                   `id` int(11) NOT NULL auto_increment,
                   `name` varchar(255) NOT NULL,
                   PRIMARY KEY  (`id`)
                 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
               'insert' => "INSERT INTO ARTest.users (id, name) VALUES (1, 'Jim')"),
-        "user_find" => array('create' => 
+        "user_find" => array('create' =>
                 "create table ARTest.user_finds (
                   `id` int(11) NOT NULL auto_increment,
                   `find_id` int(11) NOT NULL,
@@ -103,19 +103,19 @@ class DB_TestCase extends PHPUnit_Framework_TestCase {
                   PRIMARY KEY  (`id`)
                 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
               'insert' => "INSERT INTO ARTest.user_finds (id, find_id, user_id) VALUES (1, 1, 1)"),
-        "find" => array('create' => 
+        "find" => array('create' =>
                 "create table ARTest.finds (
                   `id` int(11) NOT NULL auto_increment,
                   `name` varchar(255) NOT NULL,
                   PRIMARY KEY  (`id`)
               ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
               'insert' => array(
-                    "INSERT INTO ARTest.finds (id, name) VALUES (1, 'Shoe')", 
-                    "INSERT INTO ARTest.finds (id, name) VALUES (2, 'Tin Can')", 
+                    "INSERT INTO ARTest.finds (id, name) VALUES (1, 'Shoe')",
+                    "INSERT INTO ARTest.finds (id, name) VALUES (2, 'Tin Can')",
                     "INSERT INTO ARTest.finds (id, name) VALUES (3, 'Treasure')"
                     )
                 ),
-        "car" => array('create' => 
+        "car" => array('create' =>
                 "create table ARTest.cars (
                   `id` int(11) NOT NULL auto_increment,
                   `customer_id` int(11) NOT NULL,
@@ -445,7 +445,7 @@ class DB_TestCase extends PHPUnit_Framework_TestCase {
         $this->recreate_database();
         /* put our hardcoded schema def into App */
         App::$schema_definition = $this->schema_definition;
-        
+
     }
     public function __destruct() {
         if ($this->delete_db) {
@@ -474,7 +474,7 @@ class DB_TestCase extends PHPUnit_Framework_TestCase {
         foreach ($this->schema_sql as $class_name => $query) {
             $this->db->query($query['create']);
             AR::error_check($this->db);
-            
+
             #hack for customers
                 if ($class_name == 'customer') {
                     $customers_sql = "INSERT INTO ARTest.customers (name, address, company_name)
