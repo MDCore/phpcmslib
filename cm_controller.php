@@ -28,6 +28,7 @@ class cm_controller extends action_controller {
     public $field_length_range = array(30, 55);
 
     public $list_sort_field = null, $list_sort_type = null;
+    public $export = false;
 
     /*
      * now in /cm/cm_face_controller
@@ -61,6 +62,24 @@ class cm_controller extends action_controller {
         else {
             $this->foreign_keys = array();
         }
+
+        /* export */
+        if (isset($_GET['export'])) {
+            $this->export = $_GET['export'];
+            if (isset($this->export_sql_query)) {
+                $this->sql_query = $this->export_sql_query;
+                $this->list_fields = $this->export_list_fields;
+            }
+            switch ($this->export) {
+                case 'psv':
+                    $this->export_delimiter = '|';
+                    break;
+                default:
+                    $this->export_delimiter = ',';
+                    break;
+            }
+        }
+
         if (!isset($this->list_type))       { $this->list_type =  singularize($this->route['controller']); }
         if (!isset($this->primary_model))   { $this->primary_model = $this->list_type; }
         if (!isset($this->list_title))      { $this->list_title = proper_nounize(pluralize($this->list_type)); } $this->list_title = proper_nounize($this->list_title);
@@ -393,34 +412,36 @@ class cm_controller extends action_controller {
         }
 
         /* settings tweaks if in print mode */
-            if (defined('PRINTING_MODE')) {
-                $this->allow_filters = false;
-                $this->allow_add = false;
-                $this->allow_edit = false;
-                $this->allow_delete = false;
-                $this->back_link = false;
-                unset($this->category_actions);
-                unset($this->related_pages);
-                /* only for view/add/edit really $this->draw_form_buttons = false; */
-                $this->row_limit = 1000000;
-                $this->allow_sort = false;
-                $this->field_length_range = array(1000, 10000); /* print all the text in long fields */
-            }
+        if (defined('PRINTING_MODE') | $this->export !== false) {
+            $this->allow_filters = false;
+            $this->allow_add = false;
+            $this->allow_edit = false;
+            $this->allow_delete = false;
+            $this->back_link = false;
+            unset($this->category_actions);
+            unset($this->related_pages);
+            /* only for view/add/edit really $this->draw_form_buttons = false; */
+            $this->row_limit = 1000000;
+            $this->allow_sort = false;
+            $this->field_length_range = array(1000, 10000); /* print all the text in long fields */
+        }
 
         /* setup the list fields */
-            $this->list_fields = split_aliased_string($this->list_fields);
+        $this->list_fields = split_aliased_string($this->list_fields);
 
         /* draw the list title */
-            /* the foreign key description portion of the title */
-            if (isset($_GET['fk_t'])) {
-                $fk_t= $_GET['fk_t'];
-                $this->foreign_key_title = $this->foreign_key_title_prefix.$fk_t;
-            }
-            else {
-                $this->foreign_key_title = '';
-            }
+        /* the foreign key description portion of the title */
+        if (isset($_GET['fk_t'])) {
+            $fk_t= $_GET['fk_t'];
+            $this->foreign_key_title = $this->foreign_key_title_prefix.$fk_t;
+        }
+        else {
+            $this->foreign_key_title = '';
+        }
 
+        if ($this->export === false) {
             ?><h2><?=$this->list_title;?><?=stripslashes($this->foreign_key_title);?></h2><?
+        }
 
         /* draw the filters */
             if ($this->allow_filters && $this->has_filters) {
@@ -432,9 +453,11 @@ class cm_controller extends action_controller {
         }
 
     #--------- query, sql_query, sql query, sqlquery, xxxsql ---------------------------------------#
-
-        if (!is_array($this->sql_query)) {$list_sql = SQL_explode($this->sql_query);} else { $list_sql = $this->sql_query; }
-
+        if (!is_array($this->sql_query)) {
+            $list_sql = SQL_explode($this->sql_query);
+        } else {
+            $list_sql = $this->sql_query;
+        }
 
         #if (!isset($list_sql['WHERE']) || $list_sql['WHERE'] == '') { $list_sql['WHERE'] = '1=1'; }
         if (property_exists($this, 'foreign_keys')) {
@@ -453,7 +476,7 @@ class cm_controller extends action_controller {
 
         if (!($filter_sql == false)) {
             #join from's
-                if ($filter_sql['FROM']) { foreach ($filter_sql['FROM'] as $filter_from) { $list_sql['FROM'] .= ' ' . $filter_from; }}
+            if ($filter_sql['FROM']) { foreach ($filter_sql['FROM'] as $filter_from) { $list_sql['FROM'] .= ' ' . $filter_from; }}
 
             #join where's
             foreach ($filter_sql['WHERE'] as $filter_where) { $list_sql['WHERE'][] = ' AND '. $filter_where; }
@@ -506,36 +529,50 @@ class cm_controller extends action_controller {
             $results_list = $AR->db->query($results_query.' LIMIT '.$this->paging->limit_sql());
             AR::error_check($results_list);
 
-        ?><div class="list_rows"><?=$this->paging->page_description($this->list_type);?> <?
+        if ($this->export === false) {
 
-        if (property_exists($this, 'filter_object')) {
-            echo $this->filter_object->match_text($no_of_records);
-        }
-        ?></div><?
-        ?><div class="list_wrapper"><?
-            ?><table class="list"><?=$this->list_header();?><?=$this->list_body($results_list);?></table><?
-            ?></div><? if (!defined('PRINTING_MODE')) { ?><div class="paging"><?=$this->paging->paging_anchors();?></div><? }
+            ?><div class="list_rows"><?=$this->paging->page_description($this->list_type);?> <?
 
-        if ($this->show_record_selector) {
-            ?><div id="record_selector_buttons_container"><input disabled="disabled" type="button" id="bt_select_record" value="Select <?=$this->list_type;?>" onclick="window.parent.select_record_callback(currently_selected_row.val());" /><input type="button" id="bt_cancel_record_selector" value="cancel" onclick="window.parent.cancel_record_callback();" /></div><?
-        }
-
-        ?><div><?
-        if ($this->show_delete) { ?><input type="submit" value="Delete selected" onclick="return confirm('Are you sure you want to delete these <?=humanize(pluralize($this->list_type))?> ?');">&nbsp;<? }
-        if (isset($this->return_page )) {$return_page = $this->return_page ;} else { $return_page = pluralize($this->list_type); }  #XXX
-        ?> </div><?
-
-        if ($this->allow_add || $this->allow_delete || $this->back_link || isset($this->category_actions)) {
-            ?><div class="category_actions"><? #todo document category_actions
-            if (isset($this->category_actions)) {
-                foreach ($this->category_actions as $value => $url) {
-                    ?><a href="<?=$url;?>"><?=$value;?></a><br /><?
-                }
+            if (property_exists($this, 'filter_object')) {
+                echo $this->filter_object->match_text($no_of_records);
             }
-            if ($this->back_link) { ?><a href="<?=url_to($this->back_link).page_parameters('/^fk/', false);?>">Back to <?=humanize($this->back_link);?></a><br /><? }
-            if ($this->allow_add) { ?><a href="<?=url_to(array('action' =>'add')).page_parameters('', false);?>">Add a new <?=humanize($this->list_type);?></a><br /><? }
-            if ($this->allow_delete) { ?><a href="<?=page_parameters('');?>&amp;delete=y">Delete <?=humanize(pluralize($this->list_type));?></a><br /><? }
             ?></div><?
+            ?><div class="list_wrapper"><?
+                ?><table class="list"><?=$this->list_header();?><?=$this->list_body($results_list);?></table><?
+                ?></div><? if (!defined('PRINTING_MODE')) { ?><div class="paging"><?=$this->paging->paging_anchors();?></div><? }
+
+            if ($this->show_record_selector) {
+                ?><div id="record_selector_buttons_container"><input disabled="disabled" type="button" id="bt_select_record" value="Select <?=$this->list_type;?>" onclick="window.parent.select_record_callback(currently_selected_row.val());" /><input type="button" id="bt_cancel_record_selector" value="cancel" onclick="window.parent.cancel_record_callback();" /></div><?
+            }
+
+            ?><div><?
+            if ($this->show_delete) { ?><input type="submit" value="Delete selected" onclick="return confirm('Are you sure you want to delete these <?=humanize(pluralize($this->list_type))?> ?');">&nbsp;<? }
+            if (isset($this->return_page )) {$return_page = $this->return_page ;} else { $return_page = pluralize($this->list_type); }  #XXX
+            ?> </div><?
+
+            if ($this->allow_add || $this->allow_delete || $this->back_link || isset($this->category_actions)) {
+                ?><div class="category_actions"><? #todo document category_actions
+                if (isset($this->category_actions)) {
+                    foreach ($this->category_actions as $value => $url) {
+                        ?><a href="<?=$url;?>"><?=$value;?></a><br /><?
+                    }
+                }
+                if (isset($this->export_sql_query) && isset($this->export_list_fields)) { ?><a href="<?=page_parameters('');?>&amp;export=csv">Export to CSV</a><br /><? }
+                if ($this->back_link) { ?><a href="<?=url_to($this->back_link).page_parameters('/^fk/', false);?>">Back to <?=humanize($this->back_link);?></a><br /><? }
+                if ($this->allow_add) { ?><a href="<?=url_to(array('action' =>'add')).page_parameters('', false);?>">Add a new <?=humanize($this->list_type);?></a><br /><? }
+                if ($this->allow_delete) { ?><a href="<?=page_parameters('');?>&amp;delete=y">Delete <?=humanize(pluralize($this->list_type));?></a><br /><? }
+                ?></div><?
+            }
+        } else {
+            header("Content-Type: text/csv");
+            #header("Content-Length: " . $filesize);
+            $now = strftime(SQL_DATE_TIME_FORMAT, time());
+            $now = str_replace(':', '', $now);
+            $now = str_replace(' ', '-', $now);
+            header("Content-Disposition: attachment; filename=\"csv_export-$now.csv\";" );
+            $this->layout = false; /* we don't need a layout for CSV, natch */
+            $this->list_header();
+            $this->list_body($results_list);
         }
         $this->render_inline();
     }
@@ -681,45 +718,53 @@ class cm_controller extends action_controller {
     }
 
     public function list_header() {
-        ?><thead><tr><?
-        if ($this->show_record_selector) { ?><th class="record_selector_column">&nbsp;</th><? }
-        if ($this->show_delete) { ?><th><input type="checkbox" id="delete_all" name="delete_all" onclick="select_all_rows();" value="on" /></th><? }
-        if (!$this->show_delete && $this->allow_edit) {
-            ?><th>&nbsp;</th><?
-        }
-        if (!$this->show_delete && $this->allow_view) {
-            ?><th>&nbsp;</th><?
-        }
-        if ($this->related_pages && sizeof($this->related_pages) > 0) {
-            foreach ($this->related_pages as $related_page) { ?><th>&nbsp;</th><? }
-        }
-
-        foreach ($this->list_fields as $header => $alias) {
-            ?><th <?
-
-            if ($this->list_sort_field == $header) {
-                echo 'class = "sorted"';
+        if ($this->export === false) {
+            ?><thead><tr><?
+            if ($this->show_record_selector) { ?><th class="record_selector_column">&nbsp;</th><? }
+            if ($this->show_delete) { ?><th><input type="checkbox" id="delete_all" name="delete_all" onclick="select_all_rows();" value="on" /></th><? }
+            if (!$this->show_delete && $this->allow_edit) {
+                ?><th>&nbsp;</th><?
             }
-            ?>><?
-            $sortable = $this->allow_sort;
-            if (substr($header, -2) == '()') {
-                $sortable = false;
-
-                if (substr($alias, -2) == '()') { $alias = substr($alias, 0, strlen($alias)-2); }
+            if (!$this->show_delete && $this->allow_view) {
+                ?><th>&nbsp;</th><?
             }
-            if ($sortable) {
-                ?><a href="<?=page_parameters('/^sort$/')?>&amp;sort=<?=$header;?>_<?
+            if ($this->related_pages && sizeof($this->related_pages) > 0) {
+                foreach ($this->related_pages as $related_page) { ?><th>&nbsp;</th><? }
+            }
+
+            foreach ($this->list_fields as $header => $alias) {
+                ?><th <?
+
                 if ($this->list_sort_field == $header) {
-                    if ($this->list_sort_type == 'ASC') { echo 'desc'; } else { echo 'asc'; }
+                    echo 'class = "sorted"';
                 }
-                else { echo 'asc'; }
-                ?>"><?
+                ?>><?
+                $sortable = $this->allow_sort;
+                if (substr($header, -2) == '()') {
+                    $sortable = false;
+
+                    if (substr($alias, -2) == '()') { $alias = substr($alias, 0, strlen($alias)-2); }
+                }
+                if ($sortable) {
+                    ?><a href="<?=page_parameters('/^sort$/')?>&amp;sort=<?=$header;?>_<?
+                    if ($this->list_sort_field == $header) {
+                        if ($this->list_sort_type == 'ASC') { echo 'desc'; } else { echo 'asc'; }
+                    }
+                    else { echo 'asc'; }
+                    ?>"><?
+                }
+                echo proper_nounize($alias);
+                if ($sortable) {?></a><?}
+                ?></th><?
             }
-            echo proper_nounize($alias);
-            if ($sortable) {?></a><?}
-            ?></th><?
+            ?> </tr></thead><?
+        } else {
+            foreach ($this->list_fields as $header => $alias) {
+                $header_row .= '"'.$header.'"'.$this->export_delimiter;
+            }
+            $header_row = substr($header_row, 0, -1)."\r\n";
+            echo $header_row;
         }
-        ?> </tr></thead><?
 
     }
 
@@ -753,9 +798,11 @@ class cm_controller extends action_controller {
 
         /* the start of the big loop */
         while ($row = $results_list->fetchRow()) {
-            ?><tr class="odd"><?
-            if ($this->show_record_selector) { ?><td class="record_selector_column"><input type="radio" class="record_selector_row" id="record_selector_<?=$row->__pk_field;?>" name="record_selector[]" value="<?=$row->__pk_field;?>"  onclick="cm_select_record(this, <?=$row->__pk_field;?>);" /></td><? }
-            if ($this->show_delete) { ?><td><input type="checkbox" class="delete_row" name="delete[]" value="<?=$row->__pk_field;?>" /></td><? }
+            if ($this->export === false) {
+                ?><tr class="odd"><?
+                if ($this->show_record_selector) { ?><td class="record_selector_column"><input type="radio" class="record_selector_row" id="record_selector_<?=$row->__pk_field;?>" name="record_selector[]" value="<?=$row->__pk_field;?>"  onclick="cm_select_record(this, <?=$row->__pk_field;?>);" /></td><? }
+                if ($this->show_delete) { ?><td><input type="checkbox" class="delete_row" name="delete[]" value="<?=$row->__pk_field;?>" /></td><? }
+            }
 
             /* if we are not in delete mode and editing is allowed */
             if (!$this->show_delete && $this->allow_edit) {
@@ -791,10 +838,15 @@ class cm_controller extends action_controller {
             /* here we actually write out the value of the field */
             foreach ($list_fields_field_names as $field) {
                 $this_field_descriptor = $list_field_descriptors[$field];
-                ?><td><?
+                if ($this->export === false ) {
+                    ?><td><?
+                }
+
                 switch ($this_field_descriptor[0]) {
                 case 'call_method':
+                    if ($this->export !== false) { echo '"'; }
                     echo $this->model_object->{$this_field_descriptor[1]}($row);
+                    if ($this->export !== false) { echo '"'; }
                     break;
                 case 'date':
                     echo strftime(DATE_FORMAT, strtotime((string)$row->$field));
@@ -815,13 +867,31 @@ class cm_controller extends action_controller {
                     break;
                     }
                 default:
+                    if ($this->export !== false) { echo '"'; }
                     echo htmlentities(stripslashes($row->$field));
+                    if ($this->export !== false) { echo '"'; }
+                }
+                if ($this->export === false ) {
+                    ?></td><?
+                } else {
+                    echo $this->export_delimiter;
                 }
             }
-            ?></td><?
+
+            if ($this->export === false ) {
+                ?></tr><?
+            } else {
+                echo "~~~!~~~";
+            }
         }
-        ?></tr><?
-        ob_end_flush();
+        $output = ob_get_clean();
+        if ($this->export === false) {
+            echo $output;
+        } else {
+            /* strip trailing comma's */
+            $output = str_replace($this->export_delimiter.'~~~!~~~', "\r\n", $output);
+            echo $output;
+        }
     }
 
     public function draw_filters($filters) {
