@@ -20,10 +20,10 @@ class tasks_beachhead
 {
     /* defaults */
     public $root_url = '/';
-    public $app_skeleton_repository = 'app_skeleton.git';
+    public $app_skeleton_repository = 'app_skeleton';
     public $app_skeleton_branch = 'master';
     public $submodules = array(
-        'lib' => array('repository' => 'lib.git', 'branch' => 'version_3', 'path' => 'vendor/pedantic/lib')
+        'lib' => array('repository' => 'lib', 'branch' => 'version_3', 'path' => 'vendor/pedantic/lib')
         );
 
     public $strings = array(
