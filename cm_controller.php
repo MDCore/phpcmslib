@@ -433,7 +433,11 @@ class cm_controller extends action_controller {
         /* the foreign key description portion of the title */
         if (isset($_GET['fk_t'])) {
             $fk_t= $_GET['fk_t'];
-            $this->foreign_key_title = $this->foreign_key_title_prefix.$fk_t;
+            $this->foreign_key_title = $fk_t;
+            if (isset($_GET['rfk_t'])) {
+              $related_fk_title = explode('||', $_GET['rfk_t']);
+              $this->foreign_key_title .= implode(' ', array_reverse($related_fk_title));
+            }
         }
         else {
             $this->foreign_key_title = '';
@@ -558,7 +562,34 @@ class cm_controller extends action_controller {
                     }
                 }
                 if (isset($this->export_sql_query) && isset($this->export_list_fields)) { ?><a href="<?=page_parameters('');?>&amp;export=csv">Export to CSV</a><br /><? }
-                if ($this->back_link) { ?><a href="<?=url_to($this->back_link).page_parameters('/^fk/', false);?>">Back to <?=humanize($this->back_link);?></a><br /><? }
+                if ($this->back_link) {
+                  ?><a href="<?php
+                  $backlink_url = url_to($this->back_link).page_parameters('/^fk/,/^rfk/', false);
+
+                  if (isset($_GET['rfk'])) {
+                    /* get the last value for the fk and then pop it */
+                    $rfk = explode('||', $_GET['rfk']);
+                    $backlink_url.='&amp;fk='.$rfk[sizeof($rfk)-1];
+                    array_pop($rfk);
+                    if ($rfk) {
+                      $backlink_url.='&amp;rfk='.implode('||', $rfk);
+                    }
+                  }
+
+                  if (isset($_GET['rfk_t'])) {
+                    /* get the last value for the fk_t and then pop it */
+                    $rfk_t = explode('||', $_GET['rfk_t']);
+                    $backlink_url.='&amp;fk_t='.$rfk_t[sizeof($rfk_t)-1];
+                    array_pop($rfk_t);
+                    if ($rfk_t) {
+                      $backlink_url.='&amp;rfk_t='.implode('||', $rfk_t);
+                    }
+                  }
+
+                  echo $backlink_url;
+                  ?>">Back to <?=humanize($this->back_link);?></a><br /><?
+                }
+
                 if ($this->allow_add) { ?><a href="<?=url_to(array('action' =>'add')).page_parameters('', false);?>">Add a new <?=humanize($this->list_type);?></a><br /><? }
                 if ($this->allow_delete) { ?><a href="<?=page_parameters('');?>&amp;delete=y">Delete <?=humanize(pluralize($this->list_type));?></a><br /><? }
                 ?></div><?
@@ -683,7 +714,22 @@ class cm_controller extends action_controller {
             if (!isset($related_page['fk_field'])) { $fk_field = $this->model_object->primary_key_field; } else { $fk_field = $related_page['fk_field']; }
             ?>&amp;fk=<?=$related_page['fk'];?>~<? echo $row->$fk_field;
         }
-        if (isset($related_page['fk_title_field'])) { ?>&amp;fk_t=<? echo urlencode($row->{$related_page['fk_title_field']}); }
+        if (isset($related_page['fk_title_field'])) { ?>&amp;fk_t=<? echo urlencode($this->foreign_key_title_prefix.$row->{$related_page['fk_title_field']}); }
+
+        /* the additional related page titles and foreign keys, for going up and down a tree */
+        if (isset($_GET['fk'])) {
+          $related_fk = $_GET['rfk'];
+          $related_fk_title = $_GET['rfk_t'];
+
+          if ($related_fk != '') { $related_fk .= '||'; }
+          $related_fk .= $_GET['fk'];
+          if ($related_fk_title != '') { $related_fk_title .= '||'; }
+          $related_fk_title .= urlencode($_GET['fk_t']);
+
+          echo '&amp;rfk='.$related_fk.'&amp;rfk_t='.$related_fk_title;
+        }
+
+
 
         ?>"><?
 
@@ -816,7 +862,7 @@ class cm_controller extends action_controller {
             }
 
             /**
-             * a related page draws an extra action link in the list next to say, edit or delete like so:
+             * a related page draws an extra action link in the list next to, say, edit or delete like so:
              *     [ edit ] [ delete ] [ related ]
              *
              *     This is the structure of a related page:
@@ -829,7 +875,7 @@ class cm_controller extends action_controller {
              *                   fk                      : the foreign key name that the target controller is going to expect. the list page will, by default, append the primary key of this table, unless fk_field is set. not required.
              *                   fk_field                : the field name to use for the value of the foreign_key field. not required.
              *                   fk_title_field          : the name that will be passed to the target action as extra title text. not required.
-             *                   append_page_parameters  : setting this values causes page_parameters() to be called with the value of this property
+             *                   append_page_parameters  : setting this values causes page_parameters() to be called with the value of this property. not required.
              */
             if ($this->related_pages && $no_of_related_pages > 0) {
                 foreach ($this->related_pages as $related_page ) { echo $this->related_page_anchor($related_page, $row); }
