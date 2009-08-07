@@ -56,6 +56,9 @@ function tableize($str) {
     return str_replace(' ', '_', $str);
 }
 function singularize($str) {
+    #exceptions
+    if (preg_match('/people$/', $str)) { return substr($str, 0, strlen($str)-6).'person'; }
+    if (preg_match('/branches$/', $str)) { return substr($str, 0, strlen($str)-8).'branch'; }
 
     if (strtolower(substr($str, -3)) == 'ses') {
         return substr($str,0, strlen($str)-2);
@@ -73,9 +76,6 @@ function singularize($str) {
     if (strtolower(substr($str, -1)) == 's') {
         return substr($str, 0, strlen($str)-1);
     }
-
-    #exceptions
-    if (preg_match('/people$/', $str)) { return substr($str, 0, strlen($str)-6).'person'; }
 
     return $str;
 
