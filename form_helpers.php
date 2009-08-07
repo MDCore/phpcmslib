@@ -200,6 +200,14 @@ class forms
     return $result;
     }
 
+    function subheading($name, $value = null, $attributes = null)
+    {
+      $result .= '<h3';
+      $result .= self::parse_attributes( $attributes );
+      $result .= '>'.$name.'</h3>';
+      return $result;
+    }
+
     function partial($name)
     {
         /* this whole partial handling is a HACK! action_controller should be rendering the partial. not this way. Ugh! */
@@ -379,6 +387,12 @@ class forms
                 'field_name' => $element_description[0],
                 'record_id' => $record->id
             );
+        }
+        // subheading
+        if ($element_description[1] == 'subheading') {
+            /* putting this here prevents it from setting the db_field_name later and trying to find a value for it */
+            $field_name = $element_description[0];
+            $visible = false; /* a hack to force it to output the html straight */
         }
 
         /* find the options for the select */
