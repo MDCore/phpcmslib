@@ -58,24 +58,12 @@ function tableize($str) {
 function singularize($str) {
     #exceptions
     if (preg_match('/people$/', $str)) { return substr($str, 0, strlen($str)-6).'person'; }
-    if (preg_match('/branches$/', $str)) { return substr($str, 0, strlen($str)-8).'branch'; }
-
-    if (strtolower(substr($str, -3)) == 'ses') {
-        return substr($str,0, strlen($str)-2);
-    }
-    if (strtolower(substr($str, -3)) == 'ing') {
-        return $str;
-    }
-    if (strtolower(substr($str, -3)) == 'ies') {
-        return substr($str, 0, strlen($str)-3).'y';
-    }
-
-    if (strtolower(substr($str, -2)) == 'sses') {
-        return substr($str, 0, strlen($str)-2);
-    }
-    if (strtolower(substr($str, -1)) == 's') {
-        return substr($str, 0, strlen($str)-1);
-    }
+    if (preg_match('/ses/', $str)) { return substr($str, 0, strlen($str)-3).'s'; }
+    if (preg_match('/ing/', $str)) { return $str; }
+    if (preg_match('/ies/', $str)) { return substr($str, 0, strlen($str)-3).'y'; }
+    if (preg_match('/sses/', $str)) { return substr($str, 0, strlen($str)-2); }
+    if (preg_match('/ches/', $str)) { return substr($str, 0, strlen($str)-2); }
+    if (preg_match('/s/', $str)) { return substr($str, 0, strlen($str)-1); }
 
     return $str;
 
