@@ -99,6 +99,16 @@ case 'test':
     pedantic_app_testrunner::run_tests();
 
     break;
+case 'create':
+    /* init */
+    require $path_to_lib.'/init.php';
+
+    App::$running_from_shell = $running_from_shell;
+    require $path_to_lib.'/tasks/create.php';
+
+    $create = new tasks_create;
+    $create->run($arguments);
+    break;
 
 case 'help':
 ?>
@@ -112,12 +122,24 @@ beachhead <path> <repository_url>
 
 Migrate : Run migrations
 =======
+usage:
 migrate
 [--remigrate]                   Run all migrations from the beginning. WARNING this
                                 is dangerous!
 [--force_from=REVISION]         The default process is to run any new migrations
                                 starting after the number stored in the schema_info
                                 table. This runs from an arbitrary migration number.
+
+Test : Run tests
+=======
+usage:
+test
+
+Create : Create objects
+=======
+usage:
+create <face> <object>
+
 <?
     break;
 default:
