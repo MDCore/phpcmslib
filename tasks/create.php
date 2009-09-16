@@ -52,12 +52,22 @@ class tasks_create
     /* create the controller file */
     //todo DON'T bork the controller file
     file_put_contents(
-      $path_to_root.'/'.$face_name.'/controllers/'.$controller_name.'_controller.php', 
+      "$path_to_root/$face_name/controllers/{$controller_name}_controller.php", 
       $this->controller_text($controller_name, $actions)
     );
 
-    /* create the view files */
+    /* create the controller folder in face/views */
+    mkdir($path_to_root.'/'.$face_name.'/views/'.$controller_name);
 
+    /* create the view files */
+    if ($actions) {
+      foreach ($actions as $action) {
+        file_put_contents(
+          "$path_to_root/$face_name/views/$controller_name/$action.php", 
+          "find me in $face_name/views/$controller_name/$action.php"
+        );
+      }
+    }
 
     return true;
   }
