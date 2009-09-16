@@ -138,7 +138,11 @@ test
 Create : Create objects
 =======
 usage:
-create <face> <object>
+To create a face:
+create face <name>
+
+To create a controller:
+create controller <face name> <controller name> <action 1> <action 2> .... <action n>
 
 <?
     break;
