@@ -306,7 +306,6 @@ class AR implements SeekableIterator
             $finder_where = '';
             $cnt = 0;
             foreach ($find_by as $find_by_field) {
-              var_dump($find_by_field);echo '<br>';
               $finder_where .= $this->dsn['database'].'.'.$this->schema_table.'.'.$find_by_field;
               if (is_array($params[$cnt])) {
                 $finder_where .= ' in ('.implode(',', $params[$cnt]).')';
