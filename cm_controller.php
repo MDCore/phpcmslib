@@ -110,6 +110,11 @@ class cm_controller extends action_controller {
             $this->edit_link_title = 'Edit';
         }
 
+        /* the title for the view action_link */
+        if (!isset($this->view_link_title)) {
+            $this->view_link_title = 'View';
+        }
+
         //setup some objects
         $this->model_object = new $this->primary_model; #instantiate an object of this model so we can interrogate it
         $this->filter_object = new filter;
@@ -648,6 +653,40 @@ class cm_controller extends action_controller {
         $this->render_inline();
     }
 
+    public function cm_view() {
+        $this->render_inline();
+        if (!$this->allow_view) {
+            echo 'Edit not allowed';
+            return true;
+        }
+
+        /* $_GET['view_id'] is still here for backwards compat... with other parts of the code. I'm too lazy to change it all right now */
+        if (isset($_GET['view_id']) && $_GET['view_id'] != '') {
+            $view_id = $_GET['view_id'];
+        } else {
+            $view_id = App::$route['id'];
+        }
+        $record = $this->model_object->find($view_id);
+
+        if ($record && $record->count > 0) {
+            //valid record
+        } else {
+            echo 'No '.humanize($this->primary_model).' found.';die();
+        }
+
+        # pull out id's and suchlike
+        $this->view_page_title = str_replace('__id__', $view_id, $this->view_page_title); #todo fix this hack, replace with actual field names in some way
+        ?><h2><?=$this->view_page_title;?></h2><?
+        ?><form method="post" enctype="multipart/form-data"><?
+
+        $form_fields = $this->form_fields;
+        if (isset($form_fields)) {
+            forms::form(array_merge(array($this->primary_model, &$record), $form_fields));
+        }
+        ?></form><?
+        $this->render_inline();
+    }
+
     /**
      * The add form for a new record
      *
@@ -857,8 +896,8 @@ class cm_controller extends action_controller {
 
             /* if we are not in delete mode and viewing is allowed */
             if (!$this->show_delete && $this->allow_view) {
-                # get or set the view_title
-                    ?><td class="action_link"><a href="<?=url_to(array('action' => 'view')).page_parameters('/^view/');?>&amp;view_id=<?=$row->__pk_field;?>"><?=$this->view_title;?></a></td><?
+                # get or set the view_link_title
+                    ?><td class="action_link"><a href="<?=url_to(array('action' => 'view', 'id' => $row->__pk_field)).page_parameters('/^view/');?>&"><?=$this->view_link_title;?></a></td><?
             }
 
             /**
