@@ -84,7 +84,7 @@ class action_controller {
         }
     }
     public function render($route_param = null) {
-        $this->parse_route_parameter($route_param, true); // allow passing in a different route collection or view to render
+      $this->route = $this->parse_route_parameter($route_param);
 
         /* if the $route_param is JUST a view then execute that method too. That way one
          * can just call render->(view_name) and it will execute the action and render the action's view

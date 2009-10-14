@@ -2,7 +2,7 @@
 
 function default_scripts()
 {
-    ?><script type="text/javascript" src="vendor/jquery/jquery-1.2.3.min.js"></script><?
+    ?><script type="text/javascript" src="vendor/jquery/jquery-1.3.2.min.js"></script><?
 }
 
 function image_path($asset_name, $face = null)
