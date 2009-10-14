@@ -66,6 +66,7 @@ class cm_controller extends action_controller {
         /* export */
         if (isset($_GET['export'])) {
             $this->export = $_GET['export'];
+            if ($this->export == 'y' | $this->export == 'true') { $this->export = true; }
             if (isset($this->export_sql_query)) {
                 $this->sql_query = $this->export_sql_query;
                 $this->list_fields = $this->export_list_fields;
@@ -421,6 +422,7 @@ class cm_controller extends action_controller {
             $this->allow_filters = false;
             $this->allow_add = false;
             $this->allow_edit = false;
+            $this->allow_view = false;
             $this->allow_delete = false;
             $this->back_link = false;
             unset($this->category_actions);
@@ -566,7 +568,7 @@ class cm_controller extends action_controller {
                         ?><a href="<?=$url;?>"><?=$value;?></a><br /><?
                     }
                 }
-                if (isset($this->export_sql_query) && isset($this->export_list_fields)) { ?><a href="<?=page_parameters('');?>&amp;export=csv">Export to CSV</a><br /><? }
+                if ((isset($this->export_sql_query) && isset($this->export_list_fields)) | $this->show_csv_export === true) { ?><a href="<?=page_parameters('');?>&amp;export=csv">Export to CSV</a><br /><? }
                 if ($this->back_link) {
                   ?><a href="<?php
                   $backlink_url = url_to($this->back_link).page_parameters('/^fk/,/^rfk/', false);
