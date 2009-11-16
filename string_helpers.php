@@ -157,6 +157,10 @@ function sanitize_text($text) { #todo, evaluate this name
 }
 
 function h($text) {
-  return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+  if (mb_detect_encoding($text)) {
+    return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+  } else {
+    return htmlspecialchars($text, ENT_QUOTES);
+  }
 }
 ?>
