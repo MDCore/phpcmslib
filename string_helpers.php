@@ -157,6 +157,6 @@ function sanitize_text($text) { #todo, evaluate this name
 }
 
 function h($text) {
-  echo htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+  return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
 }
 ?>
