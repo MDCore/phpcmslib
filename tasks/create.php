@@ -33,7 +33,7 @@ class tasks_create
       break;
     default:
       echo "Error: object must be one of:\r\n";
-      foreach($this->legitimate_objects as $lo) {
+      foreach($legitimate_objects as $lo) {
           echo $lo."\r\n";
       }
     }

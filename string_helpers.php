@@ -155,4 +155,8 @@ function value_else_none($value, $none_value = 'none') {
 function sanitize_text($text) { #todo, evaluate this name
     return nl2br(htmlspecialchars(stripslashes($text)));
 }
+
+function h($text) {
+  echo htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+}
 ?>
