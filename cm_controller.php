@@ -90,12 +90,16 @@ class cm_controller extends action_controller {
         if (isset($_GET['records_per_page'])) { $this->row_limit = $_GET['records_per_page']; }
 
         //add page title
-        $this->add_page_title = 'Add a new '.humanize($this->list_type);
+        if (!isset($this->add_page_title)) {
+          $this->add_page_title = 'Add a new '.humanize($this->list_type);
+        }
 
         //edit page title
-        $this->edit_page_title = "Editing a";
-        switch(strtolower(substr($this->list_type, 0, 1))) {case 'a': case 'e': case 'i': case 'o': case 'u': $this->edit_page_title .= 'n';}
-        $this->edit_page_title .= ' '.humanize($this->list_type);
+        if (!isset($this->edit_page_title)) {
+          $this->edit_page_title = "Editing a";
+          switch(strtolower(substr($this->list_type, 0, 1))) {case 'a': case 'e': case 'i': case 'o': case 'u': $this->edit_page_title .= 'n';}
+          $this->edit_page_title .= ' '.humanize($this->list_type);
+        }
 
         $this->draw_form_buttons = true;
 
