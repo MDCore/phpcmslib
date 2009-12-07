@@ -5,7 +5,7 @@ class stylesheet_dispatcher extends dispatcher
 {
     public function path_from_collection(&$collection)
     {
-        $path = parent::path_from_collection(&$collection);
+        $path = parent::path_from_collection($collection);
         $path = str_replace('_css', '.css', $path);
         return $path;
     }
