@@ -135,6 +135,13 @@ class cm_controller extends action_controller {
                 'SELECT' => $this->schema_table.'.*, '.$sql_pk,
                 'FROM'   => $this->schema_table
             );
+        } else {
+          if (isset($this->sql_query['SELECT']) && $this->sql_query['SELECT'] == 'default') {
+            $this->sql_query['SELECT'] = $this->schema_table.'.*, '.$sql_pk;
+          }
+          if (isset($this->sql_query['FROM']) && $this->sql_query['FROM'] == 'default') {
+            $this->sql_query['FROM'] = $this->schema_table;
+          }
         }
         if ($this->allow_filters ) {
             if ($this->filters) {
