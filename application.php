@@ -19,7 +19,6 @@ class Application
 
     static function init($path_to_root)
     {
-
         /* check for application load or reload */
         if (!isset($_SESSION[APP_NAME]['application'])) {
             App::$booting = true;
@@ -89,9 +88,8 @@ class Application
 
     static function load_models($path_to_root)
     {
-        if (App::$booting) {
-            App::find_these('models');
-        }
+        //Always reload the models (this was previously only on boot)
+        App::find_these('models');
 
         if (App::$reloading) {
             echo "<li>Loading models<ul>\r\n";
@@ -175,7 +173,6 @@ class Application
             $file_to_require = $_SESSION[APP_NAME]['application'][$face][$type_name][$name.'.php'];
             return $file_to_require;
         } elseif ($recheck_if_missing) {
-
             $expected_path = App::$env->root.'/'.$face.'/'.$type_name.'/'.$name.'.php';
             if (file_exists($expected_path)) {
                 $_SESSION[APP_NAME]['application'][$face][$type_name][$name.'.php'] = $expected_path;

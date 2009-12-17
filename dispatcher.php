@@ -44,9 +44,7 @@ class dispatcher
         #echo '<pre>';print_r(App::$route);echo '</pre>';
         #
         #load the face_controller for this face first
-        if ($face_controller_path = App::require_this('controller', App::$route['face'].'_face_controller', App::$route['face'])) {
-            $face_controller_classname = App::$route['face'].'_face_controller';
-        } elseif ($face_controller_path = App::require_this('controller', 'face_controller', App::$route['face'])) {
+        if ($face_controller_path = App::require_this('controller', 'face_controller', App::$route['face'])) {
             $face_controller_classname = 'face_controller';
         }
         else {

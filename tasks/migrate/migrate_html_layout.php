@@ -31,7 +31,7 @@ body {
     <p><?=proper_nounize(APP_NAME);?> schema is currently at version <?=$schema_version;?></p><?
 
     foreach ($sys->migrations as $migration) {
-        if ($migration['version'] > $schema_version) {
+        if ($migration['version'] > $schema_version || (isset($force_from) && $force_from <= $migration['version'])) {
             ?><div class="migration"><span class="description">version <?=$migration['version']?> - <i><?=$migration['description'];?></i></span>
             <p><?=$migration['result'];?></p>
             <span class="success">successfully migrated to version <?=$migration['version'];?></span>&nbsp;
