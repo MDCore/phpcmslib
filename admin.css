@@ -153,6 +153,15 @@ p.form_element textarea.large {
         height: 200px;
         width: 450px;
 }
+p.form_element a img {
+  border: 0;
+}
+p.form_element a, p.form_element a:hover {
+  color: black;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /*
  * this class is used by the date picker form control */
 .date_picker_button {
