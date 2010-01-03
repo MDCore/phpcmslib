@@ -5,7 +5,7 @@
  *   App::$face, App::$controller etc
  *
  */
-class Application
+class App
 {
     static $booting;static $reloading;
     static $running_from_shell = false;
@@ -183,24 +183,7 @@ class Application
         }
     }
 
-    static function error_check($result, $die_on_error = true)
-    {
-        if (PEAR::isError($result) || MDB2::isError($result)) {
-            if ($die_on_error) {
-                die('<pre>'.$result->getMessage().' - '.$result->getUserinfo()).'</pre>';
-            } else {
-                return $result->code;
-            }
-        }
-    }
-
 }
-/* convenience */
-class App extends Application
-{
-    var $foo = ''; /* foo is there cos I read something about empty classes not working so lekker. yes, yes, where's my proof... */
-}
-
 
 /**
  * error handler only for !dev
