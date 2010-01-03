@@ -98,7 +98,11 @@ function pluralize($str) {
     return $str . 's';
 }
 function proper_case($str) {
-    $str[0] = strtoupper($str[0]);return $str;
+  if (strlen($str) == 0) { 
+    return '';
+  }
+  $str[0] = strtoupper($str[0]);
+  return $str;
 }
 
 function split_on_word($string, $range, $add_ellipses = false, $htmlentities = false) {
