@@ -262,7 +262,7 @@ class tasks_beachhead
     }
 
     public function create_database($dsn, $db_name) {
-        $db =& MDB2::Connect($dsn); App::error_check($db);
+        $db =& MDB2::Connect($dsn); AR::error_check($db);
         $result = $db->query('CREATE DATABASE '.$db_name);
         $result_code = AR::error_check($result, false);
         if (!is_null($result_code)) {

@@ -66,12 +66,12 @@ class tasks_beachheadTest extends PHPUnit_Framework_TestCase {
     }
 
     public function test_create_database() {
-        $db =& MDB2::Connect($this->dsn); App::error_check($db);
+        $db =& MDB2::Connect($this->dsn); AR::error_check($db);
         $test_db_name = 'tasks_beachhead_test';
 
         /* drop the test database first; basically a custom setUp() */
         $sql = "DROP DATABASE IF EXISTS tasks_beachhead_test";
-        $result = $db->query($sql); App::error_check($result);
+        $result = $db->query($sql); AR::error_check($result);
 
         $tb = new tasks_beachhead;
         $result = $tb->create_database($this->dsn, $test_db_name);
@@ -80,12 +80,12 @@ class tasks_beachheadTest extends PHPUnit_Framework_TestCase {
         /* test that it exists now */
         $sql = "USE $test_db_name";
         $result = $db->query($sql);
-        $result_code = App::error_check($result, false);
+        $result_code = AR::error_check($result, false);
         $this->assertNull($result_code, 'The database does not exist');
 
         /* drop the test database; basically a custom tearDown() */
         $sql = "DROP DATABASE IF EXISTS tasks_beachhead_test";
-        $result = $db->query($sql); App::error_check($result);
+        $result = $db->query($sql); AR::error_check($result);
     }
 
 }
