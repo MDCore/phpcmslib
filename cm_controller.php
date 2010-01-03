@@ -13,6 +13,7 @@
 /* TODO
  * - document properties of cm_controller (find out how)
  * - related pages doesn't have enough convention over configuration
+ * - list body needs to use the schema introspection already being done
  */
 class cm_controller extends action_controller {
     public $is_controller = true;
@@ -874,7 +875,7 @@ class cm_controller extends action_controller {
                 $method = substr($field, 0, strlen($field)-2);
                 $list_field_descriptors[$field] = array('call_method', $method);
             }
-            // ok... TODO fix this.. now that this uses mdb2 schema introspection.
+            // ok... TODO fix this to use the schema introspection already being done
             // Problem is that these field names might be different to the schema field names.
             elseif ((stristr($this->list_field_descriptors[$field], ' date') != false) or strtolower($this->list_field_descriptors[$field]) == 'date') {
                 $list_field_descriptors[$field] = array('date');

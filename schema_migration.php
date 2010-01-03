@@ -181,9 +181,9 @@ class schema_migration
 
         $AR = new AR;
         $manager = $this->db->loadModule('Manager');
-        $mdb2_table = array();
+        $db_table = array();
         // add the primary key
-        $mdb2_table['id'] = array('type' => 'integer', 'notnull' => true, 'autoincrement' => true);
+        $db_table['id'] = array('type' => 'integer', 'notnull' => true, 'autoincrement' => true);
 
         /* convert our compact schema definition syntax into the mdb2 syntax */
         foreach ($schema_definition as $field) {
@@ -208,27 +208,27 @@ class schema_migration
                     $type = $field[1];
                 }
 
-                $mdb2_table[$field_name] = array('type' => $type);
+                $db_table[$field_name] = array('type' => $type);
 
                 //deal with the additional options
                 if (sizeof($field) > 2) {
                     $as = $field[2];
-                    if (isset($as['default'])) { $mdb2_table[$field_name]['default'] = $as['default']; }
-                    if (isset($as['length'])) { $mdb2_table[$field_name]['length'] = $as['length']; }
-                    if (isset($as['not_null'])) { $mdb2_table[$field_name]['notnull'] = 1; }
+                    if (isset($as['default'])) { $db_table[$field_name]['default'] = $as['default']; }
+                    if (isset($as['length'])) { $db_table[$field_name]['length'] = $as['length']; }
+                    if (isset($as['not_null'])) { $db_table[$field_name]['notnull'] = 1; }
                 }
             } else {
                 //some shortcuts
                 switch ($field) {
                 case 'timestamps':
                     //create the timestamps fields
-                    $mdb2_table['created_on'] = array('type' => 'timestamp', 'notnull' => true);
-                    $mdb2_table['updated_on'] = array('type' => 'timestamp', 'notnull' => true);
+                    $db_table['created_on'] = array('type' => 'timestamp', 'notnull' => true);
+                    $db_table['updated_on'] = array('type' => 'timestamp', 'notnull' => true);
                 }
             }
         }
 
-        //var_dump($mdb2_table);
+        //var_dump($db_table);
         //drop the table
         try {
             $result = $manager->dropTable($table_name); AR::error_check($result);
@@ -243,7 +243,7 @@ class schema_migration
             //print_r($e);
         }
         //create the table
-        $result = $manager->createTable($table_name, $mdb2_table); AR::error_check($result);
+        $result = $manager->createTable($table_name, $db_table); AR::error_check($result);
 
         $definition = array(
             'primary' => true,

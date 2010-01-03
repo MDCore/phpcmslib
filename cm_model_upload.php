@@ -46,7 +46,6 @@ class cm_model_upload extends AR {
         //$sql = "SELECT * FROM uploads WHERE model = '$model' AND field_name = '$field_name' AND record_id = '$record_id';";
         $this->find_by_model_and_field_name_and_record_id($model, $field_name, $record_id);
         //$result = $this->db->query($sql);
-        //$row = $result->fetchRow(MDB2_FETCHMODE_OBJECT);
         if ($this->count > 0 && !$force_new) {
             $this->new_record = false;
         } else {
