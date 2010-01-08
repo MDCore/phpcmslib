@@ -191,15 +191,14 @@ class tasks_beachhead implements lib_task
         );
 
         /* config/environments/development.php
-        *   DB_NAME
-        *   SITE
         */
         $this->show_string(308);
         replace_keywords_in_file($this->project_path.'/config/environments/development.php',
             array(
                 'DB_NAME' => $this->project_name,
                 'DEV_PATH' => $this->project_path,
-                'DEV_URL' => $project_url
+                'DEV_URL' => $project_url,
+                'SHELL_USERNAME' => $_SERVER['USERNAME'],
             )
         );
 
