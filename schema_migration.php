@@ -148,7 +148,7 @@ class schema_migration
         }
 
         $this->table('schema_info', array(
-            array('version', 'float', array('not_null' => true, 'default' => 0))
+            array('version', 'string', array('not_null' => true, 'default' => 0))
             )
         );
     }
