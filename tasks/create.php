@@ -17,11 +17,7 @@ class tasks_create implements lib_task
     switch ($object) {
     case 'face':
       $face_name = $arguments[3]; if (is_null($face_name) || $face_name == '') { echo 'No face name specified'; die(); }
-      $this->create_face($object_name);
-      echo "created face $object_name\r\n";
-
-      //todo do this automagically
-      echo "\r\nTo use this face add $object_name to \$allowed_faces in config/application.php";
+      $this->create_face($face_name);
       break;
     case 'controller':
       $face_name = $arguments[3]; if (is_null($face_name) || $face_name == '') { echo 'No face name specified'; die(); }
@@ -29,7 +25,6 @@ class tasks_create implements lib_task
       $actions = array_slice($arguments, 5);
 
       $this->create_controller($face_name, $controller_name, $actions);
-      echo "created controller $controller_name\r\n";
       break;
     case 'model':
       $model_name = $arguments[3]; if (is_null($model_name) || $model_name == '') { echo 'No model name specified'; die(); }
@@ -70,6 +65,8 @@ class tasks_create implements lib_task
     if (!$result) {
       echo("unable to create face directory $face_name");
       return false;
+    } else {
+      echo("created $face_name\r\n");
     }
 
     /* if we've made it this far it means we can create directories */
@@ -79,9 +76,10 @@ class tasks_create implements lib_task
     }
 
     //create the face controller
-    $this->save_file($face_name.'/controllers/face_controller.php', $this->controller_text('face', null, 'action_controller'));
+    $this->create_controller($face_name, 'face', '', 'action_controller');
 
-    //TODO add face to config
+      //todo do this automagically
+      echo "\r\nTo use this face add $face_name to \$allowed_faces in config/application.php";
 
     return true;
   }
@@ -109,15 +107,21 @@ class tasks_create implements lib_task
     $this->save_file("$face_name/controllers/{$controller_name}_controller.php", $this->parse_template('controller', array($controller_name, $extends, $actions_text)));
 
     /* create the controller folder in face/views */
-    $filename = $face_name.'/views/'.$controller_name;
-    $result = mkdir("$path_to_root/$filename");
-    if ($result) { echo 'created '; } else { echo 'exists '; }
-    echo $filename."\r\n";
+    if ($controller_name !== 'face') {
+      $filename = $face_name.'/views/'.$controller_name;
+      if (file_exists("$path_to_root/$filename")) {
+        $result = false; 
+      } else {
+        $result = mkdir("$path_to_root/$filename");
+      }
+      if ($result) { echo 'created '; } else { echo 'exists '; }
+      echo $filename."\r\n";
 
-    /* create the view files */
-    if ($actions) {
-      foreach ($actions as $action) {
-        $this->save_file("$face_name/views/$controller_name/$action.php", "find me in $face_name/views/$controller_name/$action.php");
+      /* create the view files */
+      if ($actions) {
+        foreach ($actions as $action) {
+          $this->save_file("$face_name/views/$controller_name/$action.php", "find me in $face_name/views/$controller_name/$action.php");
+        }
       }
     }
     return true;
@@ -205,6 +209,7 @@ class tasks_create implements lib_task
   }
 
   private function parse_template($template, $arguments) {
+    if (!is_array($arguments)) { $arguments = array($arguments); }
     global $path_to_lib;
     $result = file_get_contents(
       "$path_to_lib/tasks/create_templates/$template.php"
@@ -218,9 +223,14 @@ class tasks_create implements lib_task
   }
   private function save_file($filename, $contents) {
     global $path_to_root;
+    if (file_exists("$path_to_root/$filename")) {
+      echo "exists ".$filename."\r\n";
+      return false;
+    }
     $result = file_put_contents("$path_to_root/$filename", $contents);
-    if ($result) { echo 'created '; } else { echo 'exists '; }
+    if ($result) { echo 'created '; } else { echo 'failed '; }
     echo $filename."\r\n";
+    return true;
   }
 
 
