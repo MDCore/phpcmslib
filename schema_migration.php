@@ -31,7 +31,7 @@ class schema_migration
         }
 
         $result = $result->fetchRow();
-        if ($result && ! isset($_GET['remigrate'])) {
+        if ($result) {
             $schema_version = $result->version;
         } else {
             $schema_version = 0;

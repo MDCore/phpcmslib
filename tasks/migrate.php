@@ -17,7 +17,11 @@ class tasks_migrate implements lib_task
     $sys->running_from_shell = App::$running_from_shell;
 
     //get the latest migration number
-    $schema_version = $sys->get_latest_schema_number();
+    if (!isset($arguments['remigrate'])) {
+      $schema_version = $sys->get_latest_schema_number();
+    } else {
+      $schema_version = 0;
+    }
     if (!$sys->running_from_shell) {
     } else {
         echo 'Schema currently at version '.$schema_version;
