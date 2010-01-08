@@ -67,7 +67,7 @@ class schema_migration
                 $version = explode('_', $file_name); $version = $version[0];
                 $description = str_replace('_', ' ', str_replace('.'.$this->file_extension_from_file_name($file_name), '', substr($file_name, strlen($version)+1)));
                 $migrations[$i] = array(
-                    'version' => (int)$version,
+                    'version' => $version,
                     'filename' => $migrations[$i],
                     'description' => $description,
                     'extension' => $this->file_extension_from_file_name($migrations[$i]),
