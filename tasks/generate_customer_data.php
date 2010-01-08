@@ -1,4 +1,5 @@
 <?
+die('this file has been DEPRECATED!');
 set_time_limit(6*60*60);
 $path_to_root = "../../..";
 require("../lib/init.php");

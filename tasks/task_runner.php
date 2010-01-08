@@ -7,10 +7,17 @@
 /* NOTE
  * This script should be shell/web agnostic.
  */
+$valid_tasks = array('beachhead', 'migrate', 'test', 'create');
 
+/*-----------------------------------------------------------------------------*/
 $path_to_lib = dirname(__FILE__).'/..';
 $path_to_root = $path_to_lib.'/../../..';
 
+require ($path_to_lib.'/tasks/task_interface.php');
+
+asort($valid_tasks);
+
+/* $task_name and $arguments come from the shell or web task script */
 
 /* check if running directly from lib. The beachhead does this */
 if (!isset($task_name) || $task_name == '') {
@@ -37,116 +44,40 @@ if ($running_from_shell) {
         } else {
             $arguments[$key] = $value;
         }
-
     }
 }
 
-/* $task_name and $arguments come from the shell or web task script */
-switch ($task_name) {
+/* deal with help specifically */
+if ($task_name === 'help') {
+  require ($path_to_lib.'/string_helpers.php');
+  if (sizeof($arguments) > 0 && (in_array($arguments[2], $valid_tasks))) {
+    require $path_to_lib.'/tasks/'.$arguments[2].'.php';
+    $task_class = 'tasks_'.$arguments[2];
+    $task = new $task_class;
+    $task->help();
 
-case 'beachhead':
-    /* init */
-    $only_require_libraries = true; /* this doesn't need (or want) config or environment */
-    require $path_to_lib.'/init.php';
-
-    require $path_to_lib.'/tasks/beachhead.php';
-    $beachhead = new tasks_beachhead;
-    $beachhead->output_progress = true;
-    $beachhead->run($arguments);
-    break;
-
-case 'migrate':
-    /* init */
-    require $path_to_lib.'/init.php';
-
-    App::$running_from_shell = $running_from_shell;
-    require $path_to_lib.'/schema_interregator.php' ;
-    require $path_to_lib.'/schema_migration.php' ;
-    require $path_to_lib.'/tasks/migrate/migrate.php';
-    break;
-
-case 'test':
-    ini_set('memory_limit', '100M');
-    require_once 'PHPUnit/Framework.php';
-    require_once 'PHPUnit/TextUI/TestRunner.php';
-
-    /* setup test_specific stuff */
-    $path_to_root = '.';
-    define('TEST_MODE', true);
-
-    require $path_to_root.'/vendor/pedantic/lib/init.php';
-    require $path_to_lib.'/schema_interregator.php' ;
-    require $path_to_lib.'/schema_migration.php' ;
-    require $path_to_root.'/vendor/pedantic/lib/test_functions.php';
-
-    /* include the helpers file with general custom test methods */
-    include $path_to_root.'/test/test_helpers.php';
-
-    /* pull the development database schema */
-    // step 1: run all the migrations against the test environment (implicitly the test env)
-    echo "Running the migrations against the test database\r\n";
-    pedantic_app_testrunner::run_all_migrations();
-
-    // step 2: pull the schema
-    echo "pulling the schema from the test database\r\n";
-    $schema_interregator = new schema_interregator;
-    $schema = $schema_interregator->pull_entire_schema(App::$env->dsn);
-
-    /* set the schema property in pedantic_app_testrunner */
-    pedantic_app_testrunner::$schema = $schema;
-
-    /* run all the tests */
-    pedantic_app_testrunner::run_tests();
-
-    break;
-case 'create':
-    /* init */
-    require $path_to_lib.'/init.php';
-
-    App::$running_from_shell = $running_from_shell;
-    require $path_to_lib.'/tasks/create.php';
-
-    $create = new tasks_create;
-    $create->run($arguments);
-    break;
-
-case 'help':
+  } else {
+    /* default help output */
 ?>
-Beachhead : Create a new project
+Lib Tasks
 =========
-usage:
-beachhead <path> <repository_url>
-[--root_url=ROOT_URL]           The default root URL is '/'.
-[--project=PROJECT_NAME]        The default project name is the last directory in
-                                the path parameter.
+Valid tasks are <?=to_sentence($valid_tasks);?>.
 
-Migrate : Run migrations
-=======
-usage:
-migrate
-[--remigrate]                   Run all migrations from the beginning. WARNING this
-                                is dangerous!
-[--force_from=REVISION]         The default process is to run any new migrations
-                                starting after the number stored in the schema_info
-                                table. This runs from an arbitrary migration number.
-
-Test : Run tests
-=======
-usage:
-test
-
-Create : Create objects
-=======
-usage:
-To create a face:
-create face <name>
-
-To create a controller:
-create controller <face name> <controller name> <action 1> <action 2> .... <action n>
-
+To get help on a specific task run task with:
+   help <task name>
 <?
-    break;
-default:
-    die('No task specified or unknown task');
+  }
+} else {
+  /* load the task, and let its constructor run as an init */
+  require $path_to_lib.'/tasks/'.$task_name.'.php';
+  $task_name = 'tasks_'.$task_name;
+  $task = new $task_name;
+
+  /* run the app init */
+  require $path_to_lib.'/init.php';
+  App::$running_from_shell = $running_from_shell;
+
+  /* run the task */
+  $task->run($arguments);
 }
 ?>

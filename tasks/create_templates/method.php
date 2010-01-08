@@ -1,0 +1,4 @@
+protected function %1() {
+
+}
+

@@ -3,7 +3,7 @@
 /* beachhead PATH
  *
  * Note: The assumption is that you are running this on a dev server. So it updates
- * the dev environment and uses the deve environment to create the database. That
+ * the dev environment and uses the dev environment to create the database. That
  * may change in the future
  */
 
@@ -16,7 +16,7 @@
  * - account for remote repository failure or disconnection
  */
 
-class tasks_beachhead
+class tasks_beachhead implements lib_task
 {
     /* defaults */
     public $root_url = '/';
@@ -28,76 +28,80 @@ class tasks_beachhead
 
     public $strings = array(
         0 => 'No error found',
+        1 => "Beachhead\r\n=========\r\n",
         100 => 'No path specified',
         101 => 'No project specified',
         102 => 'No repository URL specified',
+        199 => 'Error: ',
         200 => 'Project directory %1 already exists',
         201 => 'Project directory %1 does not exist',
-        300 => 'Cloning the application skeleton',
-        301 => 'Switching to %1 branch',
-        302 => 'Creating repository',
+        300 => "Cloning the application skeleton\r\n",
+        301 => "Switching to %1 branch\r\n",
+        302 => "Creating repository\r\n",
         303 => 'Committing application',
-        304 => 'Setting up the submodules',
-        305 => 'Configuring:',
-        306 => '.htaccess',
-        307 => 'config/application.php',
-        308 => 'config/environments/development.php',
-        309 => 'Creating the database',
-        310 => 'Commiting auto-configuration',
-        311 => 'Complete',
+        304 => "Setting up the submodules\r\n",
+        305 => 'Configuring: ',
+        306 => '.htaccess, ',
+        307 => 'config/application.php, ',
+        308 => "config/environments/development.php\r\n",
+        309 => "Creating the database\r\n",
+        310 => "Commiting auto-configuration\r\n",
+        311 => 'Beachhead complete',
         /* commit messages */
-        400 => 'Initial import\r\n\r\nImport by beachhead.',
-        401 => 'Setting up submodules\r\n\r\nSetup by beachhead.',
-        402 => 'Auto-configuration\r\n\r\nConfig by beachhead.',
+        400 => "Initial import\r\n\r\nImport by beachhead.",
+        401 => "Setting up submodules\r\n\r\nSetup by beachhead.",
+        402 => "Auto-configuration\r\n\r\nConfig by beachhead.",
 
     );
     public $error_no = 0;
-    public $output_progress = false;
+    public $output_progress = true;
 
     public function run($arguments) {
-        $path = $arguments[2];
-        $repository_url = $arguments[3];
+      if ($this->output_progress) {
+        $this->show_string(1);
+      }
+      $path = $arguments[2];
+      $repository_url = $arguments[3];
 
-        /* get the project argument */
-        if (isset($arguments['project'])) {
-            $project = $arguments['project'];
-        } else {
-            $project = explode('/', str_replace('\\', '/', $path));
-            $project = $project[sizeof($project)-1];
-        }
+      /* get the project argument */
+      if (isset($arguments['project'])) {
+        $project = $arguments['project'];
+      } else {
+        $project = explode('/', str_replace('\\', '/', $path));
+        $project = $project[sizeof($project)-1];
+      }
 
-        /* check the path and project */
-        if (is_null($path) || $path == '') {
-            $this->error(100); //'No path specified'
-            return false;
-        }
-        if (is_null($project) || $project == '') {
-            $this->error(101); //No project specified
-            return false;
-        }
-        if (is_null($repository_url) || $repository_url == '') {
-            $this->error(102); //No repository url specified
-            return false;
-        } else {
-            $this->repository_url = $repository_url;
-        }
-        /* validate the repository url */
-        if (substr($this->repository_url, -1, 1) != '/') {
-            $this->repository_url .= '/';
-        }
-        /* check for additional arguments */
-        if (isset($arguments['root_url'])) {
-            $this->root_url = $arguments['root_url'];
-        }
-        return $this->create_application($path, $project);
+      /* check the path and project */
+      if (is_null($path) || $path == '') {
+        $this->error(100); //'No path specified'
+        return false;
+      }
+      if (is_null($project) || $project == '') {
+        $this->error(101); //No project specified
+        return false;
+      }
+      if (is_null($repository_url) || $repository_url == '') {
+        $this->error(102); //No repository url specified
+        return false;
+      } else {
+        $this->repository_url = $repository_url;
+      }
+      /* validate the repository url */
+      if (substr($this->repository_url, -1, 1) != '/') {
+        $this->repository_url .= '/';
+      }
+      /* check for additional arguments */
+      if (isset($arguments['root_url'])) {
+        $this->root_url = $arguments['root_url'];
+      }
+      return $this->create_application($path, $project);
     }
     public function __construct() {
+      global $only_require_libraries;
+      $only_require_libraries = true; /* this doesn't need (or want) config or environment */
     }
 
     private function create_application($path, $project) {
-
-        $op = $this->output_progress;
-
         /* generate the filename / URL friendly project_name */
         $this->project_name = str_replace('.', '_', $project);
         $this->project_name = str_replace('/', '_', $project);
@@ -107,20 +111,16 @@ class tasks_beachhead
 
         /* does this directory already exist ? fail! */
         if (file_exists($this->project_path)) {
-            $this->error(200, array('%1' => $this->project_path));
+            $this->error(200, array($this->project_path));
             return false;
         }
 
         /* export the skeleton */
-        if ($op) {
-            echo $this->strings[300]."\r\n";
-        }
+        $this->show_string(300);
         exec("git clone {$this->repository_url}{$this->app_skeleton_repository} {$this->project_path}", $output);
 
         if ($this->app_skeleton_branch != 'master') {
-            if ($op) {
-                echo sprintf($this->strings[301], $this->app_skeleton_branch)."\r\n";
-            }
+            $this->show_string(301, $this->app_skeleton_branch);
             exec("cd {$this->project_path} ; git checkout {$this->app_skeleton_branch} ; cd ../.. ", $output);
         }
 
@@ -134,21 +134,15 @@ class tasks_beachhead
         }
 
         /* init a new repository */
-        if ($op) {
-            echo $this->strings[302]."\r\n";
-        }
+        $this->show_string(302);
         exec("cd {$this->project_path} ; git init", $output);
 
         /* commit */
-        if ($op) {
-            //echo $this->strings[303]."\r\n";
-        }
+        //$this->show_string(303)."\r\n";
         exec("cd {$this->project_path} ; git add . ; git commit -m '".$this->strings['400']."'", $output);
 
         /* set up the submodules in vendor */
-        if ($op) {
-            echo $this->strings[304]."\r\n";
-        }
+        $this->show_string(304);
         foreach ($this->submodules as $submodule) {
             $repository = $submodule['repository'];
             $branch = $submodule['branch'];
@@ -159,14 +153,11 @@ class tasks_beachhead
 
             //echo("cd {$this->project_path} ; git submodule add -b $branch {$this->repository_url}$repository $path\r\n");
             exec("cd {$this->project_path} ; git submodule add {$this->repository_url}$repository $path", $output, $return_status);
-            exec("cd {$this->project_path}/$path ; git checkout -b $branch origin/$branch", $output, $return_status);
         }
 
         /* submodule commit */
         exec("cd {$this->project_path} ; git commit -a -m '".$this->strings['402']."'", $output);
-        if ($op) {
-            echo $this->strings[305];
-        }
+        $this->show_string(305);
 
         /* sort out the project url */
         $project_url = $this->root_url.'/'.$project;
@@ -181,9 +172,7 @@ class tasks_beachhead
         * .htaccess
         *    URL_TO_DEV_SITE
          */
-        if ($op) {
-            echo $this->strings[306].", ";
-        }
+        $this->show_string(306);
         replace_keywords_in_file($this->project_path.'/.htaccess',
             array('URL_TO_DEV_SITE' => $project_url)
         );
@@ -193,9 +182,7 @@ class tasks_beachhead
         *   YOUR_APP_NAME
         *   PASSWORD_SALT
         */
-        if ($op) {
-            echo $this->strings[307].", ";
-        }
+        $this->show_string(307);
         replace_keywords_in_file($this->project_path.'/config/application.php',
             array(
                 'YOUR_APP_NAME' => $this->project_name,
@@ -207,9 +194,7 @@ class tasks_beachhead
         *   DB_NAME
         *   SITE
         */
-        if ($op) {
-            echo $this->strings[308]."\r\n";
-        }
+        $this->show_string(308);
         replace_keywords_in_file($this->project_path.'/config/environments/development.php',
             array(
                 'DB_NAME' => $this->project_name,
@@ -223,14 +208,10 @@ class tasks_beachhead
 
 
         exec("cd {$this->project_path} ; git commit -a -m '".$this->strings['401']."'", $output);
-        if ($op) {
-            //echo "\r\n".$this->strings[310]."\r\n";
-        }
+        //$this->show_string(310);
 
         /* creating the database */
-        if ($op) {
-            echo $this->strings[309]."\r\n";
-        }
+        $this->show_string(309);
 
         /* this checks that the class has not already been declared. This was
          * happening in a phpunit --repeat n scenario.
@@ -255,13 +236,11 @@ class tasks_beachhead
 
         }
 
-        if ($op) {
-            echo "\r\n".$this->strings[311];
-        }
+            $this->show_string(311); /* beachhead complete */
         return true;
     }
 
-    public function create_database($dsn, $db_name) {
+    private function create_database($dsn, $db_name) {
         $db =& MDB2::Connect($dsn); AR::error_check($db);
         $result = $db->query('CREATE DATABASE '.$db_name);
         $result_code = AR::error_check($result, false);
@@ -271,29 +250,35 @@ class tasks_beachhead
         return true;
     }
 
-    public function error($error_no, $error_variables = null) {
-        $this->error_no = $error_no;
-        $this->error_variables = $error_variables;
+  public function help() {
+?>
+Beachhead : Create a new project
+================================
+usage:
+beachhead <path> <repository_url>
+[--root_url=ROOT_URL]           The default root URL is '/'.
+[--project=PROJECT_NAME]        The default project name is the last directory in
+                                the path parameter.
+<?
+  }
 
-        $error = $this->strings[$this->error_no];
-        if (isset($this->error_variables) && is_array($this->error_variables)) {
-            foreach ($this->error_variables as $variable => $value) {
-                $error = str_replace($variable, $value, $error);
-            }
-        }
-        $this->error = $error;
-
-        if ($this->output_progress) {
-            echo $error;
-        }
-
-        return $error_no;
+  public function error($no, $variables) {
+    $this->error_no = $no;
+    $this->error_variables = $variables;
+    $this->error = $this->show_string($no, $variables, $this->strings[199]);
+    return $this->error;
+  }
+  public function show_string($no, $variables = null, $prefix = null) {
+    $string = $this->strings[$no];
+    if (isset($variables) && is_array($variables)) {
+      foreach ($variables as $variable => $value) {
+        $string = str_replace($variable, $value, $string);
+      }
     }
-    public function show_output($output) {
-        foreach($output as $line) {
-            echo $line."\r\n";
-        }
+    if ($this->output_progress) {
+      echo $string;
     }
+    return $string;
+  }
 }
-
 ?>

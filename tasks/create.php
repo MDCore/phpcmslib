@@ -1,13 +1,15 @@
 <?
 /*
  * TODO
- * - Documentation
  * - Add face to $allowed_faces in conf/app
  * - NBNB controllers/views etc
+ * - allow overriding defaults like extends
  */
-class tasks_create
+class tasks_create implements lib_task
 {
-  private $legitimate_objects = array('face', 'controller');
+  private $valid_objects = array('face', 'controller', 'model', 'migration');
+  private $valid_migration_field_types = array('string', 'integer', 'text', 'active', 'timestamps');
+  private $valid_model_attributes = array('validates_presence_of', 'has_one', 'has_many', 'belongs_to', 'changelog', 'acts_as_nested_set', 'display_field');
 
   public function run($arguments) {
     $object = $arguments[2]; if (is_null($object) || $object == '') { echo 'No object specified (e.g. face)'; die(); }
@@ -29,62 +31,31 @@ class tasks_create
       $this->create_controller($face_name, $controller_name, $actions);
       echo "created controller $controller_name\r\n";
       break;
+    case 'model':
+      $model_name = $arguments[3]; if (is_null($model_name) || $model_name == '') { echo 'No model name specified'; die(); }
+      $fields = array_slice($arguments, 4);
+      $skip_migration = false;
+      if ($smpos = array_search('skip_migration', $fields)) {
+        unset($fields[$smpos]);
+        $skip_migration = true;
+      }
+
+      $this->create_model($model_name, $fields, $skip_migration);
+      break;
+    case 'migration':
+      $migration_name = $arguments[3]; if (is_null($migration_name) || $migration_name == '') { echo 'No migration name specified'; die(); }
+      $fields = array_slice($arguments, 4);
+
+      $this->create_migration($migration_name, $fields);
+      break;
     case 'view':
       break;
     default:
       echo "Error: object must be one of:\r\n";
-      foreach($legitimate_objects as $lo) {
+      foreach($valid_objects as $lo) {
           echo $lo."\r\n";
       }
     }
-  }
-  function create_controller($face_name, $controller_name, $actions) {
-    global $path_to_root;
-
-    /* create the face first if needed */
-    if (!file_exists($path_to_root.'/'.$face_name)) {
-      $result = $this->create_face($face_name);
-      if (!$result) {
-        return false;
-      }
-    }
-
-    /* create the controller file */
-    //todo DON'T bork the controller file
-    file_put_contents(
-      "$path_to_root/$face_name/controllers/{$controller_name}_controller.php", 
-      $this->controller_text($controller_name, $actions)
-    );
-
-    /* create the controller folder in face/views */
-    mkdir($path_to_root.'/'.$face_name.'/views/'.$controller_name);
-
-    /* create the view files */
-    if ($actions) {
-      foreach ($actions as $action) {
-        file_put_contents(
-          "$path_to_root/$face_name/views/$controller_name/$action.php", 
-          "find me in $face_name/views/$controller_name/$action.php"
-        );
-      }
-    }
-
-    return true;
-  }
-
-  private function controller_text($controller_name, $actions = array(), $extends = 'face_controller') {
-    $controller_text =  '<'."?\r\nclass {$controller_name}_controller extends $extends {\r\n";
-
-    //Actions
-    if ($actions) {
-      foreach ($actions as $action) {
-        $controller_text .= "\r\n  protected function $action() {\r\n  }\r\n";
-      }
-    }
-
-    $controller_text .= "\r\n}\r\n?>";
-
-    return $controller_text;
   }
 
   function create_face($face_name) {
@@ -108,14 +79,197 @@ class tasks_create
     }
 
     //create the face controller
-    file_put_contents(
-      $path_to_root.'/'.$face_name.'/controllers/face_controller.php',
-      $this->controller_text('face', null, 'action_controller')
-    );
+    $this->save_file($face_name.'/controllers/face_controller.php', $this->controller_text('face', null, 'action_controller'));
 
     //TODO add face to config
 
     return true;
+  }
+
+  function create_controller($face_name, $controller_name, $actions, $extends = 'face_controller') {
+    global $path_to_root;
+
+    /* create the face first if needed */
+    if (!file_exists($path_to_root.'/'.$face_name)) {
+      $result = $this->create_face($face_name);
+      if (!$result) {
+        return false;
+      }
+    }
+
+    if ($actions) {
+      foreach ($actions as $action) {
+        $actions_text .= $this->parse_template('method', $action);
+      }
+    } else {
+      $actions_text = '';
+    }
+
+    /* create the file */
+    $this->save_file("$face_name/controllers/{$controller_name}_controller.php", $this->parse_template('controller', array($controller_name, $extends, $actions_text)));
+
+    /* create the controller folder in face/views */
+    $filename = $face_name.'/views/'.$controller_name;
+    $result = mkdir("$path_to_root/$filename");
+    if ($result) { echo 'created '; } else { echo 'exists '; }
+    echo $filename."\r\n";
+
+    /* create the view files */
+    if ($actions) {
+      foreach ($actions as $action) {
+        $this->save_file("$face_name/views/$controller_name/$action.php", "find me in $face_name/views/$controller_name/$action.php");
+      }
+    }
+    return true;
+  }
+
+  public function create_model($model_name, $fields_and_attributes, $skip_migration = true, $extends = 'AR') {
+    global $path_to_root;
+
+    $fields = $fields_and_attributes;
+    $attributes = array();
+    for ($i=0;$i<sizeof($fields_and_attributes);$i++) {
+      if (strpos($fields[$i], ':') > 0) {
+        $fields[$i] = explode(':', $fields[$i]);
+        if (in_array($fields[$i][0], $this->valid_model_attributes)) {
+          $attributes[] = $fields[$i];
+          unset($fields[$i]);
+        }
+      } else {
+        if (in_array($fields[$i], $this->valid_model_attributes)) {
+          $attributes[] = $fields[$i];
+          unset($fields[$i]);
+        }
+      }
+    }
+    /* reformat fields */
+    for ($i=0; $i < sizeof($fields); $i++) {
+      if (is_array($fields[$i])) {
+        $fields[$i] = implode(':', $fields[$i]);
+      }
+    }
+    /* build the attribute text */
+
+    $attributes_text = "";
+    for ($i=0; $i < sizeof($attributes); $i++) {
+      $attributes_text .= '  public $';
+      if (is_array($attributes[$i])) {
+        $attributes_text .= "{$attributes[$i][0]} = '{$attributes[$i][1]}';";
+      } else {
+        $attributes_text .= "{$attributes[$i]};";
+      }
+      $attributes_text .= "\r\n";
+    }
+
+    /* create the file */
+    $this->save_file("models/{$model_name}.php", $this->parse_template('model', array($model_name, $extends, $attributes_text)));
+
+    if (!$skip_migration) {
+      $this->create_migration('create_'.$model_name, $fields, $model_name);
+    }
+
+
+    return true;
+  }
+
+  public function create_migration($migration_name, $fields, $model_name = null) {
+    if (!$model_name) {
+      $model_name = $migration_name;
+    }
+
+    /* generate the migration prefix */
+    $migration_prefix = date('YmdHis');
+
+    /* sort out the fields */
+    $fields_text = '';
+    for ($i=0;$i<sizeof($fields);$i++) {
+      if (strpos($fields[$i], ':') > 0) {
+        $fields[$i] = explode(':', $fields[$i]);
+        if (in_array($fields[$i][1], $this->valid_migration_field_types)) {
+          $fields_text .= "    array('{$fields[$i][0]}', '{$fields[$i][1]}'),\r\n";
+        }
+      } else {
+        if (in_array($fields[$i], $this->valid_migration_field_types)) {
+          $fields_text .= "    '{$fields[$i]}',\r\n";
+        }
+      }
+    }
+    if ($fields_text) {
+      $fields_text = substr($fields_text, 0, strlen($fields_text)-3);
+    }
+
+    /* create the file */
+    $this->save_file("db/migrations/{$migration_prefix}_{$migration_name}.php", $this->parse_template('migration', array($model_name, $fields_text)));
+    return true;
+
+  }
+
+  private function parse_template($template, $arguments) {
+    global $path_to_lib;
+    $result = file_get_contents(
+      "$path_to_lib/tasks/create_templates/$template.php"
+    );
+    if ($result) {
+      $arguments = array_merge(array($result), $arguments);
+      $result = call_user_func_array('sprintf', $arguments);
+    }
+
+    return $result;
+  }
+  private function save_file($filename, $contents) {
+    global $path_to_root;
+    $result = file_put_contents("$path_to_root/$filename", $contents);
+    if ($result) { echo 'created '; } else { echo 'exists '; }
+    echo $filename."\r\n";
+  }
+
+
+  public function help() {
+?>
+Create : Create objects
+=======================
+usage:
+------------------------------------------------------------------------------------------------------------------------------
+To create a face:
+create face <name>
+
+------------------------------------------------------------------------------------------------------------------------------
+To create a controller:
+create controller <face_name> <controller name> <action 1> <action 2> ... <action n>
+
+------------------------------------------------------------------------------------------------------------------------------
+To create a model:
+create model <model_name> <column:datatype> <column:datatype> <property:value> [...]
+you can also pass parameters to define relationships. E.g.:
+create model products name:string description:text active timestamps has_many:product_parts belongs_to:category
+
+Field types are:
+string, integer, text, active, timestamps
+
+Additional properties are:
+has_one               comma seperated value
+has_many              comma seperated value
+belongs_to            comma seperated value
+changelog             no value
+acts_as_nested_set    no value
+display_field         single value for display_field
+validates_presence_of comma seperated value
+
+To skip creating the migration:
+--skip-migration
+
+------------------------------------------------------------------------------------------------------------------------------
+To create a migration:
+create migration <migration_name> <column:datatype> <column:datatype> [...]
+E.g.:
+create migration name:string description:text active timestamps
+
+Field types are:
+string, integer, text, active, timestamps
+ 
+E.g.
+------------------------------------------------------------------------------------------------------------------------------
+<?
   }
 }
 ?>
