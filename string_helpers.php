@@ -63,7 +63,8 @@ function singularize($str) {
     if (preg_match('/ies/', $str)) { return substr($str, 0, strlen($str)-3).'y'; }
     if (preg_match('/sses/', $str)) { return substr($str, 0, strlen($str)-2); }
     if (preg_match('/ches/', $str)) { return substr($str, 0, strlen($str)-2); }
-    if (preg_match('/es/', $str)) { return substr($str, 0, strlen($str)-2); }
+    if (preg_match('/shes/', $str)) { return substr($str, 0, strlen($str)-2); }
+    if (preg_match('/es/', $str)) { return substr($str, 0, strlen($str)-1); }
     if (preg_match('/s/', $str)) { return substr($str, 0, strlen($str)-1); }
 
     return $str;
