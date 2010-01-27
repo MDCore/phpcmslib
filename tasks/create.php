@@ -110,7 +110,7 @@ class tasks_create implements lib_task
     if ($controller_name !== 'face') {
       $filename = $face_name.'/views/'.$controller_name;
       if (file_exists("$path_to_root/$filename")) {
-        $result = false; 
+        $result = false;
       } else {
         $result = mkdir("$path_to_root/$filename");
       }
@@ -251,7 +251,7 @@ create controller <face_name> <controller name> <action 1> <action 2> ... <actio
 To create a model:
 create model <model_name> <column:datatype> <column:datatype> <property:value> [...]
 you can also pass parameters to define relationships. E.g.:
-create model products name:string description:text active timestamps has_many:product_parts belongs_to:category
+create model product name:string description:text active timestamps has_many:product_parts belongs_to:category
 
 Field types are:
 string, integer, text, active, timestamps
@@ -276,7 +276,7 @@ create migration name:string description:text active timestamps
 
 Field types are:
 string, integer, text, active, timestamps
- 
+
 E.g.
 ------------------------------------------------------------------------------------------------------------------------------
 <?
