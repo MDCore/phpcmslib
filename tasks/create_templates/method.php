@@ -1,4 +1,3 @@
-protected function %1() {
+protected function %1$s() {
 
 }
-

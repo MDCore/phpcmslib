@@ -239,7 +239,7 @@ class tasks_beachhead implements lib_task
         return true;
     }
 
-    private function create_database($dsn, $db_name) {
+    public function create_database($dsn, $db_name) {
         $db =& MDB2::Connect($dsn); AR::error_check($db);
         $result = $db->query('CREATE DATABASE '.$db_name);
         $result_code = AR::error_check($result, false);

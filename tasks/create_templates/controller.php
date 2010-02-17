@@ -1,7 +1,6 @@
 <?
-class %1_controller extends %2 {
+class %1$s_controller extends %2$s {
 
-  %3
+  %3$s
 }
 ?>
-
