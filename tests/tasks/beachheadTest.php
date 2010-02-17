@@ -5,11 +5,12 @@
  */
 define('RUNNING_UNIT_TESTS', true);
 require_once 'MDB2.php';
-require_once '../functions.php';
-require_once '../application.php';
-require_once '../environment.php';
-require_once '../AR.php';
-require_once '../tasks/beachhead.php';
+require_once 'functions.php';
+require_once 'application.php';
+require_once 'environment.php';
+require_once 'AR.php';
+require_once 'tasks/task_interface.php';
+require_once 'tasks/beachhead.php';
 
 class tasks_beachheadTest extends PHPUnit_Framework_TestCase {
     public $project_dir = '/tmp/bob_client/bob_project';
@@ -40,6 +41,7 @@ class tasks_beachheadTest extends PHPUnit_Framework_TestCase {
         $arguments = array(null, 'beachhead', $this->project_dir, $this->repository_url);
 
         $tb = new tasks_beachhead;
+        $tb->output_progress = false;
         $tb->submodules['lib']['repository'] = 'lib'; /* not pulling from a bare repo */
         $tb->app_skeleton_repository = 'app_skeleton'; /* not pulling from a bare repo */
         $result = $tb->run($arguments);
@@ -58,6 +60,7 @@ class tasks_beachheadTest extends PHPUnit_Framework_TestCase {
         exec("mkdir $project_dir");
 
         $tb = new tasks_beachhead;
+        $tb->output_progress = false;
         $tb->submodules['lib']['repository'] = 'lib'; /* not pulling from a bare repo */
         $tb->app_skeleton_repository = 'app_skeleton'; /* not pulling from a bare repo */
         $result = $tb->run($arguments);
@@ -74,6 +77,7 @@ class tasks_beachheadTest extends PHPUnit_Framework_TestCase {
         $result = $db->query($sql); AR::error_check($result);
 
         $tb = new tasks_beachhead;
+        $tb->output_progress = false;
         $result = $tb->create_database($this->dsn, $test_db_name);
         $this->assertTrue($result);
 

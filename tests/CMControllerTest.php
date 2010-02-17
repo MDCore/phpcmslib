@@ -3,12 +3,12 @@
  * we need to require everything we need here because allTests.php is not run when
  * executing phpunit <testClass>
  */
-require_once '../functions.php';
-require_once '../string_helpers.php';
-require_once '../filter.php';
-require_once '../AR.php';
-require_once '../action_controller.php';
-require_once '../cm_controller.php';
+require_once 'functions.php';
+require_once 'string_helpers.php';
+require_once 'filter.php';
+require_once 'AR.php';
+require_once 'action_controller.php';
+require_once 'cm_controller.php';
 
 require_once 'DB/NestedSet.php' ;
 

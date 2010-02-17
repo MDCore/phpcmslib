@@ -3,9 +3,9 @@
  * we need to require everything we need here because allTests.php is not run when
  * executing phpunit <testClass>
  */
-require_once '../functions.php';
-require_once '../AR.php';
-require_once '../action_controller.php';
+require_once 'functions.php';
+require_once 'AR.php';
+require_once 'action_controller.php';
 
 class actionControllerTest extends PHPUnit_Framework_TestCase {
     public function __construct()

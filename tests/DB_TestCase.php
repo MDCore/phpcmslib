@@ -1,5 +1,5 @@
 <?
-require_once '../application.php';
+require_once 'application.php';
 require_once 'MDB2.php' ;
 
 /* homemade mocking */
