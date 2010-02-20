@@ -135,5 +135,12 @@ class cm_model_upload extends AR {
             unlink($filename);
         }
     }
+    function force_download($content_type = null) {
+      header('Content-disposition: attachment; filename="'.$this->original_filename.'"');
+      if ($content_type) {
+        header('Content-type: '.$content_type);
+      }
+      readfile($this->save_path.'/'.$this->basename());
+    }
 }
 ?>
