@@ -45,6 +45,10 @@ class tasks_create implements lib_task
       break;
     case 'view':
       break;
+    case 'uploads_table':
+        $this->uploads_table();
+      break;
+
     default:
       echo "Error: object must be one of:\r\n";
       foreach($valid_objects as $lo) {
@@ -208,6 +212,20 @@ class tasks_create implements lib_task
 
   }
 
+  public function uploads_table() {
+
+    /* generate the migration prefix */
+    $migration_prefix = date('YmdHis');
+    $migration_name = 'uploads';
+
+    /* create the file */
+    $this->save_file("db/migrations/{$migration_prefix}_{$migration_name}.php", $this->parse_template('upload_migration', null));
+
+    /* create the model file */
+    $this->save_file("models/upload.php", $this->parse_template('upload_model', null));
+    return true;
+  }
+
   private function parse_template($template, $arguments) {
     if (!is_array($arguments)) { $arguments = array($arguments); }
     global $path_to_lib;
@@ -277,7 +295,11 @@ create migration name:string description:text active timestamps
 Field types are:
 string, integer, text, active, timestamps
 
-E.g.
+------------------------------------------------------------------------------------------------------------------------------
+To create the uploads table:
+create uploads_table
+
+This also creates the model
 ------------------------------------------------------------------------------------------------------------------------------
 <?
   }
