@@ -3,10 +3,10 @@
  * we need to require everything we need here because allTests.php is not run when
  * executing phpunit <testClass>
  */
-require_once '../asset_helpers.php';
-require_once '../string_helpers.php';
-require_once '../functions.php';
-require_once '../application.php';
+require_once 'asset_helpers.php';
+require_once 'string_helpers.php';
+require_once 'functions.php';
+require_once 'application.php';
 
 class assetHelpersTest extends PHPUnit_Framework_TestCase {
 
