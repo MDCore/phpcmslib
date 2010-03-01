@@ -252,6 +252,7 @@ To create a model:
 create model <model_name> <column:datatype> <column:datatype> <property:value> [...]
 you can also pass parameters to define relationships. E.g.:
 create model product name:string description:text active timestamps has_many:product_parts belongs_to:category
+Note that 'id' as primary key is automatically added
 
 Field types are:
 string, integer, text, active, timestamps
