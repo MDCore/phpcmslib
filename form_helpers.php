@@ -294,15 +294,11 @@ class forms
                     }
                 }
 
-                if ( $draw_element )
-                {
+                if ($draw_element) {
                     //is it a partial or a form element ?
-                    if ( array_key_exists( 'partial', $arg ) )
-                    {
-                        self::partial($arg['partial']);
-                    }
-                    else
-                    {
+                    if ($arg[1] == 'partial') {
+                        self::partial($arg[0]);
+                    } else {
                         self::draw_element( $arg, $default_model, $record );
                     }
                 }
@@ -356,6 +352,7 @@ class forms
             break;
           case 'password':
             $db_field_name = 'password_md5';
+            $form_field[1] = 'input';
             $field_name = "$default_model"."[$db_field_name]";
             //$form_field['type'] = "password"; not setting to password because it is never shown. plain text entry is better
             $form_field['value'] = '';

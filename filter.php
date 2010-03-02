@@ -108,6 +108,7 @@ class filter
                 $sql['WHERE'][] = str_replace('~', '.', $filter_value['name'])." LIKE '".
                 strftime(SQL_DATE_FORMAT, strtotime((string)$filter_value['value']))."%'"; #warning this format might bed to be specific to doing where criteria, and not the display friendly format
             }
+
             if ($this->filters[$name]['type'] == 'select')
             {
                 #check what relationship it is to the primary model
@@ -127,6 +128,7 @@ class filter
                 }
                 else
                 {
+
                     $filter_field = foreign_keyize(singularize($name));
                 }
                 $sql['WHERE'][] = str_replace('~', '.', $filter_field)."='".$filter_value['value']."'";
@@ -139,11 +141,13 @@ class filter
     function filter_select($filter)
     {
         $name = $filter['name']; $alias = $filter['alias'];
+
         if (isset($filter['model'])) {
             $foreign_model_name = $filter['model'];
         } else {
-            $foreign_model_name = singularize($name);
+            $foreign_model_name = $name;
         }
+
         $options = new $foreign_model_name;
         $get_var = 'filter_'. $name;
         if ($_GET[$get_var] != '') {
