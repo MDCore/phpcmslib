@@ -1128,6 +1128,7 @@ class AR implements SeekableIterator
                 if (substr($field, -2) == '()') {
                     $method = substr($field, 0, strlen($field)-2);
                     $row[$field] = $this->$method($record);
+                    echo $this->$method($record);
                 } else {
                     $row[$field] = $record->$field;
                 }
@@ -1415,8 +1416,11 @@ class AR implements SeekableIterator
      *
      * @return string the display_field value of the current record, or false if no records in this recordset
      */
-    function display_name()
+    function display_name($question_everything_accept_nothing = null)
     {
+        if ($question_everything_accept_nothing) {
+            trigger_error("AR::display_name() does not accept any parameters.", E_USER_ERROR);
+        }
         if ($this->count == 0) {
             return false;
         }
