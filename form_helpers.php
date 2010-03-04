@@ -403,9 +403,8 @@ class forms
         } else {
             $fk_model = strtolower(tableize($form_field[0]));
         }
-        if ( ($form_field[1] == 'select' || $form_field[1] == 'multi_select')
-            && !isset($record->$fk_model)  /* this checks whether or not the field_name is a property or not. If it is a property then it skips this section */
-        ) {
+        if (($form_field[1] == 'select' || $form_field[1] == 'multi_select')) {
+          if (!isset($record->$fk_model)) {  /* this checks whether or not the field_name is a property or not. If it is a property then it skips this section */
             if ($form_field['field']) { $field = $form_field['field'];} else {$field = null;}
             if ($form_field['show_all_option']) {$show_all_option = $form_field['show_all_option'];} else { $show_all_option = null; }
             if (isset($form_field['criteria'])) { $criteria = $form_field['criteria']; } else { $criteria = 'all'; }
@@ -475,6 +474,9 @@ class forms
                 }
                 break;
             }
+          } elseif (!array_key_exists('options', $form_field)) {
+            trigger_error("Trying to draw a select for the <i>$fk_model</i> property but no options have been supplied. Is this a misconfigured <i>has_one</i> relationship?", E_USER_ERROR);
+          }
         }
 
         //field_name and db_field_name
