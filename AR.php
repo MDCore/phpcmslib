@@ -910,7 +910,7 @@ class AR implements SeekableIterator
             break;
         default:
             /*todo fix this hack */
-            if (preg_match('/date/', $field) && $value != '' && $value != 0 && $value != null) {
+            if (preg_match('/date$/', $field) && $value != '' && $value != 0 && $value != null) {
                 $value = strftime(SQL_INSERT_DATE_FORMAT, strtotime($value));
             }
             /*
