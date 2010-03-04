@@ -223,7 +223,7 @@ class cm_controller extends action_controller {
         $result = $this->cm_update_core($edit_id, $_POST);
 
         switch ($result['result']) {
-        case 'validation_errors':
+        case 'validation_failed':
             redirect_with_parameters(url_to(array('action' => 'edit')), "edit_id=".$edit_id."&flash=".$result['errors']);
             break;
         case 'success':

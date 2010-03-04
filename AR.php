@@ -1128,7 +1128,6 @@ class AR implements SeekableIterator
                 if (substr($field, -2) == '()') {
                     $method = substr($field, 0, strlen($field)-2);
                     $row[$field] = $this->$method($record);
-                    echo $this->$method($record);
                 } else {
                     $row[$field] = $record->$field;
                 }
