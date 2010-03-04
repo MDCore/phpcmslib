@@ -57,14 +57,16 @@ class filter
                     }
                     else
                     {
-                        $class_name = singularize($filter_value['name']);
+                        $class_name = $filter_value['name'];
                     }
                     $options = new $class_name;
                     $options->find($filter_value['value']);
-                    $display_field = 'name'; if (isset($filter['field'])) {$display_field = $filter['field'];}
+                    $display_field = 'name';
+                    if (isset($filter['field'])) { $display_field = $filter['field']; } else { $display_field = $options->display_field; }
                     if (substr($display_field, -2) == '()')
                     {
-                        $display_field = substr($display_field, 0, strlen($display_field)-2); $display_value = $options->$display_field();
+                        $display_field = substr($display_field, 0, strlen($display_field)-2);
+                        $display_value = $options->$display_field();
                     }
                     else
                     {
@@ -129,9 +131,9 @@ class filter
                 else
                 {
 
-                    $filter_field = foreign_keyize(singularize($name));
+                    $filter_field = foreign_keyize($name);
                 }
-                $sql['WHERE'][] = str_replace('~', '.', $filter_field)."='".$filter_value['value']."'";
+                $sql['WHERE'][] = pluralize($this->primary_model).'.'.str_replace('~', '.', $filter_field)."='".$filter_value['value']."'";
             }
         }
 
