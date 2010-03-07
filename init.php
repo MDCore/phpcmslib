@@ -24,7 +24,7 @@ require("cm_model_upload.php");
 
 /* load the application config */
 if (!isset($only_require_libraries)) {
-    require($path_to_root.'/config/application.php');
+  require($path_to_root.'/config/application.php');
 }
 
 /*
@@ -34,14 +34,14 @@ if (!isset($only_require_libraries)) {
  */
 
 if (isset($use_PEAR_in_vendor) && $use_PEAR_in_vendor) {
-    $local_pear_path = $path_to_root.'/vendor/PEAR/pear/php/';
-    ini_set('include_path', ini_get('include_path').PATH_SEPARATOR.$local_pear_path);
+  $local_pear_path = $path_to_root.'/vendor/PEAR/pear/php/';
+  ini_set('include_path', ini_get('include_path').PATH_SEPARATOR.$local_pear_path);
 }
 
 /* PEAR Libraries */
 require_once('MDB2.php');
 if ((isset($uses_nested_set) && $uses_nested_set == true)) {
-    require_once('DB/NestedSet.php');
+  require_once('DB/NestedSet.php');
 }
 
 /*
@@ -50,20 +50,20 @@ if ((isset($uses_nested_set) && $uses_nested_set == true)) {
  */
 
 if (!isset($only_require_libraries)) {
-    // before application init callback
-    if (isset($before_application_start)) { $before_application_start(); }
+  // before application init callback
+  if (isset($before_application_start)) { $before_application_start(); }
 
     // application init
     session_start();
-    App::init($path_to_root);
+  App::init($path_to_root);
 
-    if (!$running_from_shell) {
-        // set the custom error handler
-        if ($environment != '' && !defined('TEST_MODE')) {
-            set_error_handler('framework_error_handler');
-            set_exception_handler('framework_exception_handler');
-        }
+  if (!$running_from_shell) {
+    // set the custom error handler
+    if ($environment != '' && !defined('TEST_MODE')) {
+      set_error_handler('framework_error_handler');
+      set_exception_handler('framework_exception_handler');
     }
+  }
 
 }
 ?>
