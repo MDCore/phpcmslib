@@ -167,7 +167,7 @@ function page_parameters($except = '', $always_return_something = true, $method 
                 }
 
                 if ($matches == 0) {
-                    if ($method == 'querystring') { $return .= '&'. $var .'=' .urlencode($value); }
+                    if ($method == 'querystring') { $return .= '&'. $var .'=' .urlencode(stripslashes($value)); }
                     if ($method == 'hidden') { $return .= "<input type=\"hidden\" name=\"$var\" value=\"$value\" />"; }
                     #debug echo "!$return!<br>";
                 }
