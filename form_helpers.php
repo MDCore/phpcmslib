@@ -71,7 +71,7 @@ class forms
             $result .= '<table><tr>';
             /* the select all checkbox */
             $result .= "<td><input name =\"".$name."[]\" class=\"checkbox\" type=\"checkbox\" id=\"".$element_name."_all\" onclick=\"
-                var f = $('div#".$element_name."_container input[@type=checkbox]');
+                var f = $('div#".$element_name."_container input[type=checkbox]');
             	for(var i=0; i<f.length; i++){
                     if (this.checked)
                     {
@@ -497,24 +497,24 @@ class forms
         }
         //value
         if (array_key_exists('value', $form_field)) {
-            $value = $form_field['value'];
+          $value = $form_field['value'];
         } else {
-            /* no value set for this field but a db_field_name is set */
-            if ($db_field_name) {
-                $value = htmlentities($record->$db_field_name);
-            }
+          /* no value set for this field but a db_field_name is set */
+          if ($db_field_name) {
+              $value = htmlentities($record->$db_field_name);
+          }
         }
 
         if (array_key_exists('options', $form_field)) {
-            $options = $form_field['options'];
+          $options = $form_field['options'];
         } else {
-            $options = null;
+          $options = null;
         }
 
         //convert form_field to attributes, by removing all the non-attribute stuff
         $attributes = $form_field;
         foreach(array(0, 1, 2, 3, 'name', 'options', 'value', 'note', 'only', 'show_all_option', 'order_by','criteria', 'field', 'model', 'label', 'additional_sql_options') as $key) {
-            unset($attributes[$key]);
+          unset($attributes[$key]);
         }
 
         $element_function = $form_field[1];
@@ -547,6 +547,24 @@ class forms
         <? if ($show_cancel) {?><input type="button" value="cancel" onclick="window.location='<?=redirect_with_parameters(url_to(array('action' => 'list')), '', true);?>'" />&nbsp;<? } ?><br />
         <br /><strong>Note:</strong> All fields marked with <strong>*</strong> are required.
 <?
+    }
+
+    function button($name, $value = 'unused', $attributes = null)
+    {
+      //attributes includes id, readonly etc.. whatever is in there get's set
+      $result = '';
+      //default attributes
+      // id
+      if (!isset($attributes['id'])) { $attributes['id'] = $name; }
+      // type
+      if (!isset($attributes['type'])) { $attributes['type'] = 'text'; }
+
+
+      $result .= '<button ';
+      $result .= self::parse_attributes( $attributes );
+
+      $result .= '>'.stripslashes($name).'</button>';
+    return $result;
     }
 }
 ?>

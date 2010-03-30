@@ -1176,12 +1176,12 @@ class AR implements SeekableIterator
 
         if ($show_all_option === 'all' || $show_all_option === true || $show_all_option == 'true') {
             $result .= '<option value="">-- Any --</option>';
-        }
-        if ($show_all_option === 'none') {
+        } elseif ($show_all_option === 'none') {
             $result .= '<option value="">-- none --</option>';
-        }
-        if ($show_all_option === 'select_one') {
+        } elseif ($show_all_option === 'select_one') {
             $result .= '<option value="">-- Select One --</option>';
+        } elseif ($show_all_option) {
+            $result .= '<option value="">-- '.$show_all_option.'--</option>';
         }
         $options = $this->as_array($field);
         foreach ($options as $id => $value) {
