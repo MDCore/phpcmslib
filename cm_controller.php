@@ -670,7 +670,7 @@ class cm_controller extends action_controller {
     public function cm_view() {
         $this->render_inline();
         if (!$this->allow_view) {
-            echo 'Edit not allowed';
+            echo 'View not allowed';
             return true;
         }
 
