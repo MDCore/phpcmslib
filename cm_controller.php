@@ -694,6 +694,13 @@ class cm_controller extends action_controller {
         ?><form method="post" enctype="multipart/form-data"><?
 
         $form_fields = $this->form_fields;
+        /* force the fields to be readonly */
+        for ($i = 0; $i < sizeof($form_fields); $i++) {
+          if ($form_fields[$i][1] !== 'subheading') {
+            $form_fields[$i]['readonly'] = 'readonly';
+          }
+        }
+
         if (isset($form_fields)) {
             forms::form(array_merge(array($this->primary_model, &$record), $form_fields));
         }
