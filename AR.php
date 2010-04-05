@@ -427,7 +427,12 @@ class AR implements SeekableIterator
                 return false;
             }
             $ro = new $name;
-            $fk = foreign_keyize($name);
+            $belongs_to_fk_field = $this->belongs_to($name);
+            if ($belongs_to_fk_field === true) { /* is the boolean true, not just NOT false */
+              $fk = foreign_keyize($name);
+            } else {
+                $fk = $belongs_to_fk_field;
+            }
             if (!$this->$fk) {
                 return false;
             }
@@ -1243,8 +1248,7 @@ class AR implements SeekableIterator
      *
      * @return boolean
      */
-    function belongs_to($model_name)
-    {
+    function belongs_to($model_name) {
         /* nested set automatically belongs to itself (parent) */
         if ($this->acts_as_nested_set && $this->model_name == $model_name) {
             return true;
@@ -1253,7 +1257,11 @@ class AR implements SeekableIterator
         if (!property_exists($this, 'belongs_to')) {
             return false;
         }
-        return in_array($model_name, explode(',', $this->belongs_to));
+        if (!is_array($this->belongs_to)) {
+          return in_array($model_name, explode(',', $this->belongs_to));
+        } else {
+          return $this->belongs_to[$model_name];
+        }
     }
 
     /**
