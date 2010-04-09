@@ -468,13 +468,27 @@ class AR implements SeekableIterator
             }
 
             $ro = singularize($name); $ro = new $ro;
-            $link = singularize($this->has_many_through($name)); $link = new $link;
-            $sql_ro = '
-                SELECT '.$ro->dsn['database'].'.'.$ro->schema_table.'.*
-                FROM '.$ro->dsn['database'].'.'.$ro->schema_table. ' INNER JOIN '.$link->dsn['database'].'.'.$link->schema_table.'
-                ON '.$ro->dsn['database'].'.'.$link->schema_table.'.'.foreign_keyize(singularize($ro->schema_table)).'
-                     = '.$ro->dsn['database'].'.'.$ro->schema_table.'.'.$ro->primary_key_field.'
-                WHERE '.$link->dsn['database'].'.'.$link->schema_table.'.'.foreign_keyize($this->model_name).' = \''.$this->values[$this->primary_key_field].'\'';
+            $hmt = $this->has_many_through($name);
+            $hmt_sql_merge = null;
+            if (is_array($hmt)) {
+              $link = $hmt[0];
+              if ($hmt[1]) {
+                $hmt_sql_merge = $hmt[1];
+              }
+            } else {
+              $link = singularize($hmt);
+            }
+            $link = new $link;
+            $sql_ro = array(
+              'SELECT' => $ro->dsn['database'].'.'.$ro->schema_table.'.*',
+              'FROM'   => $ro->dsn['database'].'.'.$ro->schema_table. ' INNER JOIN '.$link->dsn['database'].'.'.$link->schema_table.'
+                          ON '.$ro->dsn['database'].'.'.$link->schema_table.'.'.foreign_keyize(singularize($ro->schema_table)).'
+                          = '.$ro->dsn['database'].'.'.$ro->schema_table.'.'.$ro->primary_key_field,
+              'WHERE'  => $link->dsn['database'].'.'.$link->schema_table.'.'.foreign_keyize($this->model_name)." = '".$this->values[$this->primary_key_field]."'"
+              );
+              if ($hmt_sql_merge) {
+                $sql_ro = SQL_merge($sql_ro, $hmt_sql_merge);
+              }
             $ro->find_by_sql($sql_ro);
             $this->last_sql_query = $sql_ro;
             return $ro;
