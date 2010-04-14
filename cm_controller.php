@@ -181,7 +181,7 @@ class cm_controller extends action_controller {
                 /*
                  *  list is a reserved word, so overriding cm_list involves a method named _list #todo recipe this
                  */
-                if (method_exists('_list', $this)) {
+                if (method_exists($this, '_list')) {
                     $this->_list();
                 }
                 else {
