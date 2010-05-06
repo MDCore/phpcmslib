@@ -252,7 +252,7 @@ class AR implements SeekableIterator
      *
      * @return void
      */
-    private function __call($method_name, $params)
+    public function __call($method_name, $params)
     {
         /* nested set function checks */
         if ($this->acts_as_nested_set) {
@@ -349,7 +349,7 @@ class AR implements SeekableIterator
      *
      * @return boolean
      */
-    private function __isset($name)
+    public function __isset($name)
     {
         //debug echo 'testing isset '.$name; echo "<br>\r\n\r\n";
 
@@ -378,7 +378,7 @@ class AR implements SeekableIterator
      * @return variant returns an AR object for relationships and changelog
      *                 returns a property for record properties
      */
-    private function __get($name)
+    public function __get($name)
     {
         //debug echo 'getting '.$name; echo "<br>\r\n\r\n";
         //check for record_properties request
@@ -517,7 +517,7 @@ class AR implements SeekableIterator
      *
      * @return void
      */
-    private function __set($name, $value)
+    public function __set($name, $value)
     {
         //debug echo 'setting '.$name.' to <u>"'.$value.'"</u>'; echo "<br>\r\n";
         // check for primary_key_field
