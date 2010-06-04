@@ -287,7 +287,7 @@ class forms
                 if ( array_key_exists( 'only', $arg ) )
                 {
                     $only = $arg['only'];
-                    $only = split( ',', $only );
+                    $only = explode( ',', $only );
                     if (!in_array( $page->action, $only ))
                     {
                         $draw_element = false;
