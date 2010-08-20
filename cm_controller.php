@@ -599,14 +599,14 @@ class cm_controller extends action_controller {
                     /* get the last value for the fk_t and then pop it */
                     $rfk_t = explode('||', $_GET['rfk_t']);
                     $backlink_url.='&amp;fk_t='.$rfk_t[sizeof($rfk_t)-1];
-                    array_pop($rfk_t);
+                    $current_fk_t = array_pop($rfk_t);
                     if ($rfk_t) {
                       $backlink_url.='&amp;rfk_t='.implode('||', $rfk_t);
                     }
                   }
 
                   echo $backlink_url;
-                  ?>">Back to <?=humanize($this->back_link);?></a><br /><?
+                  ?>">Back to <?=humanize($this->back_link);?><? if (isset($current_fk_t)) { echo ' '.$current_fk_t; } ?></a><br /><?
                 }
 
                 if ($this->allow_add) { ?><a href="<?=url_to(array('action' =>'add')).page_parameters('', false);?>">Add a new <?=humanize($this->list_type);?></a><br /><? }
