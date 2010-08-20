@@ -235,7 +235,7 @@ class cm_controller extends action_controller {
     }
     public function cm_update_core($edit_id, $full_collection)
     {
-        if (method_exists($this, 'before_update')) { $this->before_update(); } #todo clean this up.... should be in model, maybe
+        if (method_exists($this, 'before_update')) { $this->before_update($edit_id); } #todo clean this up.... should be in model, maybe
 
         #print_r($_GET);print_r($full_collection);print_r($_FILES);
         $primary_model_object = new $this->primary_model;
