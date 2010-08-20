@@ -50,9 +50,11 @@ class schema_interregator
                         $fields_in_table[$field['name']] = array(
                             'type' => $field['type'],
                             'mdb2type' => $field['mdb2type'],
-                            'length' => $field['length'],
                             'default' => $field['default'],
                             );
+                        if (isset($field['length'])) {
+                            $fields_in_table[$field['name']]['length'] = $field['length'];
+                        }
                     }
                     return $fields_in_table;
                     if ($echo_progress) {
