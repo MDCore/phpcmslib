@@ -492,7 +492,11 @@ class forms
                 }
             } else {
                 $db_field_name = strtolower(tableize($form_field[0])); // I'm strtolowering because I'm going to assume that if you don't specificy a specific name for the field then it should be all lowered automatically
-                $field_name = $default_model.'['.$db_field_name.']';
+                $field_model = $default_model;
+                if (isset($form_field['model'])) {
+                  $field_model = $form_field['model'];
+                }
+                $field_name = $field_model.'['.$db_field_name.']';
             }
         }
         //value
