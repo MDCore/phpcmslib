@@ -928,7 +928,7 @@ class AR implements SeekableIterator
                 return true;
             break;
         default:
-            if ($this->schema_definition[$field]['type'] === 'datetime' && $value != 0 && $value !== null) {
+            if (($this->schema_definition[$field]['type'] === 'date' | $this->schema_definition[$field]['type'] === 'datetime') && $value != 0 && $value !== null) {
                 $value = strftime(SQL_INSERT_DATE_FORMAT, strtotime($value));
             }
             /*
