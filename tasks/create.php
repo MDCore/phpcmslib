@@ -8,7 +8,7 @@
 class tasks_create implements lib_task
 {
   private $valid_objects = array('face', 'controller', 'model', 'migration');
-  private $valid_migration_field_types = array('string', 'integer', 'text', 'active', 'timestamps');
+  private $valid_migration_field_types = array('string', 'integer', 'text', 'date', 'active', 'timestamps');
   private $valid_model_attributes = array('validates_presence_of', 'has_one', 'has_many', 'belongs_to', 'changelog', 'acts_as_nested_set', 'display_field');
 
   public function run($arguments) {
@@ -191,15 +191,25 @@ class tasks_create implements lib_task
     /* sort out the fields */
     $fields_text = '';
     for ($i=0;$i<sizeof($fields);$i++) {
+      $is_valid_field = false;
       if (strpos($fields[$i], ':') > 0) {
         $fields[$i] = explode(':', $fields[$i]);
         if (in_array($fields[$i][1], $this->valid_migration_field_types)) {
+          $is_valid_field = true;
           $fields_text .= "    array('{$fields[$i][0]}', '{$fields[$i][1]}'),\r\n";
         }
       } else {
         if (in_array($fields[$i], $this->valid_migration_field_types)) {
+          $is_valid_field = true;
           $fields_text .= "    '{$fields[$i]}',\r\n";
         }
+      }
+      if (!$is_valid_field) {
+        $unknown = $fields[$i]; 
+        if (is_array($unknown)) {
+          $unknown = $unknown[1];
+        }
+        die('Error: unknown field type '.$unknown);
       }
     }
     if ($fields_text) {
