@@ -26,6 +26,7 @@ class dispatcher
             unset($collection['qs']);
 
             if ($path == 'index_html') {$path = 'default';}
+            $path = str_replace('_php', '', $path); /* get .php links to still work */
             return $path;
         }
 
