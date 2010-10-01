@@ -219,7 +219,6 @@ class cm_controller extends action_controller {
      */
     public function cm_update($redirect_on_success = true) {
         $edit_id = $_GET['edit_id'];
-
         $result = $this->cm_update_core($edit_id, $_POST);
 
         switch ($result['result']) {

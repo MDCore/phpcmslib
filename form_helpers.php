@@ -274,11 +274,10 @@ class forms
          * arg 1 is the record
          * arg 2... should be arrays for the elements
          */
-
+	$fields_on_form_for_fk = array(); // list f fields on the form so tha we don't foreign-key-hidden them
         $default_model = $arguments[0];
         $record = $arguments[1];
-        for ($i=2;$i<sizeof($arguments);$i++)
-        {
+        for ($i=2;$i<sizeof($arguments);$i++) {
             $arg = $arguments[$i];
             if (is_array($arg)) // it's a form element
             {
@@ -297,9 +296,10 @@ class forms
                 if ($draw_element) {
                     //is it a partial or a form element ?
                     if ($arg[1] == 'partial') {
-                        self::partial($arg[0]);
+		      self::partial($arg[0]);
                     } else {
-                        self::draw_element( $arg, $default_model, $record );
+		      $fields_on_form_for_fk[] = $arg[0].'_id'; /* we're doing this to make the array each later easy; */
+		      self::draw_element( $arg, $default_model, $record );
                     }
                 }
             }
@@ -311,7 +311,7 @@ class forms
         }
         //foreign key(s)
         foreach ($this->foreign_keys as $key => $value) {
-            if ($page->primary_model == $default_model) //only make hiddens for FK's when building a form for this page
+	  if ($page->primary_model == $default_model && !in_array($key, $fields_on_form_for_fk)) //only make hiddens for FK's when building a form for this page
             {
 
                 $prefix = pluralize($this->primary_model).'.';

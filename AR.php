@@ -735,11 +735,9 @@ class AR implements SeekableIterator
             foreach ($collection as $field => $value) {
                 $collection[$field] = "'".$value."'";
             }
-
             /* build the sql query */
             $update_sql = implode_with_keys(',', $collection, "");
             $sql = 'UPDATE '.$this->dsn['database'].'.'.$this->schema_table." SET $update_sql WHERE ".$this->primary_key_field."=".$this->values[$this->primary_key_field];
-
             $this->last_sql_query = $sql;
 
             //debug($sql);
@@ -1199,7 +1197,7 @@ class AR implements SeekableIterator
         } elseif ($show_all_option === 'select_one') {
             $result .= '<option value="">-- Select One --</option>';
         } elseif ($show_all_option) {
-            $result .= '<option value="">-- '.$show_all_option.'--</option>';
+            $result .= '<option value="">-- '.$show_all_option.' --</option>';
         }
         $options = $this->as_array($field);
         foreach ($options as $id => $value) {
