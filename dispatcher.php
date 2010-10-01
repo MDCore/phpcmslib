@@ -70,11 +70,10 @@ class dispatcher
 
             if (!$controller) {
                 /* generate an error of some kind if the file does not exist */
-                global $environment;
-                if ($environment == 'production') {
-                    http_header(404, true);
+                if (get_class(App::$env) == 'production') {
+		  http_header(404, true); die();
                 } else {
-                    trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> not found", E_USER_ERROR);
+		  trigger_error("Controller <i>".App::$route['face'].'/'.App::$route['controller']."</i> not found", E_USER_ERROR);
                 }
             }
 

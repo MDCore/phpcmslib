@@ -165,7 +165,7 @@ class action_controller {
             /* fail: layout not found */
             $environment = $_SESSION[APP_NAME]['application']['environment'];
             if ($environment == 'production') {
-                http_header(404, true);
+	      http_header(404, true);die();
             } else {
                 trigger_error('Layout <i>'.$this->layout.'</i> not found', E_USER_ERROR);
             }
@@ -188,7 +188,7 @@ class action_controller {
         else {
             $environment = $_SESSION[APP_NAME]['application']['environment'];
             if ($environment == 'production') {
-                http_header(404, true);
+	      http_header(404, true);die();
             } else {
                 trigger_error("View <i>".$route['face'].'/'.$route['controller'].'/'.$route['action']."</i> not found", E_USER_ERROR);
             }
