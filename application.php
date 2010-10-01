@@ -247,13 +247,13 @@ function handle_error($errno, $errstr='', $errfile='', $errline='', $backtrace =
     $detailed_error = detailed_error_description($errno, $errstr, $errfile, $errline, $backtrace);
 
     /* do we send an email or just display it? */
-    global $email_errors_to;
-    if (isset($email_errors_to) && $email_errors_to != '' && get_class(App::$env) == 'production') {
+    global $automatically_email_errors_to;
+    if (isset($automatically_email_errors_to) && $automatically_email_errors_to != '' && get_class(App::$env) == 'production') {
         $headers = "MIME-Version: 1.0\r\n";
         $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
         $subject = '['.$_SERVER['HTTP_HOST'].'] Error - '.date(DATE_RFC822);
-        mail($email_errors_to, $subject, $detailed_error, $headers);
+        mail($automatically_email_errors_to, $subject, $detailed_error, $headers);
 
         // print a pretty error message
         die(friendly_error_description());
