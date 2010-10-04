@@ -49,10 +49,10 @@ function show_validation_errors($class='form_errors', $method='get', $fieldname=
   if (isset($method[$fieldname])) {
     ?><p class="<?=$class;?>">Please enter your <?
     $cnt = 0;
-    foreach (split(',',$method[$fieldname]) as $field) {
+    foreach (explode(',',$method[$fieldname]) as $field) {
       ?><strong><?=str_replace('_',' ',$field)?></strong><?
       $cnt++;
-      if ($cnt < sizeof(split(',',$method[$fieldname]))) {
+      if ($cnt < sizeof(explode(',',$method[$fieldname]))) {
 	echo ', ';
       }
     }
