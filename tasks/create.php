@@ -24,18 +24,29 @@ class tasks_create implements lib_task
       $controller_name = $arguments[4]; if (is_null($controller_name) || $controller_name == '') { echo 'No controller name name specified'; die(); }
       $actions = array_slice($arguments, 5);
 
-      $this->create_controller($face_name, $controller_name, $actions);
+      $this->create_controller($face_name, $controller_name, array('actions' => $actions));
       break;
     case 'model':
       $model_name = $arguments[3]; if (is_null($model_name) || $model_name == '') { echo 'No model name specified'; die(); }
       $fields = array_slice($arguments, 4);
+
       $skip_migration = false;
-      if ($smpos = array_search('skip_migration', $fields)) {
-        unset($fields[$smpos]);
+      $spos = array_search('skip-migration', $fields);
+      if ($spos !== false) {
+        unset($fields[$spos]);
+	$fields = array_values($fields); /* reconstitute the fields array */
         $skip_migration = true;
       }
 
-      $this->create_model($model_name, $fields, $skip_migration);
+      $skip_cm_controller = false;
+      $spos = array_search('skip-cm-controller', $fields);
+      if ($spos !== false) {
+        unset($fields[$spos]);
+	$fields = array_values($fields); /* reconstitute the fields array */
+        $skip_cm_controller = true;
+      }
+
+      $this->create_model($model_name, $fields, $skip_migration, $skip_cm_controller);
       break;
     case 'migration':
       $migration_name = $arguments[3]; if (is_null($migration_name) || $migration_name == '') { echo 'No migration name specified'; die(); }
@@ -80,7 +91,7 @@ class tasks_create implements lib_task
     }
 
     //create the face controller
-    $this->create_controller($face_name, 'face', '', 'action_controller');
+    $this->create_controller($face_name, 'face', null, 'action_controller');
 
       //todo do this automagically
       echo "\r\nTo use this face add $face_name to \$allowed_faces in config/application.php";
@@ -88,7 +99,7 @@ class tasks_create implements lib_task
     return true;
   }
 
-  function create_controller($face_name, $controller_name, $actions, $extends = 'face_controller') {
+  function create_controller($face_name, $controller_name, $template_fields = null, $extends = 'face_controller') {
     global $path_to_root;
 
     /* create the face first if needed */
@@ -99,7 +110,8 @@ class tasks_create implements lib_task
       }
     }
 
-    if ($actions) {
+    if (!is_null($template_fields) && isset($template_fields['actions'])) {
+      $actions = $template_fields['actions'];
       foreach ($actions as $action) {
         $actions_text .= $this->parse_template('method', $action);
       }
@@ -108,10 +120,19 @@ class tasks_create implements lib_task
     }
 
     /* create the file */
-    $this->save_file("$face_name/controllers/{$controller_name}_controller.php", $this->parse_template('controller', array($controller_name, $extends, $actions_text)));
+    if ($face_name == 'cm') {
+
+      if (!is_null($template_fields) && isset($template_fields['list_fields'])) {
+	$list_fields = $template_fields['list_fields'];
+      }
+
+      $this->save_file("$face_name/controllers/{$controller_name}_controller.php", $this->parse_template('cm_controller', array($controller_name, $extends, $list_fields, $actions_text)));
+    } else {
+      $this->save_file("$face_name/controllers/{$controller_name}_controller.php", $this->parse_template('controller', array($controller_name, $extends, $actions_text)));
+    }
 
     /* create the controller folder in face/views */
-    if ($controller_name !== 'face') {
+    if ($controller_name !== 'face' && $face_name !== 'cm') {
       $filename = $face_name.'/views/'.$controller_name;
       if (file_exists("$path_to_root/$filename")) {
         $result = false;
@@ -122,7 +143,7 @@ class tasks_create implements lib_task
       echo $filename."\r\n";
 
       /* create the view files */
-      if ($actions) {
+      if (isset($actions)) {
         foreach ($actions as $action) {
           $this->save_file("$face_name/views/$controller_name/$action.php", "find me in $face_name/views/$controller_name/$action.php");
         }
@@ -131,7 +152,7 @@ class tasks_create implements lib_task
     return true;
   }
 
-  public function create_model($model_name, $fields_and_attributes, $skip_migration = true, $extends = 'AR') {
+  public function create_model($model_name, $fields_and_attributes, $skip_migration, $skip_cm_controller, $extends = 'AR') {
     global $path_to_root;
 
     $fields = $fields_and_attributes;
@@ -151,11 +172,18 @@ class tasks_create implements lib_task
       }
     }
     /* reformat fields */
+    $cm_list_fields = array();
     for ($i=0; $i < sizeof($fields); $i++) {
       if (is_array($fields[$i])) {
+	$cm_list_fields[] = $fields[$i][0];
         $fields[$i] = implode(':', $fields[$i]);
+      } else {
+	if ($fields[$i] !== 'timestamps') {
+	  $cm_list_fields[] = $fields[$i];
+	}
       }
     }
+
     /* build the attribute text */
 
     $attributes_text = "";
@@ -175,7 +203,9 @@ class tasks_create implements lib_task
     if (!$skip_migration) {
       $this->create_migration('create_'.$model_name, $fields, $model_name);
     }
-
+    if (!$skip_cm_controller) {
+      $this->create_controller('cm', pluralize($model_name), array('list_fields' => implode(',', $cm_list_fields)));
+    }
 
     return true;
   }
@@ -205,7 +235,7 @@ class tasks_create implements lib_task
         }
       }
       if (!$is_valid_field) {
-        $unknown = $fields[$i]; 
+        $unknown = $fields[$i];
         if (is_array($unknown)) {
           $unknown = $unknown[1];
         }
@@ -296,6 +326,9 @@ validates_presence_of comma seperated value
 
 To skip creating the migration:
 --skip-migration
+
+To skip creating the cm controller:
+--skip-cm-controller
 
 ------------------------------------------------------------------------------------------------------------------------------
 To create a migration:
