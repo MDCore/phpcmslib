@@ -200,6 +200,16 @@ class forms
     return $result;
     }
 
+    function html($name, $value = null, $attributes = null) {
+      require_once(App::$env->root.'/vendor/ckeditor/ckeditor_php5.php');
+      $CKEditor = new CKEditor();
+      ob_start();
+      $CKEditor->editor($name, $value);
+      $result = ob_get_contents();
+      ob_end_clean();
+      return $result;
+    }
+
     function subheading($name, $value = null, $attributes = null)
     {
       $result .= '<h3';
@@ -505,7 +515,8 @@ class forms
         } else {
           /* no value set for this field but a db_field_name is set */
           if ($db_field_name) {
-              $value = htmlentities($record->$db_field_name);
+	    //$value = htmlentities($record->$db_field_name); // why htmlentities here !?!
+	    $value = $record->$db_field_name;
           }
         }
 
