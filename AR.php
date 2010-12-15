@@ -51,12 +51,14 @@ class AR implements SeekableIterator
 
             //$this->db =& MDB2::singleton($dsn);
             $this->db =& MDB2::factory($dsn);
+	    $this->db->setCharset('utf8');
             //print_r($this->db);
             $this->error_check($this->db);
 
             if ($this->acts_as_nested_set) {
                 $this->nested_set = null;
                 $this->nested_set =& DB_NestedSet::factory('MDB2', $this->dsn, $this->nested_set_params);
+		$this->nested_set->setCharset('utf8');
                 $this->error_check($this->nested_set);
                 $this->nested_set->setAttr(array(
                     'node_table' => $this->nested_set_node_table,

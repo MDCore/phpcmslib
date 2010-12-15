@@ -792,7 +792,7 @@ class cm_controller extends action_controller {
 
         ?>"><?
 
-        if (isset($related_page['title'])) { echo $related_page['title']; } else echo htmlentities(proper_nounize($related_page['controller']));
+        if (isset($related_page['title'])) { echo $related_page['title']; } else echo h(proper_nounize($related_page['controller']));
 
         ?></a></td><?
 
@@ -967,13 +967,13 @@ class cm_controller extends action_controller {
                     if (isset($full_phrase{$this_field_descriptor[1][1]-1})) {
                         $shortened_phrase = split_on_word(stripslashes($row->$field), $this_field_descriptor[1], true, true);
                         if (!defined('PRINTING_MODE')) {
-                            ?><a class="tooltip"><?=$shortened_phrase;?><span><?=htmlentities(stripslashes($row->$field));?></span></a><?
+                            ?><a class="tooltip"><?=$shortened_phrase;?><span><?=h(stripslashes($row->$field));?></span></a><?
                         }
                     break;
                     }
                 default:
                     if ($this->export !== false) { echo '"'; }
-                    echo htmlentities(stripslashes($row->$field));
+                    echo h(stripslashes($row->$field));
                     if ($this->export !== false) { echo '"'; }
                 }
                 if ($this->export === false ) {
