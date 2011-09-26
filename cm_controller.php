@@ -752,14 +752,24 @@ class cm_controller extends action_controller {
 #------------------------------#
 
     function related_page_anchor($related_page, $row) {
-        if (!isset($related_page['controller'])) {$related_page['controller'] = $related_page[0];}
 
-        $target = array(
-            'controller' => $related_page['controller'],
-            'action'     => $related_page['action']
-        );
-        if (isset($related_page['id'])) { $target['id'] = $row->{$related_page['id']}; }
-        ?><td class="action_link"><a href="<?echo url_to($target);
+      /* check for a callback first */
+      if (isset($related_page['callback'])) {
+	$process = $this->{$related_page['callback']}($row);
+      } else {
+	$process = true;
+      }
+
+      if ($process === true) { /* draw this related page as normal */
+
+	if (!isset($related_page['controller'])) {$related_page['controller'] = $related_page[0];}
+
+	$target = array(
+	  'controller' => $related_page['controller'],
+	  'action'     => $related_page['action']
+	  );
+	if (isset($related_page['id'])) { $target['id'] = $row->{$related_page['id']}; }
+	?><td class="action_link"><a href="<?echo url_to($target);
 
         if (isset($related_page['append_page_parameters'])) {
             echo page_parameters($related_page['append_page_parameters']);
@@ -768,7 +778,6 @@ class cm_controller extends action_controller {
             echo '?p=y';
         }
 
-        /*if (isset($related_page['fk']) || (isset($related_page['fk_title_field']))) { echo '?p=y'; }*/
         if (isset($related_page['fk'])) {
             if (!isset($related_page['fk_field'])) { $fk_field = $this->model_object->primary_key_field; } else { $fk_field = $related_page['fk_field']; }
             ?>&amp;fk=<?=$related_page['fk'];?>~<? echo $row->$fk_field;
@@ -788,13 +797,16 @@ class cm_controller extends action_controller {
           echo '&amp;rfk='.$related_fk.'&amp;rfk_t='.$related_fk_title;
         }
 
-
-
         ?>"><?
 
         if (isset($related_page['title'])) { echo $related_page['title']; } else echo h(proper_nounize($related_page['controller']));
 
         ?></a></td><?
+      } elseif ($process === false) { /* draw a blank link */
+        ?><td>&nbsp;</td><?
+      } else { /* must be a callback result */
+       echo $process;
+      }
 
     }
 
@@ -935,6 +947,7 @@ class cm_controller extends action_controller {
              *                   fk_field                : the field name to use for the value of the foreign_key field. not required.
              *                   fk_title_field          : the name that will be passed to the target action as extra title text. not required.
              *                   append_page_parameters  : setting this values causes page_parameters() to be called with the value of this property. not required.
+             *                   callback                : A function which accepts a row and returns either true to draw the link as per normal, false for no link or a string with a replacement <td><a></a></td>
              */
             if ($this->related_pages && $no_of_related_pages > 0) {
                 foreach ($this->related_pages as $related_page ) { echo $this->related_page_anchor($related_page, $row); }
