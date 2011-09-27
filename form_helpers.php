@@ -531,8 +531,15 @@ class forms
         foreach(array(0, 1, 2, 3, 'name', 'options', 'value', 'note', 'only', 'show_all_option', 'order_by','criteria', 'field', 'model', 'label', 'additional_sql_options') as $key) {
           unset($attributes[$key]);
         }
-
-        $element_function = $form_field[1];
+	$akff = array_keys($form_field);
+        if ($akff[1] == 1) {
+	  $element_function = $form_field[1];
+        } else {
+	  $element_function = $akff[1];
+	  if ($element_function == 'partial') {
+	    $field_name = $form_field['partial']; /* get the file name for the partial */
+	  }
+	}
         $element_html = self::$element_function($field_name, $value, $attributes, $options);
 
         //if this is a visible element then draw it inside a labelled container, else just draw the element (generally a hidden)
