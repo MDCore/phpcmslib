@@ -304,13 +304,21 @@ class forms
                 }
 
                 if ($draw_element) {
-                    //is it a partial or a form element ?
-                    if ($arg[1] == 'partial') {
-		      self::partial($arg[0]);
-                    } else {
-		      $fields_on_form_for_fk[] = $arg[0].'_id'; /* we're doing this to make the array each later easy; */
-		      self::draw_element( $arg, $default_model, $record );
-                    }
+
+		  /* determine the element function now */
+		  $akarg = array_keys($arg);
+		  if ($akarg[1] == 1) {
+		    $element_function = $arg[1];
+		  } else {
+		    $element_function = $akarg[1];
+		  }
+
+		  if ($element_function == 'partial') {
+		    self::partial($arg['partial']);
+		  } else {
+		    $fields_on_form_for_fk[] = $arg[0].'_id'; /* we're doing this to make the array each later easy; */
+		    self::draw_element( $arg, $default_model, $record );
+		  }
                 }
             }
             else
@@ -374,6 +382,14 @@ class forms
             break;
           }
         }
+
+	/* determine the element function now */
+	$akff = array_keys($form_field);
+        if ($akff[1] == 1) {
+	  $element_function = $form_field[1];
+        } else {
+	  $element_function = $akff[1];
+	}
 
         //convert type of hidden to type input attrib type=hidden
         if ($form_field[1] == 'hidden') {
@@ -488,7 +504,6 @@ class forms
             trigger_error("Trying to draw a select for the <i>$fk_model</i> property but no options have been supplied. Is this a misconfigured <i>has_one</i> relationship?", E_USER_ERROR);
           }
         }
-
         //field_name and db_field_name
         if (!$field_name && !$db_field_name) { // if not set by a special case
             if (array_key_exists('name', $form_field)) {
@@ -509,6 +524,7 @@ class forms
                 $field_name = $field_model.'['.$db_field_name.']';
             }
         }
+
         //value
         if (array_key_exists('value', $form_field)) {
           $value = $form_field['value'];
@@ -531,15 +547,6 @@ class forms
         foreach(array(0, 1, 2, 3, 'name', 'options', 'value', 'note', 'only', 'show_all_option', 'order_by','criteria', 'field', 'model', 'label', 'additional_sql_options') as $key) {
           unset($attributes[$key]);
         }
-	$akff = array_keys($form_field);
-        if ($akff[1] == 1) {
-	  $element_function = $form_field[1];
-        } else {
-	  $element_function = $akff[1];
-	  if ($element_function == 'partial') {
-	    $field_name = $form_field['partial']; /* get the file name for the partial */
-	  }
-	}
         $element_html = self::$element_function($field_name, $value, $attributes, $options);
 
         //if this is a visible element then draw it inside a labelled container, else just draw the element (generally a hidden)
