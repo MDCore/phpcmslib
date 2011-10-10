@@ -170,8 +170,7 @@ class forms
     return $result;
     }
 
-    function input($name, $value = null, $attributes = null)
-    {
+    function input($name, $value = null, $attributes = null) {
         //attributes includes id, readonly etc.. whatever is in there get's set
         $result = '';
         //default attributes
@@ -382,6 +381,12 @@ class forms
             break;
           }
         }
+        //convert type of hidden to type input attrib type=hidden
+        if ($form_field[1] == 'hidden') {
+            $form_field[1] = 'input';
+            $form_field['type'] = 'hidden';
+            $visible = false;
+        }
 
 	/* determine the element function now */
 	$akff = array_keys($form_field);
@@ -391,12 +396,6 @@ class forms
 	  $element_function = $akff[1];
 	}
 
-        //convert type of hidden to type input attrib type=hidden
-        if ($form_field[1] == 'hidden') {
-            $form_field[1] = 'input';
-            $form_field['type'] = 'hidden';
-            $visible = false;
-        }
 
         // convert a type of "string" to "input=text"
         if (isset($form_field[1]) && $form_field[1] == 'string') { $form_field[1] = 'input'; $form_field['type'] = 'text'; }
@@ -541,12 +540,12 @@ class forms
         } else {
           $options = null;
         }
-
         //convert form_field to attributes, by removing all the non-attribute stuff
         $attributes = $form_field;
         foreach(array(0, 1, 2, 3, 'name', 'options', 'value', 'note', 'only', 'show_all_option', 'order_by','criteria', 'field', 'model', 'label', 'additional_sql_options') as $key) {
           unset($attributes[$key]);
         }
+
         $element_html = self::$element_function($field_name, $value, $attributes, $options);
 
         //if this is a visible element then draw it inside a labelled container, else just draw the element (generally a hidden)
