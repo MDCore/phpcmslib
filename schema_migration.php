@@ -194,7 +194,7 @@ class schema_migration
                 switch ($field[1]) {
                 case 'string':
                     $type = 'text';
-                    $field[2]['length'] = 255;
+                    if (!isset($field[2]['length'])) { $field[2]['length'] = 255; }
                     break;
                 case 'text':
                     $type = 'clob'; break;
@@ -212,7 +212,7 @@ class schema_migration
 
                 //deal with the additional options
                 if (sizeof($field) > 2) {
-                    $as = $field[2];
+		    $as = $field[2];
                     if (isset($as['default'])) { $db_table[$field_name]['default'] = $as['default']; }
                     if (isset($as['length'])) { $db_table[$field_name]['length'] = $as['length']; }
                     if (isset($as['not_null'])) { $db_table[$field_name]['notnull'] = 1; }
