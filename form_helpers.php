@@ -396,7 +396,6 @@ class forms
 	  $element_function = $akff[1];
 	}
 
-
         // convert a type of "string" to "input=text"
         if (isset($form_field[1]) && $form_field[1] == 'string') { $form_field[1] = 'input'; $form_field['type'] = 'text'; }
         // convert a type of "text" to "textarea"
@@ -422,14 +421,19 @@ class forms
             $visible = false; /* a hack to force it to output the html straight */
         }
 
-        /* find the options for the select */
+        /* find the options for the select
+	   this assumes that a select defaults to a related model. but if the select is for a field
+	   then $fk_model will actually be the field name. If it is a field name it should never
+	   pass (!isset($record->$fk_model)) below
+	 */
         if (isset($form_field['model'])) {
             $fk_model = $form_field['model'];
         } else {
             $fk_model = strtolower(tableize($form_field[0]));
         }
         if (($form_field[1] == 'select' || $form_field[1] == 'multi_select')) {
-          if (!isset($record->$fk_model)) {  /* this checks whether or not the field_name is a property or not. If it is a property then it skips this section */
+          if (!isset($record->$fk_model)) {  /* this checks whether or not the field_name is a property or not. If it is a property then it should skip this section */
+
             if ($form_field['field']) { $field = $form_field['field'];} else {$field = null;}
             if ($form_field['show_all_option']) {$show_all_option = $form_field['show_all_option'];} else { $show_all_option = null; }
             if (isset($form_field['criteria'])) { $criteria = $form_field['criteria']; } else { $criteria = 'all'; }
