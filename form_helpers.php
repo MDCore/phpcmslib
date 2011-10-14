@@ -170,8 +170,7 @@ class forms
     return $result;
     }
 
-    function input($name, $value = null, $attributes = null)
-    {
+    function input($name, $value = null, $attributes = null) {
         //attributes includes id, readonly etc.. whatever is in there get's set
         $result = '';
         //default attributes
@@ -180,7 +179,7 @@ class forms
             // type
                 if (!isset($attributes['type'])) { $attributes['type'] = 'text'; }
 
-                $result .= '<input name="'.$name.'" value="'.stripslashes($value).'" ';
+                $result .= '<input name="'.$name.'" value="'.$value.'" ';
 
         $result .= self::parse_attributes( $attributes );
 
@@ -195,7 +194,7 @@ class forms
 
         $result .= '<textarea name="'.$name.'" ';
         $result .= self::parse_attributes( $attributes );
-        $result .= ' />'.stripslashes($value).'</textarea>';
+        $result .= ' />'.$value.'</textarea>';
 
     return $result;
     }
@@ -383,6 +382,12 @@ class forms
             break;
           }
         }
+        //convert type of hidden to type input attrib type=hidden
+        if ($form_field[1] == 'hidden') {
+            $form_field[1] = 'input';
+            $form_field['type'] = 'hidden';
+            $visible = false;
+        }
 
 	/* determine the element function now */
 	$akff = array_keys($form_field);
@@ -391,13 +396,6 @@ class forms
         } else {
 	  $element_function = $akff[1];
 	}
-
-        //convert type of hidden to type input attrib type=hidden
-        if ($form_field[1] == 'hidden') {
-            $form_field[1] = 'input';
-            $form_field['type'] = 'hidden';
-            $visible = false;
-        }
 
         // convert a type of "string" to "input=text"
         if (isset($form_field[1]) && $form_field[1] == 'string') { $form_field[1] = 'input'; $form_field['type'] = 'text'; }
@@ -424,14 +422,19 @@ class forms
             $visible = false; /* a hack to force it to output the html straight */
         }
 
-        /* find the options for the select */
+        /* find the options for the select
+	   this assumes that a select defaults to a related model. but if the select is for a field
+	   then $fk_model will actually be the field name. If it is a field name it should never
+	   pass (!isset($record->$fk_model)) below
+	 */
         if (isset($form_field['model'])) {
             $fk_model = $form_field['model'];
         } else {
             $fk_model = strtolower(tableize($form_field[0]));
         }
         if (($form_field[1] == 'select' || $form_field[1] == 'multi_select')) {
-          if (!isset($record->$fk_model)) {  /* this checks whether or not the field_name is a property or not. If it is a property then it skips this section */
+          if (!isset($record->$fk_model)) {  /* this checks whether or not the field_name is a property or not. If it is a property then it should skip this section */
+
             if ($form_field['field']) { $field = $form_field['field'];} else {$field = null;}
             if ($form_field['show_all_option']) {$show_all_option = $form_field['show_all_option'];} else { $show_all_option = null; }
             if (isset($form_field['criteria'])) { $criteria = $form_field['criteria']; } else { $criteria = 'all'; }
@@ -542,12 +545,12 @@ class forms
         } else {
           $options = null;
         }
-
         //convert form_field to attributes, by removing all the non-attribute stuff
         $attributes = $form_field;
         foreach(array(0, 1, 2, 3, 'name', 'options', 'value', 'note', 'only', 'show_all_option', 'order_by','criteria', 'field', 'model', 'label', 'additional_sql_options') as $key) {
           unset($attributes[$key]);
         }
+
         $element_html = self::$element_function($field_name, $value, $attributes, $options);
 
         //if this is a visible element then draw it inside a labelled container, else just draw the element (generally a hidden)
