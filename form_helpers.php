@@ -314,7 +314,8 @@ class forms
 		  }
 
 		  if ($element_function == 'partial') {
-		    self::partial($arg['partial']);
+		    if (isset($arg['partial'])) { $partial_name = $arg['partial']; } else { $partial_name = $arg[0]; }
+		    self::partial($partial_name);
 		  } else {
 		    $fields_on_form_for_fk[] = $arg[0].'_id'; /* we're doing this to make the array each later easy; */
 		    self::draw_element( $arg, $default_model, $record );
