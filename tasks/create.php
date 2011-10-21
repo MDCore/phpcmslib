@@ -246,8 +246,16 @@ class tasks_create implements lib_task
       $fields_text = substr($fields_text, 0, strlen($fields_text)-3);
     }
 
+    /* create SQL migrations as blank files */
+    if (substr($migration_name, -4) == '.sql') {
+      $extension = '';
+      $body = "";
+    } else {
+      $extension = '.php';
+      $body = $this->parse_template('migration', array($model_name, $fields_text));
+    }
     /* create the file */
-    $this->save_file("db/migrations/{$migration_prefix}_{$migration_name}.php", $this->parse_template('migration', array($model_name, $fields_text)));
+    $this->save_file("db/migrations/{$migration_prefix}_{$migration_name}{$extension}", $body);
     return true;
 
   }
@@ -286,7 +294,7 @@ class tasks_create implements lib_task
       return false;
     }
     $result = file_put_contents("$path_to_root/$filename", $contents);
-    if ($result) { echo 'created '; } else { echo 'failed '; }
+    if ($result !== false) { echo 'created '; } else { echo 'failed '; }
     echo $filename."\r\n";
     return true;
   }
