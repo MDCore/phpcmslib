@@ -57,7 +57,9 @@ function tableize($str) {
 }
 function singularize($str) {
     #exceptions
-    if (preg_match('/people$/', $str)) { return substr($str, 0, strlen($str)-6).'person'; }
+  if (strtolower($str) == 'equipment') { return $str; }
+
+    if (preg_match('/eople$/', $str)) { return substr($str, 0, strlen($str)-5).'erson'; }
     if (preg_match('/sses/', $str)) { return substr($str, 0, strlen($str)-2); }
     if (preg_match('/ches/', $str)) { return substr($str, 0, strlen($str)-2); }
     if (preg_match('/shes/', $str)) { return substr($str, 0, strlen($str)-2); }
@@ -74,6 +76,7 @@ function singularize($str) {
 function pluralize($str) {
     #yes, I know this is lame. I will find a decent pluralization script someday
     #todo have a pluralization cache and look up words in that cache
+  if (strtolower($str) == 'equipment') { return $str; }
 
     if (strtolower(substr($str, -6)) == 'status') {
         return $str.'es';
@@ -98,7 +101,7 @@ function pluralize($str) {
         return $str.'es';
     }
     #exceptions
-    if (preg_match('/person$/', $str)) { return substr($str, 0, strlen($str)-6).'people'; }
+    if (preg_match('/erson$/', $str)) { return substr($str, 0, strlen($str)-5).'eople'; }
 
     return $str . 's';
 }
