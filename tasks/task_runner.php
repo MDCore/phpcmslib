@@ -45,6 +45,8 @@ if ($running_from_shell) {
             $arguments[$key] = $value;
         }
     }
+    // fake HTTP_HOST
+    $_SERVER['HTTP_HOST'] = null;
 }
 
 /* deal with help specifically */
