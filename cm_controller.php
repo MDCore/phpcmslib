@@ -581,31 +581,38 @@ class cm_controller extends action_controller {
                 }
                 if ((isset($this->export_sql_query) && isset($this->export_list_fields)) | $this->show_csv_export === true) { ?><a href="<?=page_parameters('');?>&amp;export=csv">Export to CSV</a><br /><? }
                 if ($this->back_link) {
+		  if (is_array($this->back_link)) {
+		    $back_link_title = array_keys($this->back_link); $back_link_title = $back_link_title[0];
+		    $back_link_url = array_values($this->back_link); $back_link_url = $back_link_url[0];
+                    $back_link_url = url_to($back_link_url).page_parameters('/^fk/,/^rfk/', false);
+		  } else {
+		    $back_link_title = humanize($this->back_link);
+                    $back_link_url = url_to($this->back_link).page_parameters('/^fk/,/^rfk/', false);
+                  }
                   ?><a href="<?php
-                  $backlink_url = url_to($this->back_link).page_parameters('/^fk/,/^rfk/', false);
 
                   if (isset($_GET['rfk'])) {
                     /* get the last value for the fk and then pop it */
                     $rfk = explode('||', $_GET['rfk']);
-                    $backlink_url.='&amp;fk='.$rfk[sizeof($rfk)-1];
+                    $back_link_url.='&amp;fk='.$rfk[sizeof($rfk)-1];
                     array_pop($rfk);
                     if ($rfk) {
-                      $backlink_url.='&amp;rfk='.implode('||', $rfk);
+                      $back_link_url.='&amp;rfk='.implode('||', $rfk);
                     }
                   }
 
                   if (isset($_GET['rfk_t'])) {
                     /* get the last value for the fk_t and then pop it */
                     $rfk_t = explode('||', $_GET['rfk_t']);
-                    $backlink_url.='&amp;fk_t='.$rfk_t[sizeof($rfk_t)-1];
+                    $back_link_url.='&amp;fk_t='.$rfk_t[sizeof($rfk_t)-1];
                     $current_fk_t = array_pop($rfk_t);
                     if ($rfk_t) {
-                      $backlink_url.='&amp;rfk_t='.implode('||', $rfk_t);
+                      $back_link_url.='&amp;rfk_t='.implode('||', $rfk_t);
                     }
                   }
 
-                  echo $backlink_url;
-                  ?>">Back to <?=humanize($this->back_link);?><? if (isset($current_fk_t)) { echo ' '.$current_fk_t; } ?></a><br /><?
+                  echo $back_link_url;
+                  ?>">Back to <?=$back_link_title;?><? if (isset($current_fk_t)) { echo ' '.$current_fk_t; } ?></a><br /><?
                 }
 
                 if ($this->allow_add) { ?><a href="<?=url_to(array('action' =>'add')).page_parameters('', false);?>">Add a new <?=humanize($this->list_type);?></a><br /><? }
