@@ -118,7 +118,7 @@ class cm_model_upload extends AR {
     }
     function basename()
     {
-        if ($this->salt) {
+      if (isset($this->salt)) {
             return $this->record_id.$this->salt.'.'.$this->file_extension();
         }
     }
