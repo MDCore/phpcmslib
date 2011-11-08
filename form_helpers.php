@@ -561,7 +561,7 @@ class forms
             if (isset($form_field['label'])) {
                 $label = $form_field['label'];
             } else {
-                $label = humanize($form_field[0]);
+	      $label = proper_nounize(humanize($form_field[0]));
             }
             if (!isset($form_field['note'])) {$form_field['note'] = '';}
             echo self::form_element($label, $model_object->requirements($db_field_name), $field_name, $element_html, $form_field['note']);
