@@ -135,6 +135,15 @@ class forms
             $result .= '>False</option>' ;
 
         }
+	elseif (is_array($options)) {
+	  foreach ($options as $id => $value) {
+            $result .= '<option value="'.$id.'"';
+            if (!empty($value) && $id == $value) {
+	      $result .= ' selected="selected"';
+            }
+            $result .='>'.$value."</option>";
+	  }
+	}
         elseif (!is_null($options))
         {
                 $result .= $options;
