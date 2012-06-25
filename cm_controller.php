@@ -615,7 +615,7 @@ class cm_controller extends action_controller {
                   ?>">Back to <?=$back_link_title;?><? if (isset($current_fk_t)) { echo ' '.$current_fk_t; } ?></a><br /><?
                 }
 
-                if ($this->allow_add) { ?><a href="<?=url_to(array('action' =>'add')).page_parameters('', false);?>">Add a new <?=humanize($this->list_type);?></a><br /><? }
+                if ($this->allow_add) { ?><a accesskey="a" href="<?=url_to(array('action' =>'add')).page_parameters('', false);?>">Add a new <?=humanize($this->list_type);?></a><br /><? }
                 if ($this->allow_delete) { ?><a href="<?=page_parameters('');?>&amp;delete=y">Delete <?=humanize(pluralize($this->list_type));?></a><br /><? }
                 ?></div><?
             }
@@ -728,7 +728,7 @@ class cm_controller extends action_controller {
             return true;
         }
 
-        ?><form method="post" enctype="multipart/form-data" action="<?
+        ?><form id="add_form" method="post" enctype="multipart/form-data" action="<?
         $parameters_to_remove = $parameters = '';
         if (isset($this->add_postback_parameters)) {$parameters_to_remove .= ','.$this->add_postback_parameters['filters']; $parameters.= '&'.$this->add_postback_parameters['parameters'];}
 
@@ -751,7 +751,7 @@ class cm_controller extends action_controller {
         if ($this->draw_form_buttons) {
             forms::form_buttons('save',false);
         }
-        ?></form><?
+        ?></form><script type="text/javascript">$(function() { $($('input,select,textarea', '#add_form')[0]).focus(); });</script><?
     }
 
 #------------------------------#
