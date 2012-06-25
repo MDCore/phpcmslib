@@ -152,7 +152,7 @@ class forms
         return $result;
     }
 
-    function date($name, $value = null, $attributes = null)
+    function date($name, $value = null, $attributes = null, $initialize_calendar = true)
     {
         $result = '';
 
@@ -168,14 +168,20 @@ class forms
 
         $result .= '
             <script type="text/javascript">
-            Calendar.setup({
+            var setup_calendar_'.$id.' = function() {
+              Calendar.setup({
                 inputField     :    "'.$id.'",     // id of the input field
                 ifFormat       :    "'.DATE_FORMAT.'",      // format of the input field
                 button         :    "'.$id.'_button",  // trigger for the calendar (button ID)
                 align          :    "Tl",           // alignment (defaults to "Bl")
                 singleClick    :    true
-            });
-        </script>';
+              });
+            };
+        ';
+        if ($initialize_calendar) {
+          $result .= ' setup_calendar_'.$id.'();';
+        }
+        $result .= '</script>';
     return $result;
     }
 
