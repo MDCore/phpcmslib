@@ -165,10 +165,13 @@ class forms
         $result .= self::parse_attributes( $attributes );
         $result .= ' />';
         $result .= '<input type="button" class="date_picker_button" id="'.$id.'_button" value="..." />';
+	$id_clean = $id;
+	$id_clean =  str_replace('[', '_', $id_clean);
+	$id_clean =  str_replace(']', '_', $id_clean);
 
         $result .= '
             <script type="text/javascript">
-            var setup_calendar_'.$id.' = function() {
+            var setup_calendar_'.$id_clean.' = function() {
               Calendar.setup({
                 inputField     :    "'.$id.'",     // id of the input field
                 ifFormat       :    "'.DATE_FORMAT.'",      // format of the input field
@@ -178,9 +181,10 @@ class forms
               });
             };
         ';
-        if ($initialize_calendar) {
-          $result .= ' setup_calendar_'.$id.'();';
-        }
+
+        //if ($initialize_calendar == true) {
+          $result .= ' setup_calendar_'.$id_clean.'();';
+	  //}
         $result .= '</script>';
     return $result;
     }
