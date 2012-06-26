@@ -51,7 +51,8 @@ class AR implements SeekableIterator
 
             //$this->db =& MDB2::singleton($dsn);
             $this->db =& MDB2::factory($dsn);
-	    $this->db->setCharset('utf8');
+            $this->error_check($this->db);			
+            $this->db->setCharset('utf8');
             //print_r($this->db);
             $this->error_check($this->db);
 
