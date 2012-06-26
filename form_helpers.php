@@ -136,12 +136,12 @@ class forms
 
         }
 	elseif (is_array($options)) {
-	  foreach ($options as $id => $value) {
-            $result .= '<option value="'.$id.'"';
-            if (!empty($value) && $id == $value) {
+	  foreach ($options as $option_value => $option_display) {
+            $result .= '<option value="'.$option_value.'"';
+            if (!empty($value) && $option_value === $value) {
 	      $result .= ' selected="selected"';
             }
-            $result .='>'.$value."</option>";
+            $result .='>'.$option_display."</option>";
 	  }
 	}
         elseif (!is_null($options))
