@@ -572,7 +572,7 @@ class cm_controller extends action_controller {
             if (isset($this->return_page )) {$return_page = $this->return_page ;} else { $return_page = pluralize($this->list_type); }  #XXX
             ?> </div><?
 
-            if ($this->allow_add || $this->allow_delete || $this->back_link || isset($this->category_actions)) {
+   if ($this->allow_add || $this->allow_delete || $this->back_link || isset($this->category_actions) || isset($this->show_csv_export)) {
                 ?><div class="category_actions"><? #todo document category_actions
                 if (isset($this->category_actions)) {
                     foreach ($this->category_actions as $value => $url) {
