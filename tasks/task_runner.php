@@ -52,7 +52,7 @@ if ($running_from_shell) {
 /* deal with help specifically */
 if ($task_name === 'help') {
   require ($path_to_lib.'/string_helpers.php');
-  if (sizeof($arguments) > 0 && (in_array($arguments[2], $valid_tasks))) {
+  if (sizeof($arguments) > 2 && (in_array($arguments[2], $valid_tasks))) {
     require $path_to_lib.'/tasks/'.$arguments[2].'.php';
     $task_class = 'tasks_'.$arguments[2];
     $task = new $task_class;
