@@ -111,7 +111,7 @@ class tasks_beachhead implements lib_task
 
         /* does this directory already exist ? fail! */
         if (file_exists($this->project_path)) {
-            $this->error(200, array($this->project_path));
+            $this->error(200, array('%1' => $this->project_path));
             return false;
         }
 
