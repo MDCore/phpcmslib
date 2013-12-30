@@ -206,6 +206,10 @@ class forms
     return $result;
     }
 
+    function text($name, $value = null, $attributes = null)
+    {
+        return forms::textarea($name, $value, $attributes);
+    }
     function textarea($name, $value = null, $attributes = null)
     {
         $result = '';
